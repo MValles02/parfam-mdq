@@ -1,0 +1,24 @@
+# Postgres para desarrollo local. En produccion la base la provee Dokploy.
+#   pnpm db:up    levanta
+#   pnpm db:down  apaga
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: parfam-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: parfam
+      POSTGRES_PASSWORD: parfam
+      POSTGRES_DB: parfam
+    ports:
+      - "5433:5432"
+    volumes:
+      - parfam-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parfam -d parfam"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  parfam-pgdata:

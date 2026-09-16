@@ -3,10 +3,10 @@
 Catálogo de referencia de fragancias, a partir de dos datasets públicos de Kaggle scrapeados
 de Fragrantica. 38 MB en total: se versionan en el repo.
 
-| Archivo | Filas | Delimitador | Aporta |
-|---|---:|---|---|
-| `fra_cleaned.csv` | 24.063 | `;` | Notas ya separadas en Top/Middle/Base, año (92%), país, perfumistas, 5 acordes ordenados. Decimales con coma. |
-| `fra_perfumes.csv` | 69.948 | `,` | Los 70k perfumes, lista completa de acordes, descripción en inglés, rating. |
+| Archivo            |  Filas | Delimitador | Aporta                                                                                                        |
+| ------------------ | -----: | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| `fra_cleaned.csv`  | 24.063 | `;`         | Notas ya separadas en Top/Middle/Base, año (92%), país, perfumistas, 5 acordes ordenados. Decimales con coma. |
+| `fra_perfumes.csv` | 69.948 | `,`         | Los 70k perfumes, lista completa de acordes, descripción en inglés, rating.                                   |
 
 ## Cómo se unen
 
@@ -16,12 +16,12 @@ fragancias.
 
 ## Cobertura de notas
 
-| Fuente | Fragancias con pirámide |
-|---|---:|
-| `fra_cleaned` (campos Top/Middle/Base) | 24.063 |
-| `fra_perfumes` (parseando la descripción) | 46.572 |
-| **Unión** | **46.578** (67%) |
-| Sin notas en ninguna fuente | 23.370 |
+| Fuente                                    | Fragancias con pirámide |
+| ----------------------------------------- | ----------------------: |
+| `fra_cleaned` (campos Top/Middle/Base)    |                  24.063 |
+| `fra_perfumes` (parseando la descripción) |                  46.572 |
+| **Unión**                                 |        **46.578** (67%) |
+| Sin notas en ninguna fuente               |                  23.370 |
 
 El parseo de la descripción usa el patrón fijo de Fragrantica:
 `Top notes are A, B and C; middle notes are …; base notes are …`.

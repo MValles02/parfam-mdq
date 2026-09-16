@@ -17,22 +17,22 @@ Deploy en Dokploy sobre la VPS (7.6 GB RAM, 61 GB libres, Docker 29.8), siguiend
 
 ### Decisiones tomadas
 
-| Tema | Decisión |
-|---|---|
-| Stack | Next.js 15 full-stack (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + PostgreSQL |
-| Imágenes | Cloudflare R2 (la cuenta ya está conectada al Dokploy; el bucket se crea en la Fase 3) |
-| Pedidos | Se persisten con estados (pendiente/confirmado/entregado/cancelado) |
-| Variantes | Frasco entero / tester / decant, precio por variante, **sin stock**: toggle activo-inactivo |
-| Checkout | Formulario con nombre + teléfono → crea el pedido → abre WhatsApp |
-| Auth admin | Auth.js v5 con credenciales, usuarios en Postgres |
-| Datos de fragancias | Datasets públicos de Fragrantica (Kaggle): 69.948 referencias |
-| Idioma de notas y acordes | Español, con diccionario propio en el repo y fallback al inglés |
-| Ratings de comunidad | No se muestran (se importan sólo para ordenar el buscador del admin) |
-| Precios | ARS, cargados a mano por variante |
-| Idioma del sitio | Español, con `next-intl` configurado para sumar idiomas después |
-| Analítica | Umami self-hosted como app aparte en Dokploy |
-| Deploy | GitHub Actions → GHCR → webhook de Dokploy |
-| Diseño | Canvas de Claude Design antes de codear el storefront |
+| Tema                      | Decisión                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| Stack                     | Next.js 15 full-stack (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + PostgreSQL |
+| Imágenes                  | Cloudflare R2 (la cuenta ya está conectada al Dokploy; el bucket se crea en la Fase 3)       |
+| Pedidos                   | Se persisten con estados (pendiente/confirmado/entregado/cancelado)                          |
+| Variantes                 | Frasco entero / tester / decant, precio por variante, **sin stock**: toggle activo-inactivo  |
+| Checkout                  | Formulario con nombre + teléfono → crea el pedido → abre WhatsApp                            |
+| Auth admin                | Auth.js v5 con credenciales, usuarios en Postgres                                            |
+| Datos de fragancias       | Datasets públicos de Fragrantica (Kaggle): 69.948 referencias                                |
+| Idioma de notas y acordes | Español, con diccionario propio en el repo y fallback al inglés                              |
+| Ratings de comunidad      | No se muestran (se importan sólo para ordenar el buscador del admin)                         |
+| Precios                   | ARS, cargados a mano por variante                                                            |
+| Idioma del sitio          | Español, con `next-intl` configurado para sumar idiomas después                              |
+| Analítica                 | Umami self-hosted como app aparte en Dokploy                                                 |
+| Deploy                    | GitHub Actions → GHCR → webhook de Dokploy                                                   |
+| Diseño                    | Canvas de Claude Design antes de codear el storefront                                        |
 
 ---
 
@@ -41,15 +41,15 @@ Deploy en Dokploy sobre la VPS (7.6 GB RAM, 61 GB libres, Docker 29.8), siguiend
 Extraída de las piezas de Canva en `brand/`. No hay SVG del logo, así que se reconstruye
 con tipografía web.
 
-| Elemento | Valor |
-|---|---|
-| Fondo | `#F2EEE9` (crema cálido) — ocupa el 90-97% de cada pieza |
-| Tinta | `#000000` puro |
-| Logotipo | `ParfamMdq` en geométrica muy bold + `P E R F U M E R I A` en versalitas espaciadas |
+| Elemento   | Valor                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Fondo      | `#F2EEE9` (crema cálido) — ocupa el 90-97% de cada pieza                                        |
+| Tinta      | `#000000` puro                                                                                  |
+| Logotipo   | `ParfamMdq` en geométrica muy bold + `P E R F U M E R I A` en versalitas espaciadas             |
 | Tipografía | Geométrica sans ExtraBold (tipo Gilroy/Cocogoose). Equivalente libre: **Outfit** (Google Fonts) |
-| Tagline | **"No solo es un perfume"** |
-| Instagram | **@parfam_mdq** |
-| WhatsApp | **+54 9 223 616 3910** |
+| Tagline    | **"No solo es un perfume"**                                                                     |
+| Instagram  | **@parfam_mdq**                                                                                 |
+| WhatsApp   | **+54 9 223 616 3910**                                                                          |
 
 La estética es minimalista: crema, negro, tipografía pesada, mucho aire. Nada de dorados ni
 degradés — el color lo ponen las fotos de los frascos y los chips de acordes. El logotipo se
@@ -105,32 +105,32 @@ si el buscador no encuentra la fragancia:
 
 ## Librerías (nada hecho a mano que ya exista)
 
-| Necesidad | Librería |
-|---|---|
-| Framework / routing / SSR / SEO | `next` 15 (App Router, Server Actions) |
-| UI base + accesibilidad | `tailwindcss` v4, `shadcn/ui` (Radix), `tailwind-merge`, `class-variance-authority` |
-| Íconos | `lucide-react` |
-| Tipografía | `next/font` con **Outfit** (Google Fonts) |
-| Tema claro/oscuro | `next-themes` |
-| Formularios + validación | `react-hook-form`, `zod`, `@hookform/resolvers` |
-| Estado de filtros en la URL | `nuqs` |
-| Carrito persistente | `zustand` + middleware `persist` |
-| Tablas del admin | `@tanstack/react-table` (shadcn data-table) |
-| Toasts | `sonner` |
-| Galería de producto | `embla-carousel-react` (shadcn carousel) |
-| Autocompletado de notas | `cmdk` (shadcn combobox) |
-| ORM + migraciones | `prisma` + `@prisma/client` |
-| Auth | `next-auth@5` (Auth.js) + `@node-rs/argon2` |
-| Subida a R2 | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `react-dropzone` |
-| Import del dataset | `csv-parse` (streaming) |
-| Slugs | `slugify` |
-| Validación de env | `@t3-oss/env-nextjs` |
-| Teléfonos AR | `libphonenumber-js` |
-| i18n | `next-intl` |
-| Fechas | `date-fns` (locale `es`) |
-| Rate limit del checkout | `lru-cache` |
-| Calidad | `eslint`, `prettier`, `husky`, `lint-staged` |
-| Smoke tests | `@playwright/test` |
+| Necesidad                       | Librería                                                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| Framework / routing / SSR / SEO | `next` 15 (App Router, Server Actions)                                              |
+| UI base + accesibilidad         | `tailwindcss` v4, `shadcn/ui` (Radix), `tailwind-merge`, `class-variance-authority` |
+| Íconos                          | `lucide-react`                                                                      |
+| Tipografía                      | `next/font` con **Outfit** (Google Fonts)                                           |
+| Tema claro/oscuro               | `next-themes`                                                                       |
+| Formularios + validación        | `react-hook-form`, `zod`, `@hookform/resolvers`                                     |
+| Estado de filtros en la URL     | `nuqs`                                                                              |
+| Carrito persistente             | `zustand` + middleware `persist`                                                    |
+| Tablas del admin                | `@tanstack/react-table` (shadcn data-table)                                         |
+| Toasts                          | `sonner`                                                                            |
+| Galería de producto             | `embla-carousel-react` (shadcn carousel)                                            |
+| Autocompletado de notas         | `cmdk` (shadcn combobox)                                                            |
+| ORM + migraciones               | `prisma` + `@prisma/client`                                                         |
+| Auth                            | `next-auth@5` (Auth.js) + `@node-rs/argon2`                                         |
+| Subida a R2                     | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `react-dropzone`             |
+| Import del dataset              | `csv-parse` (streaming)                                                             |
+| Slugs                           | `slugify`                                                                           |
+| Validación de env               | `@t3-oss/env-nextjs`                                                                |
+| Teléfonos AR                    | `libphonenumber-js`                                                                 |
+| i18n                            | `next-intl`                                                                         |
+| Fechas                          | `date-fns` (locale `es`)                                                            |
+| Rate limit del checkout         | `lru-cache`                                                                         |
+| Calidad                         | `eslint`, `prettier`, `husky`, `lint-staged`                                        |
+| Smoke tests                     | `@playwright/test`                                                                  |
 
 ---
 
@@ -181,6 +181,7 @@ y el admin "adopta" las que vende.
 ## Rutas
 
 **Storefront**
+
 - `/` — hero con la marca sobre crema; al scrollear, el catálogo con filtros.
 - `/catalogo` — misma grilla con filtros y paginado, URL propia para SEO.
 - `/producto/[slug]` — galería, variantes, pirámide olfativa, chips de acordes, ficha técnica,
@@ -195,6 +196,7 @@ y el admin "adopta" las que vende.
 concentración, estación, ocasión, tipo de presentación, rango de precio y orden.
 
 **Admin** (`/admin/*`, protegido por middleware)
+
 - `/admin` — pedidos recientes, productos publicados, accesos rápidos.
 - `/admin/productos` — tabla con búsqueda y filtros; `nuevo` con el buscador de referencias +
   el fallback a Fragrantica; `[id]` edita ficha, notas, imágenes y variantes.
@@ -208,10 +210,12 @@ concentración, estación, ocasión, tipo de presentación, rango de precio y or
 ## Fases de implementación
 
 ### ✅ Fase 0 — Repo (hecha)
+
 `git init`, PLAN.md, estructura, `.gitignore`, `.env.example`, datasets y assets de marca en
 [MValles02/parfam-mdq](https://github.com/MValles02/parfam-mdq).
 
 ### Fase 0.5 — Entorno de desarrollo
+
 1. Node 22 LTS con `nvm` (no hay `node` en la VPS) + `pnpm` vía corepack.
 2. `pnpm create next-app` (TS, Tailwind, App Router, ESLint) + `shadcn init`.
 3. `docker-compose.dev.yml` con Postgres 17 para desarrollo local.
@@ -220,6 +224,7 @@ concentración, estación, ocasión, tipo de presentación, rango de precio y or
 **Verificación:** `pnpm dev` levanta en :3000, `pnpm typecheck` y `pnpm lint` en limpio.
 
 ### Fase 0.75 — Diseño
+
 Canvas de Claude Design con las pantallas clave — home (hero + catálogo), ficha de producto,
 carrito, checkout y una del admin — sobre la paleta crema/negro y Outfit. Queda publicado como
 Artifact editable, y de ahí salen los tokens y el layout que después se codean con shadcn.
@@ -227,6 +232,7 @@ Artifact editable, y de ahí salen los tokens y el layout que después se codean
 **Verificación:** el canvas abre, se puede editar y refleja la identidad de las piezas de Canva.
 
 ### Fase 1 — Esquema, diccionarios e importador
+
 1. `prisma/schema.prisma` con las tres capas y primera migración.
 2. `data/dictionaries/accords.es.json` (~90 acordes con traducción y color) y
    `notes.es.json` (~500 notas frecuentes).
@@ -242,12 +248,14 @@ perfume conocido quede bien; contrastar los totales del import contra los del RE
 (69.948 refs, 46.578 con pirámide); después la carga completa midiendo tiempo.
 
 ### Fase 2 — Auth y shell del admin
+
 Auth.js v5 con credenciales + argon2, `middleware.ts` protegiendo `/admin`, layout con
 sidebar, login con rate limit.
 
 **Verificación:** login con el usuario del seed; `/admin` redirige si no hay sesión.
 
 ### Fase 3 — CRUD de productos
+
 1. Bucket R2 + presigned URLs + upload con `react-dropzone` (drag & drop, reorden, principal).
 2. Buscador de referencias: busca sobre las 70k ordenando por rating, muestra la ficha y
    precarga notas, acordes, perfumista, año y género al adoptarla. Fallback a Fragrantica +
@@ -262,6 +270,7 @@ sidebar, login con rate limit.
 subir 3 fotos, publicar; y crear otro a mano con el flujo de fallback.
 
 ### Fase 4 — Storefront
+
 1. Tema con los valores reales: `--background: #F2EEE9`, `--foreground: #000000`, Outfit,
    modo oscuro derivado.
 2. Home: hero con el logotipo y el tagline + catálogo con filtros (sidebar en desktop, drawer
@@ -276,6 +285,7 @@ subir 3 fotos, publicar; y crear otro a mano con el flujo de fallback.
 ≥90 en Performance y SEO.
 
 ### Fase 5 — Carrito y checkout por WhatsApp
+
 1. Carrito con Zustand + persist, drawer y badge en el header.
 2. `/checkout`: nombre + teléfono (validado con `libphonenumber-js`), resumen, honeypot.
 3. Server Action: valida con Zod, **recalcula precios desde la DB**, rechaza variantes
@@ -288,12 +298,14 @@ subir 3 fotos, publicar; y crear otro a mano con el flujo de fallback.
 formateado, el pedido aparece en `/admin/pedidos` y cambiar el precio después no lo altera.
 
 ### Fase 6 — Configuración del sitio
+
 Formulario único sobre `SiteSetting`, cacheado con `unstable_cache` e invalidado al guardar.
 
 **Verificación:** cambiar el número de WhatsApp desde el panel y ver que el siguiente checkout
 usa el nuevo sin redeploy.
 
 ### Fase 7 — Deploy
+
 1. `next.config.ts` con `output: 'standalone'` y `remotePatterns` del dominio de R2.
 2. Dockerfile multi-stage (deps → builder → runner sobre `node:22-alpine`, usuario no-root,
    `HEALTHCHECK`) y `/api/health` que verifica la DB. Los CSV quedan fuera de la imagen.
@@ -312,6 +324,7 @@ usa el nuevo sin redeploy.
 roto a propósito para confirmar el rollback.
 
 ### Fase 8 — Cierre
+
 Carga de los ~40 productos reales, revisión de textos, smoke test de Playwright
 (home → producto → carrito → checkout) en CI, y `docs/admin.md` para tu hermano.
 

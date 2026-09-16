@@ -13,13 +13,8 @@ next-env.d.ts
 .env.*
 !.env.example
 
-# FragDB: los CSV completos (~900 MB, licencia comercial) no se versionan.
-# Se suben por scp a data/fragdb/ y se quedan sólo en la VPS.
-data/fragdb/*
-!data/fragdb/README.md
-!data/fragdb/SPEC.md
-!data/fragdb/data_dictionary.md
-!data/fragdb/samples/
+# Datasets de Fragrantica: 38 MB en total, se versionan (entran holgados en GitHub).
+# Si en el futuro se suma un dump mas pesado, ignorarlo explicitamente aca.
 
 # Sistema / editores
 .DS_Store

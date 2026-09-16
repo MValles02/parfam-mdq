@@ -37,7 +37,7 @@
 
     <!-- Formulario -->
     <div style="display: flex; flex-direction: column; flex-grow: 1; max-width: 680px;">
-      <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.2em; color: #6B655C;">ULTIMO PASO</div>
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.2em; color: #6B655C;">ÚLTIMO PASO</div>
       <div style="font-size: 46px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; margin-top: 10px;">¿A nombre de quién<br>armamos el pedido?</div>
       <div style="font-size: 15px; color: #6B655C; margin-top: 14px; line-height: 1.5;">Con esto generamos el pedido y abrimos WhatsApp con todo escrito.<br>El resto — envío o retiro, y cómo pagás — lo arreglás por chat.</div>
 
@@ -49,7 +49,7 @@
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 9px;">
-          <label style="font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">TU TELEFONO</label>
+          <label style="font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">TU TELÉFONO</label>
           <div style="display: flex; align-items: stretch; border: 1.5px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; overflow: hidden;">
             <div style="display: flex; align-items: center; padding: 0 16px; border-right: 1px solid #DCD5CA; font-size: 15px; font-weight: 600; color: #6B655C;">+54 9</div>
             <input value="{{phone}}" onChange="{{onPhone}}" placeholder="223 616 3910" style="border: none; background: transparent; padding: 17px 18px; font-size: 16px; font-weight: 500; color: #000000; flex-grow: 1;">
@@ -87,7 +87,7 @@
 
       <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 22px;">
         <span style="font-size: 14px; color: #6B655C;">Total</span>
-        <span style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em;">$160.500</span>
+        <span style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em;">$146.500</span>
       </div>
 
       <div style="height: 1px; background: #DCD5CA; margin: 22px 0;"></div>
@@ -123,8 +123,8 @@ class Component extends DCLogic {
       phone,
       onName: (e) => this.setState({ name: e.target.value }),
       onPhone: (e) => this.setState({ phone: e.target.value }),
-      btnBg: ready ? "#1DA851" : "#D8D2C9",
-      btnFg: ready ? "#FFFFFF" : "#A39B8E",
+      btnBg: ready ? "#1DA851" : "#DCD5CA",
+      btnFg: ready ? "#F2EEE9" : "#A39B8E",
       btnCursor: ready ? "pointer" : "not-allowed",
       btnLabel: ready ? "Enviar pedido por WhatsApp" : "Completá tus datos",
       hint: ready

@@ -148,7 +148,9 @@ async function main() {
         slug: nslug,
         nameEn: dictEntry?.en ?? titleCaseFromSlug(canonical),
         nameEs: dictEntry?.es ?? null,
-        usageCount: dictEntry?.usageCount ?? 0,
+        // Placeholder: el valor real se calcula al final del import, cuando
+        // ya existen todas las filas de FragranceRefNote.
+        usageCount: 0,
       };
     }),
     skipDuplicates: true,
@@ -198,6 +200,10 @@ async function main() {
             descriptionEn: r.descriptionEn,
             hasPyramid: Boolean(r.pyramid),
             originCountry: r.originCountry,
+            // Desnormalizado para el buscador del panel: es lo unico que
+            // permite resolver "sauvage dior" con un solo indice GIN.
+            // Ver prisma/migrations/*_busqueda_difusa_referencias.
+            searchText: `${r.name} ${r.brandName}`,
           };
         }),
         select: { id: true, pid: true },
@@ -279,6 +285,25 @@ async function main() {
     const pct = ((processed / records.length) * 100).toFixed(1);
     console.log(`  ${fmt(processed)}/${fmt(records.length)} (${pct}%)`);
   }
+
+  // usageCount recien se puede saber aca: el diccionario solo trae el conteo
+  // de las ~500 notas que alguien tradujo, asi que tomarlo de ahi dejaba en
+  // cero las 1.398 sin traducir — justo las que /admin/notas tiene que
+  // priorizar. Se recalcula del uso real, que es el unico dato verdadero.
+  console.log("Recalculando el uso de cada nota...");
+  const actualizadas = await prisma.$executeRaw`
+    UPDATE "Note" n
+       SET "usageCount" = COALESCE(u.total, 0)
+      FROM (
+        SELECT n2."id", count(fn."id") AS total
+          FROM "Note" n2
+          LEFT JOIN "FragranceRefNote" fn ON fn."noteId" = n2."id"
+         GROUP BY n2."id"
+      ) u
+     WHERE u."id" = n."id"
+       AND n."usageCount" IS DISTINCT FROM COALESCE(u.total, 0)
+  `;
+  console.log(`  ${fmt(actualizadas)} notas con el conteo actualizado`);
 
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
   console.log("\nListo:");

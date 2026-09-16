@@ -160,6 +160,11 @@ model FragranceRef {
   descriptionEn String?
   hasPyramid    Boolean  @default(false)
   originCountry String?
+  /// Desnormalizado: "<nombre> <marca>", normalizado y con indice GIN trgm
+  /// (ver la migracion busqueda_difusa_referencias). Sin esto el buscador del
+  /// panel no puede usar indice, porque el OR entre FragranceRef y Brand obliga
+  /// a un seq scan de las 70k filas. Lo escribe scripts/import-fragrantica.ts.
+  searchText    String   @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

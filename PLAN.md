@@ -154,11 +154,10 @@ y el admin "adopta" las que vende.
   orden de aparición).
 - `FragranceRefPerfumer` — ref × perfumista.
 
-> ⏳ **Pendiente para la Fase 3:** el buscador del admin sobre 70k filas va a necesitar un
-> índice `pg_trgm` (búsqueda difusa por nombre/marca) — Prisma no lo puede declarar en el
-> schema, hay que agregarlo a mano en una migración con `CREATE EXTENSION pg_trgm` +
-> `CREATE INDEX ... USING gin (name gin_trgm_ops)`. Por ahora sólo hay índices btree
-> estándar (`@@index([name])`), que alcanzan para lookups exactos pero no para "contiene".
+> ✅ **Resuelto en la Fase 3:** la búsqueda difusa vive en la migración
+> `busqueda_difusa_referencias` (`pg_trgm` + `unaccent` + `parfam_normalize()`), y hubo que
+> sumarle una columna desnormalizada `FragranceRef.searchText` porque el `OR` entre
+> `FragranceRef.name` y `Brand.name` obligaba a un seq scan. Ver la Fase 3 para los números.
 
 ### Capa 2 — Tienda (lo que edita el admin)
 
@@ -331,20 +330,132 @@ logout `/admin` vuelve a redirigir al login. El rate limit tiene su propio test.
 > lo marca como error. Ahora usa `useSyncExternalStore`, que es la API correcta para
 > suscribirse a `matchMedia` y además evita el flash del primer render.
 
-### Fase 3 — CRUD de productos
+### 🟡 Fase 3 — CRUD de productos (hecha, menos la subida de fotos)
 
-1. Bucket R2 + presigned URLs + upload con `react-dropzone` (drag & drop, reorden, principal).
-2. Buscador de referencias: busca sobre las 70k ordenando por rating, muestra la ficha y
-   precarga notas, acordes, perfumista, año y género al adoptarla. Fallback a Fragrantica +
-   carga manual cuando no hay resultados.
-3. Formulario de producto (RHF + Zod): descripción en español, concentración, barras de
-   carácter, estación/ocasión, SEO.
-4. Editor de variantes inline: tipo (frasco/tester/decant), ml, precio ARS, activo, orden.
-5. Tabla de productos con búsqueda, filtro por estado, duplicar y publicar/despublicar.
-6. `/admin/notas` para completar traducciones faltantes.
+Todo el CRUD funciona punta a punta. **Lo único que falta es subir fotos de verdad**: el
+código está escrito y probado hasta donde se puede sin credenciales de Cloudflare R2 (ver
+"Pendientes tuyos").
 
-**Verificación:** crear un producto real desde el buscador con frasco + tester + 2 decants,
-subir 3 fotos, publicar; y crear otro a mano con el flujo de fallback.
+#### El buscador sobre las 70k: dos cosas no cerraban con lo planeado
+
+**1. El índice `pg_trgm` solo no alcanzaba.** La migración
+`20260916124255_busqueda_difusa_referencias` crea `pg_trgm`, `unaccent` y un wrapper
+`parfam_normalize()` (unaccent + lower) marcado `IMMUTABLE`, porque `unaccent()` viene
+declarada `STABLE` y Postgres no indexa funciones que no sean inmutables. Con eso,
+`lancome tresor` encuentra `Lancôme Trésor`.
+
+Pero el buscador tiene que aceptar `"sauvage dior"`, que mezcla nombre de fragancia y marca,
+y eso son dos columnas en dos tablas: el `OR` entre ellas obliga a un seq scan de las 70k
+filas aunque cada una tenga su índice GIN. **Medido: 293 ms.** La solución fue desnormalizar
+nombre + marca en una columna `FragranceRef.searchText` con un único índice GIN trgm encima:
+
+| Consulta                   |  Antes |                         Después |
+| -------------------------- | -----: | ------------------------------: |
+| `sauvage dior` (selectiva) | 293 ms |                      **0,6 ms** |
+| `noir` (poco selectiva)    |      — | 12 ms (cae al índice de rating) |
+
+`scripts/import-fragrantica.ts` ahora llena `searchText`, y la migración hace el backfill de
+las filas ya importadas.
+
+**2. Ordenar por rating, como decía el plan, daba resultados malos.** La mediana del dataset
+es de 25 votos, así que una edición limitada con 14 votos y 4,79 le ganaba al Angel de
+Mugler. Se pasó a **dos señales combinadas**:
+
+- **Popularidad**: promedio bayesiano (el truco del top 250 de IMDb), con 150 votos previos
+  en la media del dataset (C = 3,977, medida sobre las 63.769 filas con rating).
+- **Parecido**: `similarity()` de pg_trgm entre la consulta y el `searchText`. Esto es lo que
+  faltaba: el Angel de 1992 es polarizante (3,57), y sin la señal de parecido nunca subía.
+
+Se mezclan 75 % parecido / 25 % popularidad, en dos fases: primero se acotan los 60 candidatos
+más populares con el índice, y recién ahí se calcula `similarity()` sobre esos 60, para que
+una consulta poco selectiva no lo evalúe sobre miles de filas. Resultado — los cuatro casos
+que antes fallaban ahora devuelven el buque insignia primero:
+
+| Consulta          | Antes (rating puro)                    | Ahora                    |
+| ----------------- | -------------------------------------- | ------------------------ |
+| `angel mugler`    | Angel Winter Star (14 votos)           | **Angel** (1992)         |
+| `lancome tresor`  | Tresor original (36 votos)             | **Tresor** (1990)        |
+| `sauvage dior`    | Eau Sauvage Parfum 2017                | **Sauvage** (2015)       |
+| `tobacco vanille` | Charuto Tobacco Vanille (Paris Corner) | **Tobacco Vanille** (TF) |
+
+#### 🐛 Bug de la Fase 1 que salió acá: `Note.usageCount` estaba casi todo en cero
+
+El importador tomaba `usageCount` del diccionario `notes.es.json`, que sólo cubre las ~500
+notas traducidas. Resultado: las 484 notas con traducción tenían su conteo, y **las 1.398 sin
+traducir estaban todas en 0** — justo las que `/admin/notas` tiene que ordenar por prioridad.
+La pantalla habría listado 1.398 notas en orden arbitrario.
+
+Arreglado en el importador: `usageCount` se recalcula al final, desde las filas reales de
+`FragranceRefNote`, que es el único dato verdadero (y recién se conoce cuando terminó el
+import). La base local ya quedó con los conteos reales — la nota sin traducir más usada es
+`Acacia`, con 64 apariciones.
+
+#### Lo demás
+
+1. **R2** (`src/lib/r2.ts`): cliente S3 perezoso, presigned PUT de 5 minutos, lista blanca de
+   tipos (`jpeg/png/webp/avif`) y tope de 8 MB validados **en el servidor**, y la clave del
+   objeto la genera el servidor (`productos/<año>/<mes>/<uuid>.<ext>`) — nunca con el nombre
+   de archivo del cliente. Si no hay credenciales, `r2Configurado()` da `false` y la UI
+   muestra la zona de subida deshabilitada con el aviso, sin romper nada.
+2. **Buscador de referencias** con precarga de notas, acordes, perfumista, año y género al
+   adoptar, y el fallback a `fragrantica.com/search/?query=…` + carga manual.
+3. **Formulario** (`react-hook-form` + `standardSchemaResolver` + Zod). El schema
+   `src/lib/validations/producto.ts` es **el mismo en cliente y servidor**: el cliente valida
+   para dar feedback, el servidor porque es el único borde real.
+4. **Editor de variantes inline** con tipo, ml, precio ARS (string de punta a punta, nunca
+   float), activo y orden.
+5. **Tabla de productos** con búsqueda y filtro por estado en la URL (`nuqs`), duplicar y
+   publicar/despublicar desde la fila.
+6. **`/admin/notas`** con búsqueda, filtro pendientes/traducidas, paginado de a 50 y guardado
+   con Enter.
+
+#### Decisiones que se apartaron del plan
+
+- **Sin `@tanstack/react-table`.** El plan lo listaba para las tablas del admin, pero el
+  diseño no pide ordenar, paginar ni esconder columnas del lado del cliente, y el filtrado es
+  server-side sobre decenas de filas. Se usó el `table` de shadcn. Si más adelante hace falta
+  ordenar por columna, se suma ahí.
+- **Las notas van sin color.** El mockup mostraba un puntito de color por nota, pero el
+  diccionario sólo le puso color a los 93 acordes: inventar un color por nota sería mostrar un
+  dato que no existe. Los chips de acordes sí usan su color real.
+- **Token `--success`** nuevo en `globals.css` (claro y oscuro) para el verde de "Publicado",
+  que es el único color del panel fuera de la paleta crema/negro. Antes iba a quedar hardcodeado.
+- **Se agregó un campo de slug** editable en el paso de SEO. El plan no lo mencionaba, pero
+  sin él un renombre después de publicar cambiaría la URL en silencio.
+
+#### Verificado contra el servidor andando
+
+Con Playwright manejando un Chromium **dentro de un contenedor Docker** (el navegador del
+host no arranca: falta `libnspr4` y no hay sudo). Los scripts quedaron en el scratchpad, no
+en el repo — los de verdad llegan en la Fase 8.
+
+- Adoptar `Sauvage Elixir` del buscador precarga nombre, año 2021, género y 16 chips entre
+  notas, acordes y perfumista.
+- Cargarle **frasco entero 100 ml, tester 100 ml y decants de 10 y 5 ml**, y publicarlo:
+  queda con slug `dior-sauvage-elixir`, 10 notas con su nivel y orden, 5 acordes, 1
+  perfumista, y los precios como `Decimal` (`289000.00`…). En la tabla aparece como
+  "Publicado · 4 variantes · $ 15.400" (el "desde" mira sólo las variantes activas).
+- **Flujo de fallback**: buscar algo que no existe muestra el link correcto a Fragrantica,
+  y se carga a mano creando una marca nueva sobre la marcha.
+- **Volver a guardar dos veces no duplica variantes ni notas.** Esto tenía trampa: las
+  variantes recién creadas no tienen `id` en el formulario, así que un segundo guardado las
+  habría duplicado. La página de edición remonta el formulario con `key={updatedAt}`.
+- Publicar sin descripción ni variante activa se rechaza con los dos mensajes en español,
+  y **la tabla aplica la misma regla** que el formulario (son dos caminos al mismo cambio).
+- Duplicar deja la copia en borrador, con sus 4 variantes y sin SKU.
+- Traducir una nota desde `/admin/notas` la saca de pendientes.
+- **Seguridad**: las 15 Server Actions arrancan con `requireAdmin()`. Verificado que no
+  alcanza con el proxy: posteando la misma acción a `/` en vez de `/admin/...` el proxy no
+  interviene (sólo matchea `/admin/:path*`) y la llamada igual vuelve vacía, sin filtrar datos.
+- Sin errores de runtime ni de hidratación en la consola del navegador. Había uno: el
+  `list=` de los `<datalist>` usaba el `field.id` de `useFieldArray`, que es un UUID nuevo en
+  cada render — el build pasaba igual y sólo se veía en el navegador.
+
+> 📌 `pnpm build`, `pnpm typecheck` y `pnpm lint` en limpio (quedan 2 warnings a propósito de
+> `no-img-element`, con su `TODO(Fase 7)`: las miniaturas usan `<img>` porque `next.config.ts`
+> todavía no tiene los `remotePatterns` de R2 y `next/image` rompería).
+
+**Falta para cerrar la fase:** subir 3 fotos de verdad a un bucket R2 y publicar con ellas.
 
 ### Fase 4 — Storefront
 
@@ -424,7 +535,10 @@ Validadas al arrancar con `@t3-oss/env-nextjs`.
 
 ## Pendientes tuyos
 
-1. 🟡 Bucket de R2 cuando lleguemos a la Fase 3 (la cuenta ya está conectada al Dokploy).
+1. 🔴 **Bucket de R2 — bloquea el cierre de la Fase 3.** La cuenta ya está conectada al
+   Dokploy; falta crear el bucket y pasar `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+   `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` y `R2_PUBLIC_URL`. El código de subida ya está escrito
+   y degrada con elegancia mientras no estén: la zona de drag & drop se muestra deshabilitada.
 2. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
 3. 🟢 Fotos propias de los productos para la carga de la Fase 8.
 4. 🟢 Cuando arranque la Fase 2 (auth), definir `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`

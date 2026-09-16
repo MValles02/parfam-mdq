@@ -19,7 +19,7 @@ Deploy en Dokploy sobre la VPS (7.6 GB RAM, 61 GB libres, Docker 29.8), siguiend
 
 | Tema                      | Decisión                                                                                     |
 | ------------------------- | -------------------------------------------------------------------------------------------- |
-| Stack                     | Next.js 15 full-stack (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + PostgreSQL |
+| Stack                     | Next.js 16 full-stack (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + PostgreSQL |
 | Imágenes                  | Cloudflare R2 (la cuenta ya está conectada al Dokploy; el bucket se crea en la Fase 3)       |
 | Pedidos                   | Se persisten con estados (pendiente/confirmado/entregado/cancelado)                          |
 | Variantes                 | Frasco entero / tester / decant, precio por variante, **sin stock**: toggle activo-inactivo  |
@@ -107,7 +107,7 @@ si el buscador no encuentra la fragancia:
 
 | Necesidad                       | Librería                                                                            |
 | ------------------------------- | ----------------------------------------------------------------------------------- |
-| Framework / routing / SSR / SEO | `next` 15 (App Router, Server Actions)                                              |
+| Framework / routing / SSR / SEO | `next` 16 (App Router, Server Actions)                                              |
 | UI base + accesibilidad         | `tailwindcss` v4, `shadcn/ui` (Radix), `tailwind-merge`, `class-variance-authority` |
 | Íconos                          | `lucide-react`                                                                      |
 | Tipografía                      | `next/font` con **Outfit** (Google Fonts)                                           |
@@ -214,14 +214,25 @@ concentración, estación, ocasión, tipo de presentación, rango de precio y or
 `git init`, PLAN.md, estructura, `.gitignore`, `.env.example`, datasets y assets de marca en
 [MValles02/parfam-mdq](https://github.com/MValles02/parfam-mdq).
 
-### Fase 0.5 — Entorno de desarrollo
+### ✅ Fase 0.5 — Entorno de desarrollo (hecha)
 
-1. Node 22 LTS con `nvm` (no hay `node` en la VPS) + `pnpm` vía corepack.
-2. `pnpm create next-app` (TS, Tailwind, App Router, ESLint) + `shadcn init`.
-3. `docker-compose.dev.yml` con Postgres 17 para desarrollo local.
-4. ESLint + Prettier + husky + lint-staged; scripts `dev`, `build`, `lint`, `typecheck`, `db:*`.
+Node 22.23 + pnpm 12.4 vía nvm/corepack. Next.js **16.3.5** con React 19, Tailwind v4,
+`src/` y alias `@/*`. shadcn/ui inicializado con el preset `radix-nova` (iconos Lucide).
+La paleta de marca ya está en `globals.css` como tokens oklch — crema `#F2EEE9` sobre tinta
+negra, más el modo oscuro derivado manteniendo el matiz cálido — y **Outfit** como familia
+tipográfica. Prettier + ESLint + husky + lint-staged, `docker-compose.dev.yml` con Postgres 17
+en el puerto **5433**, `src/lib/site.ts` con los defaults de marca y `AGENTS.md` con las
+convenciones del proyecto.
 
-**Verificación:** `pnpm dev` levanta en :3000, `pnpm typecheck` y `pnpm lint` en limpio.
+**Verificado:** `pnpm build` compila, `pnpm typecheck` y `pnpm lint` en limpio, y `pnpm dev`
+sirve la home con la marca en :3000.
+
+> ⚠️ **Pendiente:** el usuario `mateo` no está en el grupo `docker`, así que `pnpm db:up`
+> todavía no corre. Se resuelve con `sudo usermod -aG docker mateo` y reconectar por SSH.
+
+> 📌 **Ojo con Next 16:** el scaffold genera un bloque en `AGENTS.md` avisando que hay
+> breaking changes respecto de versiones anteriores. Antes de escribir código específico del
+> framework, consultar `node_modules/next/dist/docs/`.
 
 ### Fase 0.75 — Diseño
 
@@ -347,6 +358,8 @@ Validadas al arrancar con `@t3-oss/env-nextjs`.
 
 ## Pendientes tuyos
 
-1. 🟡 Bucket de R2 cuando lleguemos a la Fase 3 (la cuenta ya está conectada al Dokploy).
-2. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
-3. 🟢 Fotos propias de los productos para la carga de la Fase 8.
+1. 🔴 Habilitar Docker sin sudo para levantar la base local:
+   `sudo usermod -aG docker mateo` y reconectar la sesión SSH.
+2. 🟡 Bucket de R2 cuando lleguemos a la Fase 3 (la cuenta ya está conectada al Dokploy).
+3. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
+4. 🟢 Fotos propias de los productos para la carga de la Fase 8.

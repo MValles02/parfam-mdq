@@ -28,12 +28,28 @@ function patronLike(termino: string) {
 }
 
 /**
+ * Un indice trigram no puede resolver un patron de menos de 3 caracteres:
+ * no hay trigrama que buscar. Con menos, Postgres cae a un seq scan de las
+ * 70k filas — medido: 244 ms para "le" contra 9 ms para "noir".
+ */
+const MINIMO_INDEXABLE = 3;
+
+/**
  * Parte la consulta en palabras. Cada una tiene que aparecer en el texto de
  * busqueda, asi "sauvage dior" encuentra el Sauvage de Dior y no todos los
  * Sauvage ni todos los Dior.
+ *
+ * Las palabras de menos de 3 letras se descartan del filtro (no del orden):
+ * en "eau de nuit", el "de" no aporta nada y forzaria el seq scan. Y el caso
+ * que importa sigue andando — "le male" filtra por "male", que alcanza.
  */
 function terminos(query: string) {
-  return query.trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0, 6);
+  return query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((t) => t.length >= MINIMO_INDEXABLE)
+    .slice(0, 6);
 }
 
 const LIMITE = 12;
@@ -84,6 +100,9 @@ export async function buscarReferencias(
 ): Promise<ResultadoReferencia[]> {
   const palabras = terminos(query);
   if (palabras.length === 0) return [];
+  // Para el parecido se usa la consulta entera, no los terminos filtrados:
+  // ahi si importa que "le male" puntue como "le male".
+  const consultaCompleta = query.trim().toLowerCase();
 
   // Un AND por palabra. Se arma con Prisma.sql para que cada patron viaje como
   // parametro ligado, no interpolado en el texto de la query.
@@ -138,7 +157,7 @@ export async function buscarReferencias(
            c."ratingCount"
       FROM bayes c
       JOIN "Brand" b ON b."id" = c."brandId"
-     ORDER BY similarity(c."normalizado", ${palabras.join(" ")}) * ${PESO_PARECIDO}
+     ORDER BY similarity(c."normalizado", ${consultaCompleta}) * ${PESO_PARECIDO}
               + (c."popularidad" - 3) / 2 * ${PESO_POPULARIDAD} DESC,
               c."ratingCount" DESC NULLS LAST,
               c."name" ASC

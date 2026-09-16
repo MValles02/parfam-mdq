@@ -4,17 +4,13 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
 import {
-  claveDesdeUrl,
   borrarObjeto,
+  esClaveDeProducto,
   r2Configurado,
   urlDeSubida,
-  urlPublica,
 } from "@/lib/r2";
 
-/**
- * Mismo contrato que `Resultado<T>` de `./actions.ts`, copiado aca a proposito
- * (no se edita ese archivo -- lo esta escribiendo otro agente en paralelo).
- */
+/** Mismo contrato que `Resultado<T>` de `./actions.ts`. */
 export type Resultado<T = undefined> =
   | ({ ok: true } & (T extends undefined ? object : { datos: T }))
   | { ok: false; mensaje: string; errores?: Record<string, string[]> };
@@ -54,7 +50,7 @@ export async function pedirUrlDeSubida(input: {
   nombre: string;
   contentType: string;
   tamanioBytes: number;
-}): Promise<Resultado<{ urlDeSubida: string; urlPublica: string }>> {
+}): Promise<Resultado<{ urlDeSubida: string; storageKey: string }>> {
   await requireAdmin();
 
   const parseado = pedidoSchema.safeParse(input);
@@ -83,10 +79,9 @@ export async function pedirUrlDeSubida(input: {
 
   const presignada = await urlDeSubida({ clave, contentType });
 
-  return {
-    ok: true,
-    datos: { urlDeSubida: presignada, urlPublica: urlPublica(clave) },
-  };
+  // Se devuelve la clave, no la URL: el panel arma la vista previa con el
+  // host que ya recibio del servidor, y la clave es lo unico que se persiste.
+  return { ok: true, datos: { urlDeSubida: presignada, storageKey: clave } };
 }
 
 /**
@@ -94,13 +89,16 @@ export async function pedirUrlDeSubida(input: {
  * guardar el producto (si ya se guardo, borrarla del bucket queda a cargo del
  * flujo de guardado del producto, no de esta accion).
  */
-export async function borrarImagenSubida(url: string): Promise<Resultado> {
+export async function borrarImagenSubida(clave: string): Promise<Resultado> {
   await requireAdmin();
 
-  const clave = claveDesdeUrl(url);
-  if (!clave) {
-    // No pertenece al bucket configurado: no hay nada seguro que borrar.
-    return fallo("Esa imagen no pertenece al bucket configurado.");
+  // La clave la manda el cliente: sin este chequeo se podria pedir el borrado
+  // de cualquier objeto del bucket, no solo de una foto de producto.
+  if (!esClaveDeProducto(clave)) {
+    return fallo("Esa imagen no es válida.");
+  }
+  if (!r2Configurado()) {
+    return fallo("Cloudflare R2 todavía no está configurado.");
   }
 
   await borrarObjeto(clave);

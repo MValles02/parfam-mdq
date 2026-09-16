@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listarAcordes } from "@/lib/admin/productos";
 import { r2Configurado } from "@/lib/r2";
+import { env } from "@/lib/env";
 import { ProductoForm } from "../_components/producto-form";
 
 export const metadata: Metadata = { title: "Nuevo producto" };
@@ -27,6 +28,7 @@ export default async function Page() {
         producto={null}
         acordes={acordes}
         r2Listo={r2Configurado()}
+        basePublica={env.R2_PUBLIC_URL ?? null}
       />
     </>
   );

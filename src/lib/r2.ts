@@ -83,10 +83,34 @@ export async function urlDeSubida(opciones: {
   });
 }
 
-/** Arma la URL publica (via el dominio publico del bucket) de un objeto. */
-export function urlPublica(clave: string): string {
-  const { publicUrl } = credenciales();
-  return `${publicUrl.replace(/\/$/, "")}/${clave}`;
+/**
+ * Arma la URL publica de un objeto a partir de su clave. Es total: devuelve
+ * null si R2 no esta configurado, asi las consultas pueden pedirla sin tener
+ * que chequear antes y la UI cae al placeholder de frasco.
+ *
+ * Esta es la unica funcion que sabe cual es el host publico. La base guarda
+ * solo la clave (ver la migracion imagenes_guardan_clave), asi que cambiar de
+ * dominio es cambiar R2_PUBLIC_URL y nada mas.
+ */
+export function urlPublica(clave: string): string | null {
+  if (!env.R2_PUBLIC_URL) return null;
+  return `${env.R2_PUBLIC_URL.replace(/\/$/, "")}/${clave}`;
+}
+
+/** Prefijo bajo el que vive todo lo que sube el panel. */
+export const PREFIJO_PRODUCTOS = "productos/";
+
+/**
+ * Las claves viajan por el formulario, asi que llegan al servidor como dato
+ * del cliente. Esto es lo que evita que alguien mande "../" o apunte a un
+ * objeto fuera del prefijo del panel.
+ */
+export function esClaveDeProducto(clave: string): boolean {
+  return (
+    clave.startsWith(PREFIJO_PRODUCTOS) &&
+    !clave.includes("..") &&
+    clave.length <= 512
+  );
 }
 
 export async function borrarObjeto(clave: string): Promise<void> {
@@ -94,18 +118,4 @@ export async function borrarObjeto(clave: string): Promise<void> {
   await obtenerCliente().send(
     new DeleteObjectCommand({ Bucket: bucket, Key: clave }),
   );
-}
-
-/**
- * Inversa de `urlPublica`: de una URL publica saca la clave del objeto en el
- * bucket. Devuelve null si la URL no pertenece al bucket configurado -- eso
- * es lo que evita que se pueda pedir el borrado de un objeto arbitrario
- * pasando cualquier URL.
- */
-export function claveDesdeUrl(url: string): string | null {
-  if (!r2Configurado()) return null;
-  const base = `${env.R2_PUBLIC_URL!.replace(/\/$/, "")}/`;
-  if (!url.startsWith(base)) return null;
-  const clave = url.slice(base.length);
-  return clave || null;
 }

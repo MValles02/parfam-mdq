@@ -320,7 +320,7 @@ async function sincronizarImagenes(
 
   for (const [i, imagen] of v.images.entries()) {
     const datos = {
-      url: imagen.url,
+      storageKey: imagen.storageKey,
       alt: imagen.alt,
       isPrimary: imagen.isPrimary,
       sortOrder: i,
@@ -537,7 +537,7 @@ export async function duplicarProducto(
           // borrar la copia no puede borrar el archivo del otro producto.
           createMany: {
             data: original.images.map((i) => ({
-              url: i.url,
+              storageKey: i.storageKey,
               alt: i.alt,
               sortOrder: i.sortOrder,
               isPrimary: i.isPrimary,

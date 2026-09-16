@@ -20,7 +20,7 @@ Deploy en Dokploy sobre la VPS (7.6 GB RAM, 61 GB libres, Docker 29.8), siguiend
 | Tema                      | Decisión                                                                                     |
 | ------------------------- | -------------------------------------------------------------------------------------------- |
 | Stack                     | Next.js 16 full-stack (App Router) + TypeScript + Tailwind + shadcn/ui + Prisma + PostgreSQL |
-| Imágenes                  | Cloudflare R2 (la cuenta ya está conectada al Dokploy; el bucket se crea en la Fase 3)       |
+| Imágenes                  | Cloudflare R2, bucket `parfam-mdq-imagenes` servido por `img.parfammdq.com`                  |
 | Pedidos                   | Se persisten con estados (pendiente/confirmado/entregado/cancelado)                          |
 | Variantes                 | Frasco entero / tester / decant, precio por variante, **sin stock**: toggle activo-inactivo  |
 | Checkout                  | Formulario con nombre + teléfono → crea el pedido → abre WhatsApp                            |
@@ -330,11 +330,7 @@ logout `/admin` vuelve a redirigir al login. El rate limit tiene su propio test.
 > lo marca como error. Ahora usa `useSyncExternalStore`, que es la API correcta para
 > suscribirse a `matchMedia` y además evita el flash del primer render.
 
-### 🟡 Fase 3 — CRUD de productos (hecha, menos la subida de fotos)
-
-Todo el CRUD funciona punta a punta. **Lo único que falta es subir fotos de verdad**: el
-código está escrito y probado hasta donde se puede sin credenciales de Cloudflare R2 (ver
-"Pendientes tuyos").
+### ✅ Fase 3 — CRUD de productos (hecha)
 
 #### El buscador sobre las 70k: dos cosas no cerraban con lo planeado
 
@@ -392,11 +388,12 @@ import). La base local ya quedó con los conteos reales — la nota sin traducir
 
 #### Lo demás
 
-1. **R2** (`src/lib/r2.ts`): cliente S3 perezoso, presigned PUT de 5 minutos, lista blanca de
+1. **R2** (`src/lib/r2.ts`): bucket **`parfam-mdq-imagenes`**, servido por
+   **`img.parfammdq.com`**. Cliente S3 perezoso, presigned PUT de 5 minutos, lista blanca de
    tipos (`jpeg/png/webp/avif`) y tope de 8 MB validados **en el servidor**, y la clave del
    objeto la genera el servidor (`productos/<año>/<mes>/<uuid>.<ext>`) — nunca con el nombre
    de archivo del cliente. Si no hay credenciales, `r2Configurado()` da `false` y la UI
-   muestra la zona de subida deshabilitada con el aviso, sin romper nada.
+   muestra la zona de subida deshabilitada, sin romper nada.
 2. **Buscador de referencias** con precarga de notas, acordes, perfumista, año y género al
    adoptar, y el fallback a `fragrantica.com/search/?query=…` + carga manual.
 3. **Formulario** (`react-hook-form` + `standardSchemaResolver` + Zod). El schema
@@ -422,6 +419,69 @@ import). La base local ya quedó con los conteos reales — la nota sin traducir
   que es el único color del panel fuera de la paleta crema/negro. Antes iba a quedar hardcodeado.
 - **Se agregó un campo de slug** editable en el paso de SEO. El plan no lo mencionaba, pero
   sin él un renombre después de publicar cambiaría la URL en silencio.
+
+#### Cloudflare R2: qué se configuró y por qué así
+
+El provider que ya existía en Dokploy es un **Destination de backups**
+(bucket `vps-dokploy-backups`). No se reusó, por dos razones: ese bucket es privado y las
+fotos tienen que ser públicas, y sus credenciales alcanzan los backups de la VPS — si la
+tienda las llevara en su `.env`, un problema en la tienda expondría los backups.
+
+Quedó entonces un bucket aparte, **`parfam-mdq-imagenes`**, con un token acotado sólo a él
+(verificado: `ListBuckets` devuelve `AccessDenied` y cualquier otro nombre de bucket da 403).
+
+El dominio público es **`img.parfammdq.com`**. `parfammdq.com` está registrado en Hostinger,
+y R2 pide que la **zona DNS** esté en Cloudflare, no que el dominio esté comprado ahí: se
+movieron los nameservers a Cloudflare manteniendo la registración en Hostinger. Eso no obliga
+a proxear el resto del sitio — en la Fase 7, `parfammdq.com` y `www` pueden ir como _DNS only_
+a la IP de la VPS para que Traefik y Let's Encrypt trabajen sin intermediarios.
+
+> ⚠️ **El paso que rompe todo en silencio es el CORS del bucket.** La foto sube por PUT
+> directo desde el navegador a la URL firmada, sin pasar por el servidor. Sin una política
+> CORS que permita `PUT` desde los orígenes de la app y el header `content-type`, la subida
+> falla con un error críptico. El `content-type` es obligatorio porque la firma lo incluye.
+
+#### La base guarda la clave, no la URL
+
+`ProductImage.url` pasó a ser **`ProductImage.storageKey`** (migración
+`imagenes_guardan_clave`): se guarda `productos/2026/09/<uuid>.png` y la URL se arma al
+renderizar con `R2_PUBLIC_URL`. El host público es configuración, no dato.
+
+Esto salió de una pregunta concreta: si arrancábamos con un `pub-xxxx.r2.dev` y después
+pasábamos al dominio propio, había que reescribir todas las filas ya cargadas. Ahora es
+cambiar una variable de entorno. **Verificado**: apuntando `R2_PUBLIC_URL` a otro host, las
+URLs renderizadas cambiaron y la fila de la base quedó byte por byte igual.
+
+De paso, `storageKey` llega del cliente en el formulario, así que se valida el prefijo
+(`esClaveDeProducto`): sin eso, se podría apuntar a cualquier objeto del bucket o pedir el
+borrado de uno ajeno.
+
+#### 🐛 Menos de 3 caracteres se iba a seq scan
+
+Un índice trigram no puede resolver un patrón de menos de 3 caracteres: no hay trigrama que
+buscar. Medido: `"le"` tardaba **244 ms** contra 9 ms de `"noir"`, cayendo a un seq scan de
+las 70k filas — y el admin pasa por ahí en cada búsqueda mientras tipea. Ahora
+`buscarReferencias` descarta del **filtro** los términos de menos de 3 letras (no del orden:
+el `similarity()` sigue usando la consulta entera, que es lo que hace que `"le male"` puntúe
+como `"le male"`). El caso que importa sigue andando, porque `"le male"` filtra por `"male"`.
+
+También se borró `FragranceRef_rating_idx`, que había creado en la migración anterior: servía
+el `ORDER BY ratingValue DESC NULLS LAST` original, pero al pasar al promedio bayesiano el
+orden es una expresión y el planner ya no puede usarlo. Confirmado con `EXPLAIN` — todas las
+consultas resuelven por el índice trgm más un top-N heapsort sobre 60 candidatos.
+
+#### Verificado con fotos reales
+
+Subiendo 3 imágenes por la zona de drag & drop del panel, contra el bucket de verdad:
+
+- Las 3 suben, quedan en `productos/2026/09/<uuid>.png` y se ven en la galería cargadas desde
+  `img.parfammdq.com` (`naturalWidth` real, no miniaturas rotas).
+- La primera queda como principal sola; marcar otra desmarca la anterior — siempre exactamente
+  una.
+- Reordenar con las flechas y recargar la página conserva el orden y la principal.
+- La miniatura de la tabla de productos es la marcada como principal.
+- Lectura pública OK, y el bucket **no** expone listado de directorio (404 en la raíz y en
+  claves inexistentes).
 
 #### Verificado contra el servidor andando
 
@@ -455,7 +515,9 @@ en el repo — los de verdad llegan en la Fase 8.
 > `no-img-element`, con su `TODO(Fase 7)`: las miniaturas usan `<img>` porque `next.config.ts`
 > todavía no tiene los `remotePatterns` de R2 y `next/image` rompería).
 
-**Falta para cerrar la fase:** subir 3 fotos de verdad a un bucket R2 y publicar con ellas.
+> 📌 Para la Fase 7: `next.config.ts` necesita `remotePatterns` con **`img.parfammdq.com`**
+> para poder pasar las miniaturas a `next/image`. Hoy van con `<img>` común justamente por eso
+> (son los 2 warnings de `no-img-element`, cada uno con su `TODO(Fase 7)`).
 
 ### Fase 4 — Storefront
 
@@ -535,10 +597,9 @@ Validadas al arrancar con `@t3-oss/env-nextjs`.
 
 ## Pendientes tuyos
 
-1. 🔴 **Bucket de R2 — bloquea el cierre de la Fase 3.** La cuenta ya está conectada al
-   Dokploy; falta crear el bucket y pasar `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
-   `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` y `R2_PUBLIC_URL`. El código de subida ya está escrito
-   y degrada con elegancia mientras no estén: la zona de drag & drop se muestra deshabilitada.
+1. ✅ **Bucket de R2 — listo.** `parfam-mdq-imagenes` servido por `img.parfammdq.com`, con un
+   token acotado a ese bucket. Las credenciales están en el `.env` local; falta cargarlas en
+   Dokploy cuando se cree la app (Fase 7).
 2. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
 3. 🟢 Fotos propias de los productos para la carga de la Fase 8.
 4. 🟢 Cuando arranque la Fase 2 (auth), definir `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`

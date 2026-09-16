@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { urlPublica } from "@/lib/r2";
 
 export type FiltroEstado = "todos" | "publicados" | "borradores";
 
@@ -52,7 +53,7 @@ export async function listarProductos(opciones: {
         images: {
           where: { isPrimary: true },
           take: 1,
-          select: { url: true, alt: true },
+          select: { storageKey: true, alt: true },
         },
         variants: {
           select: { priceArs: true, isActive: true },
@@ -79,7 +80,11 @@ export async function listarProductos(opciones: {
       brandName: p.brand.name,
       status: p.status,
       updatedAt: p.updatedAt,
-      imagen: p.images[0] ?? null,
+      // La URL se arma acá, a partir de la clave: los componentes no tienen
+      // por qué saber cuál es el host público.
+      imagen: p.images[0]
+        ? { url: urlPublica(p.images[0].storageKey), alt: p.images[0].alt }
+        : null,
       variantes: p.variants.length,
       variantesActivas: activas.length,
       desde,
@@ -156,7 +161,7 @@ export async function productoParaEditar(id: string) {
       },
       images: {
         orderBy: { sortOrder: "asc" },
-        select: { id: true, url: true, alt: true, isPrimary: true },
+        select: { id: true, storageKey: true, alt: true, isPrimary: true },
       },
     },
   });

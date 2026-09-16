@@ -16,7 +16,9 @@ const optional = <T extends z.ZodType>(schema: T) =>
 export const env = createEnv({
   server: {
     DATABASE_URL: z.url(),
-    AUTH_SECRET: optional(z.string().min(1)),
+    // Obligatoria: sin esto Auth.js no puede firmar la cookie de sesión.
+    // Se genera con `openssl rand -base64 32`.
+    AUTH_SECRET: z.string().min(32),
     R2_ACCOUNT_ID: optional(z.string().min(1)),
     R2_ACCESS_KEY_ID: optional(z.string().min(1)),
     R2_SECRET_ACCESS_KEY: optional(z.string().min(1)),

@@ -201,7 +201,7 @@ y el admin "adopta" las que vende.
 **Filtros** (estado en la URL con `nuqs`): búsqueda por texto, marca, género, acorde, nota,
 concentración, estación, ocasión, tipo de presentación, rango de precio y orden.
 
-**Admin** (`/admin/*`, protegido por middleware)
+**Admin** (`/admin/*`, protegido por `proxy.ts` + chequeo en el layout)
 
 - `/admin` — pedidos recientes, productos publicados, accesos rápidos.
 - `/admin/productos` — tabla con búsqueda y filtros; `nuevo` con el buscador de referencias +
@@ -294,12 +294,42 @@ corrida completa (69.946 fragancias, 3m13s) y re-ejecutada para confirmar idempo
 Se verificó a mano una fragancia conocida (Sauvage, Angel, Organza) en Prisma Studio: marca,
 pirámide por nivel, acordes con su color y perfumista, todo correcto.
 
-### Fase 2 — Auth y shell del admin
+### ✅ Fase 2 — Auth y shell del admin (hecha)
 
-Auth.js v5 con credenciales + argon2, `middleware.ts` protegiendo `/admin`, layout con
-sidebar, login con rate limit.
+Auth.js v5 (`next-auth@5.0.0-beta.32`, la rama que soporta Next 16) con provider de
+credenciales, verificación argon2 contra la tabla `User` y sesión JWT en cookie de 30 días.
 
-**Verificación:** login con el usuario del seed; `/admin` redirige si no hay sesión.
+- **`middleware.ts` ya no existe en Next 16: se llama `proxy.ts`** y corre en runtime Node
+  en vez de Edge. `src/proxy.ts` hace el chequeo optimista y guarda a dónde quería entrar
+  el usuario (`?volverA=`) para devolverlo ahí después de loguearse.
+- La autorización real la hace `src/app/admin/(panel)/layout.tsx` con `auth()`, del lado del
+  servidor y pegada a los datos — el proxy es sólo UX, como recomienda la doc de Next.
+- La config está partida en dos: `auth.config.ts` (sin DB, lo único que importa el proxy) y
+  `auth.ts` (con Prisma + argon2), así el proxy no arrastra el binario de argon2 en cada
+  request.
+- Login en `/admin/login`, fuera del route group `(panel)` para que no quede atrapado por su
+  propio layout protegido (si no, bucle de redirecciones).
+- Rate limit de 5 intentos cada 10 minutos por IP + email (`src/lib/rate-limit.ts`, in-memory
+  vía `lru-cache`), mensaje de error genérico que no revela si el email existe, y un `verify`
+  contra un hash descartable cuando el usuario no existe para que los tiempos de respuesta
+  sean iguales y no se puedan enumerar emails.
+- Shell con sidebar negro (los tokens `--sidebar-*` de `globals.css` ahora siguen el diseño
+  aprobado), navegación con estado activo, menú de usuario con logout, y dashboard con
+  métricas reales de la base. Las páginas de Productos/Pedidos/Notas/Configuración quedan
+  como placeholders que indican en qué fase se construyen.
+- `AUTH_SECRET` pasó a ser obligatoria en `src/lib/env.ts`: sin ella Auth.js no puede firmar
+  la cookie, y es mejor que falle al arrancar que en el primer login.
+
+**Verificado** contra el servidor real: `/admin` sin sesión redirige con `volverA`; login
+válido crea la cookie y el dashboard renderiza con datos reales; contraseña incorrecta y
+usuario inexistente no crean sesión y tardan lo mismo (51,7 ms vs 50,8 ms); estando logueado
+`/admin/login` redirige a `/admin`; las cuatro subpáginas responden 200; y después del
+logout `/admin` vuelve a redirigir al login. El rate limit tiene su propio test.
+
+> 📌 De paso hubo que reescribir `src/hooks/use-mobile.ts`, que viene de shadcn y hacía
+> `setState` dentro de un `useEffect` — la regla `react-hooks/set-state-in-effect` de React 19
+> lo marca como error. Ahora usa `useSyncExternalStore`, que es la API correcta para
+> suscribirse a `matchMedia` y además evita el flash del primer render.
 
 ### Fase 3 — CRUD de productos
 

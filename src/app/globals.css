@@ -75,14 +75,16 @@
   --chart-4: oklch(0.3287 0.0161 75.06);
   --chart-5: oklch(0.1834 0.0068 78.14);
   --radius: 0.25rem;
-  --sidebar: oklch(0.9798 0.0045 78.3);
-  --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0 0 0);
-  --sidebar-primary-foreground: oklch(0.9508 0.008 73.74);
-  --sidebar-accent: oklch(0.915 0.0138 78.26);
-  --sidebar-accent-foreground: oklch(0 0 0);
-  --sidebar-border: oklch(0.8756 0.0168 79.34);
-  --sidebar-ring: oklch(0.5095 0.0158 78.18);
+  /* El panel usa sidebar negro sobre la tienda crema (ver design/AdminProductos.dc.html):
+     se lee como herramienta interna sin salirse de la paleta de marca. */
+  --sidebar: oklch(0.1834 0.0068 78.14); /* #14120F */
+  --sidebar-foreground: oklch(0.8573 0.0157 77.06); /* #D6CFC5 */
+  --sidebar-primary: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
+  --sidebar-primary-foreground: oklch(0.1834 0.0068 78.14);
+  --sidebar-accent: oklch(0.2709 0.0123 78.08); /* #2A2620 */
+  --sidebar-accent-foreground: oklch(0.9508 0.008 73.74);
+  --sidebar-border: oklch(0.3287 0.0161 75.06); /* #3A342C */
+  --sidebar-ring: oklch(0.6926 0.0208 80.08); /* #A39B8E */
 }
 
 .dark {
@@ -110,8 +112,8 @@
   --chart-3: oklch(0.6926 0.0208 80.08);
   --chart-4: oklch(0.8756 0.0168 79.34);
   --chart-5: oklch(0.9508 0.008 73.74);
-  --sidebar: oklch(0.2284 0.0089 75.17);
-  --sidebar-foreground: oklch(0.9508 0.008 73.74);
+  --sidebar: oklch(0.1834 0.0068 78.14);
+  --sidebar-foreground: oklch(0.8573 0.0157 77.06);
   --sidebar-primary: oklch(0.9508 0.008 73.74);
   --sidebar-primary-foreground: oklch(0.1834 0.0068 78.14);
   --sidebar-accent: oklch(0.2709 0.0123 78.08);

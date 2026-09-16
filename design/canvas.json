@@ -1,0 +1,105 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Tienda" },
+    { "id": "page-2", "name": "Panel" }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 2240,
+      "page": "page-1",
+      "title": "Home",
+      "is_interactive": true
+    },
+    {
+      "file": "Producto.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 2360,
+      "page": "page-1",
+      "title": "Ficha de producto",
+      "is_interactive": true
+    },
+    {
+      "file": "HomeMobile.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 390,
+      "h": 2320,
+      "page": "page-1",
+      "title": "Home mobile",
+      "is_interactive": true
+    },
+    {
+      "file": "Carrito.dc.html",
+      "x": 0,
+      "y": 2520,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1",
+      "title": "Carrito",
+      "is_interactive": true
+    },
+    {
+      "file": "Checkout.dc.html",
+      "x": 1560,
+      "y": 2520,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1",
+      "title": "Checkout",
+      "is_interactive": true
+    },
+    {
+      "file": "AdminProductos.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-2",
+      "title": "Panel · Productos",
+      "is_interactive": true
+    },
+    {
+      "file": "AdminProductoNuevo.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1460,
+      "page": "page-2",
+      "title": "Panel · Nuevo producto",
+      "is_interactive": true
+    }
+  ],
+  "annotations": [
+    {
+      "id": "nota-tienda",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "page": "page-1",
+      "text": "Paleta y tipografía tomadas de src/app/globals.css: crema #F2EEE9, tinta negra, borde #DCD5CA, radio 4px, Outfit.\nLos frascos son siluetas placeholder: van fotos propias sobre R2."
+    },
+    {
+      "id": "nota-filtros",
+      "x": 3120,
+      "y": -150,
+      "w": 390,
+      "page": "page-1",
+      "text": "Los filtros funcionan de verdad: probá Género y Presentación acá y en la home de escritorio."
+    },
+    {
+      "id": "nota-panel",
+      "x": 0,
+      "y": -150,
+      "w": 620,
+      "page": "page-2",
+      "text": "El sidebar en negro separa el panel de la tienda sin salirse de la paleta.\nEn Nuevo producto el buscador filtra de verdad: escribí algo que no exista para ver el camino a Fragrantica."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

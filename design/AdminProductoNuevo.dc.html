@@ -1,0 +1,353 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+    a { color: #000000; text-decoration: none; }
+    a:hover { color: #6B655C; }
+    input { font-family: inherit; }
+    input:focus { outline: none; }
+    input::placeholder { color: #A39B8E; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; background: #F2EEE9; color: #000000; font-family: 'Outfit', 'Century Gothic', system-ui, sans-serif; display: flex;">
+
+  <!-- Sidebar -->
+  <div style="width: 236px; flex-shrink: 0; background: #14120F; color: #F2EEE9; display: flex; flex-direction: column; padding: 24px 0;">
+    <div style="padding: 0 22px 26px; border-bottom: 1px solid #3A342C;">
+      <div style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;">ParfamMdq</div>
+      <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.24em; color: #A39B8E; margin-top: 5px;">PANEL</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 3px; padding: 18px 12px;">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="5">
+        <div style="padding: 11px 12px; border-radius: 4px; background: {{n.bg}}; color: {{n.fg}}; font-size: 14px; font-weight: {{n.weight}};">{{n.label}}</div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- Contenido -->
+  <div style="flex-grow: 1; display: flex; flex-direction: column;">
+
+    <div style="padding: 28px 32px 22px; border-bottom: 1px solid #DCD5CA;">
+      <div style="font-size: 12px; color: #6B655C;">Productos · Nuevo</div>
+      <div style="font-size: 30px; font-weight: 800; letter-spacing: -0.03em; margin-top: 6px;">Nuevo producto</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px; padding: 24px 32px 120px;">
+
+      <!-- Paso 1: buscador -->
+      <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 24px;">
+        <div style="display: flex; align-items: baseline; gap: 12px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: #000000; color: #F2EEE9; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">1</div>
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.015em;">Buscar en el catálogo de referencia</div>
+            <div style="font-size: 13px; color: #6B655C;">69.948 fragancias. Al elegir una se precargan notas, acordes, año, perfumista y género.</div>
+          </div>
+        </div>
+
+        <div style="position: relative; margin-top: 18px;">
+          <div style="display: flex; align-items: center; gap: 12px; border: 1.5px solid #000000; border-radius: 4px; background: #F2EEE9; padding: 0 16px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input value="{{query}}" onChange="{{onQuery}}" placeholder="Escribí el nombre o la marca" style="border: none; background: transparent; padding: 16px 0; font-size: 15px; font-weight: 500; color: #000000; flex-grow: 1;">
+            <span style="font-size: 12px; color: #6B655C;">{{resultsLabel}}</span>
+          </div>
+
+          <!-- Resultados -->
+          <sc-if value="{{hasResults}}" hint-placeholder-val="{{true}}">
+            <div style="border: 1px solid #DCD5CA; border-top: none; border-radius: 0 0 4px 4px; background: #F2EEE9; overflow: hidden;">
+              <sc-for list="{{results}}" as="r" hint-placeholder-count="4">
+                <div onClick="{{r.pick}}" style="display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid #DCD5CA; background: {{r.bg}}; cursor: pointer;">
+                  <div style="width: 34px; height: 44px; display: flex; align-items: center; justify-content: center; background: #FAF8F5; border: 1px solid #DCD5CA; border-radius: 3px; flex-shrink: 0;">
+                    <svg width="18" height="30" viewBox="0 0 120 190" fill="none">
+                      <rect x="44" y="6" width="32" height="26" rx="3" fill="#DCD5CA"/>
+                      <rect x="18" y="46" width="84" height="134" rx="4" fill="#E8E2D9" stroke="#DCD5CA" stroke-width="4"/>
+                    </svg>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+                    <div style="font-size: 14px; font-weight: 600;">{{r.name}}</div>
+                    <div style="font-size: 12px; color: #6B655C;">{{r.meta}}</div>
+                  </div>
+                  <div style="font-size: 12px; font-weight: 600; color: {{r.tagFg}};">{{r.tag}}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- Sin resultados -->
+          <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+            <div style="border: 1px solid #DCD5CA; border-top: none; border-radius: 0 0 4px 4px; background: #F2EEE9; padding: 22px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="font-size: 14px; font-weight: 600;">No encontramos «{{query}}» en el catálogo</div>
+                <div style="font-size: 13px; color: #6B655C;">Buscala en Fragrantica para ver sus notas y cargala a mano acá abajo.</div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 9px; border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 11px 16px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                  <span>Buscar en Fragrantica</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
+                </div>
+                <div style="background: #000000; color: #F2EEE9; border-radius: 4px; padding: 11px 16px; font-size: 13px; font-weight: 600; cursor: pointer;">Cargar a mano</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- Paso 2: ficha -->
+      <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 24px;">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: #000000; color: #F2EEE9; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">2</div>
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.015em;">Ficha de la fragancia</div>
+            <div style="font-size: 13px; color: #6B655C;">{{prefillNote}}</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+          <sc-for list="{{fields}}" as="f" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #6B655C;">{{f.label}}</label>
+              <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 12px 14px;">
+                <span style="font-size: 14px; font-weight: 500; color: {{f.fg}};">{{f.value}}</span>
+                <sc-if value="{{f.auto}}" hint-placeholder-val="{{true}}">
+                  <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #6B655C; background: #E8E2D9; border-radius: 3px; padding: 3px 7px;">AUTO</span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 7px; margin-top: 16px;">
+          <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #6B655C;">DESCRIPCION PARA EL CLIENTE</label>
+          <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 14px; min-height: 92px; font-size: 14px; line-height: 1.55; color: #3A342C;">{{description}}</div>
+          <div style="font-size: 11px; color: #6B655C;">Escribila vos: el texto del catálogo de referencia está en inglés y no se publica.</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px;">
+          <sc-for list="{{pyramid}}" as="lv" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 9px;">
+              <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #6B655C;">{{lv.title}}</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 7px; border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 12px; min-height: 86px; align-content: flex-start;">
+                <sc-for list="{{lv.notes}}" as="n" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: 7px; border: 1px solid #DCD5CA; border-radius: 3px; background: #FAF8F5; padding: 6px 9px;">
+                    <div style="width: 7px; height: 7px; border-radius: 50%; background: {{n.color}};"></div>
+                    <span style="font-size: 12px; font-weight: 500;">{{n.label}}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#A39B8E" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </div>
+                </sc-for>
+                <div style="display: flex; align-items: center; gap: 5px; border: 1px dashed #DCD5CA; border-radius: 3px; padding: 6px 9px; color: #6B655C; cursor: pointer;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span style="font-size: 12px; font-weight: 500;">Agregar</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Paso 3: variantes -->
+      <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 24px;">
+        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px;">
+          <div style="width: 22px; height: 22px; border-radius: 50%; background: #000000; color: #F2EEE9; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">3</div>
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.015em;">Presentaciones y precios</div>
+            <div style="font-size: 13px; color: #6B655C;">No hay stock: si algo no está disponible, lo desactivás y deja de verse en la tienda.</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.4fr 0.8fr 1.2fr 1fr 60px; gap: 14px; padding: 0 14px 10px;">
+          <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">TIPO</div>
+          <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">TAMAÑO</div>
+          <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">PRECIO (ARS)</div>
+          <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">DISPONIBLE</div>
+          <div></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <sc-for list="{{variants}}" as="v" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 1.4fr 0.8fr 1.2fr 1fr 60px; gap: 14px; align-items: center; border: 1px solid #DCD5CA; border-radius: 4px; background: {{v.rowBg}}; padding: 12px 14px;">
+
+              <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 10px 12px;">
+                <span style="font-size: 13px; font-weight: 500; color: {{v.fg}};">{{v.kind}}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+
+              <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 10px 12px; font-size: 13px; font-weight: 500; color: {{v.fg}};">{{v.size}}</div>
+
+              <div style="display: flex; align-items: center; gap: 7px; border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 10px 12px;">
+                <span style="font-size: 13px; color: #6B655C;">$</span>
+                <span style="font-size: 13px; font-weight: 600; color: {{v.fg}};">{{v.price}}</span>
+              </div>
+
+              <div onClick="{{v.toggle}}" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <div style="width: 38px; height: 22px; border-radius: 11px; background: {{v.switchBg}}; padding: 3px; display: flex; justify-content: {{v.switchAlign}};">
+                  <div style="width: 16px; height: 16px; border-radius: 50%; background: #FAF8F5;"></div>
+                </div>
+                <span style="font-size: 12px; font-weight: 600; color: {{v.switchFg}};">{{v.switchLabel}}</span>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end;">
+                <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid #DCD5CA; border-radius: 3px; cursor: pointer;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+
+          <div onClick="{{addVariant}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #DCD5CA; border-radius: 4px; padding: 14px; font-size: 13px; font-weight: 600; color: #6B655C; cursor: pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Agregar presentación</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 18px 24px;">
+        <div style="font-size: 13px; color: #6B655C;">{{activeSummary}}</div>
+        <div style="display: flex; gap: 10px;">
+          <div style="border: 1px solid #DCD5CA; border-radius: 4px; padding: 13px 20px; font-size: 14px; font-weight: 600; cursor: pointer;">Guardar borrador</div>
+          <div style="background: #000000; color: #F2EEE9; border-radius: 4px; padding: 13px 24px; font-size: 14px; font-weight: 600; cursor: pointer;">Publicar producto</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1460}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      query: "sauvage",
+      adopted: "Sauvage Elixir",
+      active: [true, true, true, false],
+    };
+  }
+
+  references() {
+    return [
+      { name: "Sauvage Elixir", meta: "Dior · 2021 · Parfum · para él", tag: "con pirámide" },
+      { name: "Sauvage Eau de Parfum", meta: "Dior · 2018 · EDP · para él", tag: "con pirámide" },
+      { name: "Sauvage Eau de Toilette", meta: "Dior · 2015 · EDT · para él", tag: "con pirámide" },
+      { name: "Sauvage Very Cool Spray", meta: "Dior · 2021 · EDT · para él", tag: "sin notas" },
+      { name: "Angel", meta: "Mugler · 1992 · EDP · para ella", tag: "con pirámide" },
+      { name: "Tobacco Vanille", meta: "Tom Ford · 2007 · EDP · unisex", tag: "con pirámide" },
+      { name: "La Vie Est Belle", meta: "Lancôme · 2012 · EDP · para ella", tag: "con pirámide" },
+    ];
+  }
+
+  variantData() {
+    return [
+      { kind: "Frasco entero", size: "100 ml", price: "289.000" },
+      { kind: "Tester", size: "100 ml", price: "214.000" },
+      { kind: "Decant", size: "10 ml", price: "26.900" },
+      { kind: "Decant", size: "5 ml", price: "15.400" },
+    ];
+  }
+
+  renderVals() {
+    const q = this.state.query.trim().toLowerCase();
+    const adopted = this.state.adopted;
+
+    const matches = q.length === 0
+      ? []
+      : this.references().filter((r) => (r.name + " " + r.meta).toLowerCase().indexOf(q) !== -1);
+
+    const results = matches.slice(0, 4).map((r) => ({
+      ...r,
+      bg: r.name === adopted ? "#EFEAE3" : "#F2EEE9",
+      tagFg: r.tag === "sin notas" ? "#A39B8E" : "#2C5E34",
+      pick: () => this.setState({ adopted: r.name }),
+    }));
+
+    const active = this.state.active;
+    const variants = this.variantData().map((v, i) => {
+      const on = active[i];
+      return {
+        ...v,
+        rowBg: on ? "#F2EEE9" : "#EFEAE3",
+        fg: on ? "#000000" : "#A39B8E",
+        switchBg: on ? "#000000" : "#D8D2C9",
+        switchAlign: on ? "flex-end" : "flex-start",
+        switchFg: on ? "#000000" : "#A39B8E",
+        switchLabel: on ? "Activa" : "Oculta",
+        toggle: () => {
+          const next = active.slice();
+          next[i] = !next[i];
+          this.setState({ active: next });
+        },
+      };
+    });
+
+    const activeCount = active.filter(Boolean).length;
+
+    return {
+      query: this.state.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      results,
+      hasResults: results.length > 0,
+      noResults: q.length > 0 && matches.length === 0,
+      resultsLabel: matches.length === 0 ? "" : matches.length + " coincidencias",
+      prefillNote: adopted
+        ? "Precargada desde «" + adopted + "». Revisá y corregí lo que haga falta."
+        : "Cargala a mano: ningún campo viene precargado.",
+      fields: [
+        { label: "NOMBRE", value: adopted || "—", fg: "#000000", auto: true },
+        { label: "MARCA", value: "Dior", fg: "#000000", auto: true },
+        { label: "AÑO", value: "2021", fg: "#000000", auto: true },
+        { label: "CONCENTRACION", value: "Parfum", fg: "#000000", auto: false },
+        { label: "GENERO", value: "Para él", fg: "#000000", auto: true },
+        { label: "PERFUMISTA", value: "François Demachy", fg: "#000000", auto: true },
+      ],
+      description: "Una versión más densa y especiada del Sauvage clásico. Arranca cítrico y termina en vainilla y haba tonka: rinde todo el día y se nota de lejos. Va bien de noche y en invierno.",
+      pyramid: [
+        { title: "NOTAS DE SALIDA", notes: [
+          { label: "Bergamota", color: "#D9B64A" },
+          { label: "Pomelo", color: "#D9B64A" },
+          { label: "Canela", color: "#C2512F" },
+        ] },
+        { title: "NOTAS DE CORAZON", notes: [
+          { label: "Lavanda", color: "#8E86C4" },
+          { label: "Nuez moscada", color: "#C2512F" },
+          { label: "Cardamomo", color: "#C2512F" },
+        ] },
+        { title: "NOTAS DE FONDO", notes: [
+          { label: "Vainilla", color: "#D9B27C" },
+          { label: "Haba tonka", color: "#B5743A" },
+          { label: "Sándalo", color: "#7A5C3E" },
+        ] },
+      ],
+      variants,
+      addVariant: () => {},
+      activeSummary: activeCount + " de 4 presentaciones se van a ver en la tienda",
+      nav: [
+        { id: "dash", label: "Inicio" },
+        { id: "prod", label: "Productos" },
+        { id: "ped", label: "Pedidos" },
+        { id: "notas", label: "Notas sin traducir" },
+        { id: "conf", label: "Configuración" },
+      ].map((n) => {
+        const on = n.id === "prod";
+        return {
+          ...n,
+          bg: on ? "#F2EEE9" : "transparent",
+          fg: on ? "#14120F" : "#D6CFC5",
+          weight: on ? "600" : "400",
+        };
+      }),
+    };
+  }
+}
+</script>
+</body>
+</html>

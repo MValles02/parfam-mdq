@@ -34,3 +34,7 @@ pnpm-debug.log*
 /coverage
 /playwright-report/
 /test-results/
+
+# Canvas de diseno ya armado (2.5 MB, se regenera desde los .dc.html)
+design/*.html
+!design/*.dc.html

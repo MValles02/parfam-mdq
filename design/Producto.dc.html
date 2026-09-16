@@ -1,0 +1,331 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; }
+    * { box-sizing: border-box; }
+    a { color: #000000; text-decoration: none; }
+    a:hover { color: #6B655C; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; background: #F2EEE9; color: #000000; font-family: 'Outfit', 'Century Gothic', system-ui, sans-serif;">
+
+  <!-- Barra superior -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 64px; border-bottom: 1px solid #DCD5CA;">
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;">ParfamMdq</div>
+      <div style="font-size: 7px; font-weight: 600; letter-spacing: 0.42em; color: #6B655C;">PERFUMERIA</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 36px; font-size: 14px; font-weight: 500;">
+      <span>Catálogo</span>
+      <span>¿Qué es un tester?</span>
+      <span>Cómo comprar</span>
+      <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #DCD5CA; border-radius: 4px; padding: 8px 14px; background: #FAF8F5;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span style="font-size: 13px; font-weight: 600;">2</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 20px 64px 0; font-size: 12px; color: #6B655C;">Catálogo · Dior · Sauvage Elixir</div>
+
+  <!-- Bloque principal -->
+  <div style="display: flex; gap: 56px; padding: 28px 64px 72px;">
+
+    <!-- Galería -->
+    <div style="display: flex; flex-direction: column; gap: 14px; width: 620px;">
+      <div style="height: 620px; display: flex; align-items: center; justify-content: center; background: #FAF8F5; border: 1px solid #DCD5CA; border-radius: 4px;">
+        <svg width="250" height="400" viewBox="0 0 120 190" fill="none">
+          <rect x="44" y="6" width="32" height="26" rx="3" fill="#DCD5CA"/>
+          <rect x="50" y="32" width="20" height="16" fill="#E5DFD6"/>
+          <rect x="18" y="46" width="84" height="134" rx="4" fill="#E8E2D9" stroke="#DCD5CA" stroke-width="1.5"/>
+          <rect x="36" y="92" width="48" height="34" rx="2" fill="#FAF8F5"/>
+        </svg>
+      </div>
+      <div style="display: flex; gap: 14px;">
+        <sc-for list="{{thumbs}}" as="t" hint-placeholder-count="4">
+          <div style="width: 146px; height: 146px; display: flex; align-items: center; justify-content: center; background: #FAF8F5; border: 1px solid {{t.border}}; border-radius: 4px;">
+            <svg width="52" height="84" viewBox="0 0 120 190" fill="none">
+              <rect x="44" y="6" width="32" height="26" rx="3" fill="#DCD5CA"/>
+              <rect x="18" y="46" width="84" height="134" rx="4" fill="#E8E2D9" stroke="#DCD5CA" stroke-width="2"/>
+            </svg>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div style="display: flex; flex-direction: column; flex-grow: 1;">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.2em; color: #6B655C;">DIOR</div>
+      <div style="font-size: 52px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; margin-top: 8px;">Sauvage Elixir</div>
+      <div style="font-size: 14px; color: #6B655C; margin-top: 10px;">Parfum · 2021 · Para él · François Demachy</div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px;">
+        <sc-for list="{{accords}}" as="a" hint-placeholder-count="5">
+          <div style="border-radius: 3px; padding: 7px 13px; font-size: 12px; font-weight: 600; background: {{a.bg}}; color: {{a.fg}};">{{a.label}}</div>
+        </sc-for>
+      </div>
+
+      <div style="height: 1px; background: #DCD5CA; margin: 30px 0 26px;"></div>
+
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #6B655C; margin-bottom: 14px;">ELEGI TU PRESENTACION</div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{variants}}" as="v" hint-placeholder-count="4">
+          <div onClick="{{v.pick}}" style="display: flex; align-items: center; justify-content: space-between; border: 1.5px solid {{v.border}}; background: {{v.bg}}; border-radius: 4px; padding: 16px 18px; cursor: {{v.cursor}};">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid {{v.dotBorder}}; background: {{v.dotBg}};"></div>
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <div style="font-size: 15px; font-weight: 600; color: {{v.fg}};">{{v.label}}</div>
+                <div style="font-size: 12px; color: #6B655C;">{{v.note}}</div>
+              </div>
+            </div>
+            <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: {{v.fg}};">{{v.price}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: 30px;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="font-size: 12px; color: #6B655C;">{{selectedLabel}}</div>
+          <div style="font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">{{selectedPrice}}</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5;">
+          <div onClick="{{dec}}" style="padding: 12px 16px; font-size: 16px; font-weight: 600; cursor: pointer; color: #6B655C;">−</div>
+          <div style="font-size: 16px; font-weight: 700; min-width: 16px; text-align: center;">{{qty}}</div>
+          <div onClick="{{inc}}" style="padding: 12px 16px; font-size: 16px; font-weight: 600; cursor: pointer;">+</div>
+        </div>
+      </div>
+
+      <div onClick="{{add}}" style="margin-top: 18px; background: #000000; color: #F2EEE9; border-radius: 4px; padding: 20px; text-align: center; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; cursor: pointer;">{{addLabel}}</div>
+
+      <div style="display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #DCD5CA; border-radius: 4px; padding: 15px; margin-top: 10px; font-size: 14px; font-weight: 500;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-4.9A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
+        <span>Consultar por WhatsApp</span>
+      </div>
+
+      <div style="display: flex; gap: 20px; margin-top: 22px; font-size: 12px; color: #6B655C;">
+        <span>Envío en Mar del Plata</span>
+        <span>·</span>
+        <span>Retiro a convenir</span>
+        <span>·</span>
+        <span>100% original</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pirámide olfativa -->
+  <div style="padding: 0 64px 72px;">
+    <div style="border-top: 1px solid #DCD5CA; padding-top: 44px;">
+      <div style="font-size: 32px; font-weight: 800; letter-spacing: -0.025em;">Pirámide olfativa</div>
+      <div style="font-size: 14px; color: #6B655C; margin-top: 6px;">Cómo evoluciona la fragancia en la piel, de las primeras notas al fondo.</div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 32px;">
+        <sc-for list="{{pyramid}}" as="level" hint-placeholder-count="3">
+          <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 26px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #6B655C;">{{level.title}}</div>
+              <div style="flex-grow: 1; height: 1px; background: #DCD5CA;"></div>
+              <div style="font-size: 11px; color: #6B655C;">{{level.when}}</div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px;">
+              <sc-for list="{{level.notes}}" as="n" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 8px 12px;">
+                  <div style="width: 8px; height: 8px; border-radius: 50%; background: {{n.color}};"></div>
+                  <span style="font-size: 13px; font-weight: 500;">{{n.label}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ficha técnica + carácter -->
+  <div style="padding: 0 64px 72px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px;">
+
+    <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 30px;">
+      <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.015em;">Ficha técnica</div>
+      <div style="display: flex; flex-direction: column; margin-top: 20px;">
+        <sc-for list="{{specs}}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid #DCD5CA;">
+            <span style="font-size: 13px; color: #6B655C;">{{s.label}}</span>
+            <span style="font-size: 14px; font-weight: 600;">{{s.value}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 30px;">
+      <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.015em;">Carácter</div>
+      <div style="display: flex; flex-direction: column; gap: 26px; margin-top: 26px;">
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 14px; font-weight: 600;">{{b.label}}</span>
+              <span style="font-size: 12px; color: #6B655C;">{{b.caption}}</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <sc-for list="{{b.steps}}" as="s" hint-placeholder-count="5">
+                <div style="height: 8px; flex-grow: 1; border-radius: 2px; background: {{s.color}};"></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 11px; color: #6B655C; margin-top: 26px; line-height: 1.5;">Valores cargados por Parfam MDQ a partir de la experiencia con el producto.</div>
+    </div>
+  </div>
+
+  <!-- Relacionados -->
+  <div style="padding: 0 64px 80px;">
+    <div style="border-top: 1px solid #DCD5CA; padding-top: 44px;">
+      <div style="font-size: 32px; font-weight: 800; letter-spacing: -0.025em;">Te puede gustar</div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; margin-top: 28px;">
+        <sc-for list="{{related}}" as="r" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; overflow: hidden;">
+            <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: #F2EEE9; border-bottom: 1px solid #DCD5CA;">
+              <svg width="86" height="136" viewBox="0 0 120 190" fill="none">
+                <rect x="44" y="6" width="32" height="26" rx="3" fill="#DCD5CA"/>
+                <rect x="18" y="46" width="84" height="134" rx="4" fill="#E8E2D9" stroke="#DCD5CA" stroke-width="2"/>
+                <rect x="36" y="92" width="48" height="34" rx="2" fill="#FAF8F5"/>
+              </svg>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px; padding: 16px;">
+              <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: #6B655C;">{{r.brand}}</div>
+              <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.015em;">{{r.name}}</div>
+              <div style="font-size: 15px; font-weight: 600; margin-top: 6px;">{{r.price}}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":2360}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { variant: 1, qty: 1 };
+  }
+
+  variantData() {
+    return [
+      { label: "Frasco 100 ml", note: "Sellado, con estuche", price: "$289.000", active: true },
+      { label: "Tester 100 ml", note: "Nuevo, envase simple", price: "$214.000", active: true },
+      { label: "Decant 10 ml", note: "Fraccionado en atomizador", price: "$26.900", active: true },
+      { label: "Decant 5 ml", note: "Sin stock por ahora", price: "$15.400", active: false },
+    ];
+  }
+
+  renderVals() {
+    const sel = this.state.variant;
+    const data = this.variantData();
+
+    const variants = data.map((v, i) => {
+      const on = i === sel && v.active;
+      return {
+        ...v,
+        border: on ? "#000000" : "#DCD5CA",
+        bg: v.active ? "#FAF8F5" : "#EEEAE4",
+        fg: v.active ? "#000000" : "#A39B8E",
+        dotBorder: on ? "#000000" : "#DCD5CA",
+        dotBg: on ? "#000000" : "transparent",
+        cursor: v.active ? "pointer" : "not-allowed",
+        pick: () => { if (v.active) this.setState({ variant: i }); },
+      };
+    });
+
+    const current = data[sel];
+
+    const accordColors = [
+      { label: "Especiado cálido", bg: "#C2512F", fg: "#FFFFFF" },
+      { label: "Amaderado", bg: "#7A5C3E", fg: "#FFFFFF" },
+      { label: "Cítrico", bg: "#D9B64A", fg: "#000000" },
+      { label: "Aromático", bg: "#6E9B8A", fg: "#FFFFFF" },
+      { label: "Ámbar", bg: "#B5743A", fg: "#FFFFFF" },
+      { label: "Dulce", bg: "#C46B72", fg: "#FFFFFF" },
+    ];
+
+    const bar = (label, value, caption) => ({
+      label,
+      caption,
+      steps: [0, 1, 2, 3, 4].map((i) => ({ color: i < value ? "#000000" : "#E0DAD1" })),
+    });
+
+    return {
+      variants,
+      selectedLabel: current.label,
+      selectedPrice: current.price,
+      qty: this.state.qty,
+      inc: () => this.setState({ qty: this.state.qty + 1 }),
+      dec: () => this.setState({ qty: Math.max(1, this.state.qty - 1) }),
+      add: () => {},
+      addLabel: "Agregar al carrito · " + current.label,
+      thumbs: [0, 1, 2, 3].map((i) => ({ border: i === 0 ? "#000000" : "#DCD5CA" })),
+      accords: accordColors,
+      pyramid: [
+        {
+          title: "NOTAS DE SALIDA", when: "primeros minutos",
+          notes: [
+            { label: "Bergamota de Calabria", color: "#D9B64A" },
+            { label: "Pomelo", color: "#D9B64A" },
+            { label: "Canela", color: "#C2512F" },
+          ],
+        },
+        {
+          title: "NOTAS DE CORAZON", when: "1 a 3 horas",
+          notes: [
+            { label: "Lavanda", color: "#8E86C4" },
+            { label: "Nuez moscada", color: "#C2512F" },
+            { label: "Cardamomo", color: "#C2512F" },
+            { label: "Anís", color: "#6E9B8A" },
+          ],
+        },
+        {
+          title: "NOTAS DE FONDO", when: "el resto del día",
+          notes: [
+            { label: "Vainilla", color: "#D9B27C" },
+            { label: "Haba tonka", color: "#B5743A" },
+            { label: "Sándalo", color: "#7A5C3E" },
+            { label: "Regaliz", color: "#5A5048" },
+          ],
+        },
+      ],
+      specs: [
+        { label: "Marca", value: "Dior" },
+        { label: "Perfumista", value: "François Demachy" },
+        { label: "Año de lanzamiento", value: "2021" },
+        { label: "Concentración", value: "Parfum" },
+        { label: "Género", value: "Para él" },
+        { label: "Familia olfativa", value: "Especiado amaderado" },
+      ],
+      bars: [
+        bar("Duración", 5, "eterna"),
+        bar("Estela", 4, "fuerte"),
+        bar("Intensidad", 4, "marcada"),
+      ],
+      related: [
+        { brand: "DIOR", name: "Sauvage EDP", price: "$24.500" },
+        { brand: "TOM FORD", name: "Tobacco Vanille", price: "$21.500" },
+        { brand: "JEAN PAUL GAULTIER", name: "Le Male Elixir", price: "$23.900" },
+        { brand: "XERJOFF", name: "Accento Overdose", price: "$18.400" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

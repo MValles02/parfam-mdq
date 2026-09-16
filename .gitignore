@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Datos con licencia comercial (FragDB) — no se versionan
+data/fragdb/*
+!data/fragdb/README.md
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Testing
+/coverage
+/playwright-report/
+/test-results/

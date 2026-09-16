@@ -1,0 +1,400 @@
+// Esquema de Parfam MDQ.
+//
+// Tres capas (ver PLAN.md):
+//   1. Referencia  — sembrada por scripts/import-fragrantica.ts, read-only en la app.
+//   2. Tienda      — lo que edita el admin (Product y sus relaciones).
+//   3. Operación   — pedidos, configuración del sitio y usuarios.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7: la URL de conexión ya no va acá — vive en prisma.config.ts (para
+// Migrate/CLI) y en el driver adapter que arma src/lib/db.ts (para runtime).
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums compartidos
+// ---------------------------------------------------------------------------
+
+enum Gender {
+  WOMEN
+  MEN
+  UNISEX
+}
+
+enum NotePosition {
+  TOP
+  MIDDLE
+  BASE
+}
+
+enum Concentration {
+  EAU_FRAICHE
+  EAU_DE_COLOGNE
+  EAU_DE_TOILETTE
+  EAU_DE_PARFUM
+  PARFUM
+  EXTRAIT
+}
+
+enum Season {
+  SUMMER
+  FALL
+  WINTER
+  SPRING
+}
+
+enum Occasion {
+  DAY
+  NIGHT
+  CASUAL
+  FORMAL
+}
+
+enum VariantKind {
+  FULL_BOTTLE
+  TESTER
+  DECANT
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+}
+
+enum UserRole {
+  ADMIN
+}
+
+// ---------------------------------------------------------------------------
+// Capa 1 — Referencia (sembrada desde data/fragrantica/*.csv)
+// ---------------------------------------------------------------------------
+
+/// Marca/casa perfumista. Se crea al vuelo durante el import a partir del
+/// segmento de marca en la URL de Fragrantica.
+model Brand {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  country   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fragranceRefs FragranceRef[]
+  products      Product[]
+
+  @@index([name])
+}
+
+/// Perfumista/nariz detrás de la fragancia.
+model Perfumer {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  fragranceRefs FragranceRefPerfumer[]
+  products      ProductPerfumer[]
+
+  @@index([name])
+}
+
+/// Nota olfativa (ingrediente). `nameEs` viene de
+/// data/dictionaries/notes.es.json; si no está traducida queda null y la UI
+/// cae al inglés hasta que se complete desde /admin/notas.
+model Note {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  nameEn     String
+  nameEs     String?
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  fragranceRefs FragranceRefNote[]
+  products      ProductNote[]
+
+  @@index([nameEn])
+}
+
+/// Acorde olfativo. `color` sale de data/dictionaries/accords.es.json
+/// (paleta propia, no copiada de ningún tercero).
+model Accord {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nameEn    String
+  nameEs    String
+  color     String
+  createdAt DateTime @default(now())
+
+  fragranceRefs FragranceRefAccord[]
+  products      ProductAccord[]
+}
+
+/// Una fragancia del catálogo de referencia (69.948 filas esperadas).
+/// Nunca se muestra directamente en la tienda: el admin la "adopta" creando
+/// un Product que copia estos datos y los deja editables.
+model FragranceRef {
+  id            String   @id @default(cuid())
+  /// PID original del dataset (clave de join entre fra_cleaned y fra_perfumes).
+  pid           Int      @unique
+  url           String
+  brandId       String
+  name          String
+  year          Int?
+  gender        Gender?
+  /// Interno: ordena resultados en el buscador del admin, nunca se publica.
+  ratingValue   Decimal? @db.Decimal(3, 2)
+  ratingCount   Int?
+  /// Interno: texto en inglés de Fragrantica, sólo referencia en el panel.
+  descriptionEn String?
+  hasPyramid    Boolean  @default(false)
+  originCountry String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  brand     Brand                  @relation(fields: [brandId], references: [id])
+  notes     FragranceRefNote[]
+  accords   FragranceRefAccord[]
+  perfumers FragranceRefPerfumer[]
+  products  Product[]
+
+  @@index([name])
+  @@index([brandId])
+}
+
+model FragranceRefNote {
+  id             String       @id @default(cuid())
+  fragranceRefId String
+  noteId         String
+  position       NotePosition
+  sortOrder      Int          @default(0)
+
+  fragranceRef FragranceRef @relation(fields: [fragranceRefId], references: [id], onDelete: Cascade)
+  note         Note         @relation(fields: [noteId], references: [id])
+
+  @@index([fragranceRefId])
+  @@index([noteId])
+}
+
+model FragranceRefAccord {
+  id             String @id @default(cuid())
+  fragranceRefId String
+  accordId       String
+  /// Orden de aparición en el dataset (1 = más relevante). El dataset no
+  /// trae porcentaje real, sólo el orden.
+  rank           Int
+
+  fragranceRef FragranceRef @relation(fields: [fragranceRefId], references: [id], onDelete: Cascade)
+  accord       Accord       @relation(fields: [accordId], references: [id])
+
+  @@index([fragranceRefId])
+  @@index([accordId])
+}
+
+model FragranceRefPerfumer {
+  id             String @id @default(cuid())
+  fragranceRefId String
+  perfumerId     String
+
+  fragranceRef FragranceRef @relation(fields: [fragranceRefId], references: [id], onDelete: Cascade)
+  perfumer     Perfumer     @relation(fields: [perfumerId], references: [id])
+
+  @@index([fragranceRefId])
+  @@index([perfumerId])
+}
+
+// ---------------------------------------------------------------------------
+// Capa 2 — Tienda (lo que edita el admin)
+// ---------------------------------------------------------------------------
+
+model Product {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  name           String
+  brandId        String
+  /// Referencia adoptada, si vino del buscador. Null si se cargó a mano.
+  fragranceRefId String?
+  /// Link a Fragrantica cuando no hay FragranceRef (carga manual).
+  sourceUrl      String?
+  /// Texto en español escrito por el admin — lo único que ve el cliente.
+  description    String?
+  gender         Gender?
+  concentration  Concentration?
+  year           Int?
+  seasons        Season[]
+  occasions      Occasion[]
+  /// Barras de carácter 1-5, fijadas por el admin (no votación pública).
+  longevity      Int?
+  sillage        Int?
+  intensity      Int?
+  status         ProductStatus  @default(DRAFT)
+  isFeatured     Boolean        @default(false)
+  sortOrder      Int            @default(0)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  brand        Brand             @relation(fields: [brandId], references: [id])
+  fragranceRef FragranceRef?     @relation(fields: [fragranceRefId], references: [id], onDelete: SetNull)
+  notes        ProductNote[]
+  accords      ProductAccord[]
+  perfumers    ProductPerfumer[]
+  images       ProductImage[]
+  variants     ProductVariant[]
+  orderItems   OrderItem[]
+
+  @@index([status])
+  @@index([brandId])
+  @@index([fragranceRefId])
+}
+
+model ProductNote {
+  id        String       @id @default(cuid())
+  productId String
+  noteId    String
+  position  NotePosition
+  sortOrder Int          @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  note    Note    @relation(fields: [noteId], references: [id])
+
+  @@index([productId])
+  @@index([noteId])
+}
+
+model ProductAccord {
+  id        String @id @default(cuid())
+  productId String
+  accordId  String
+  sortOrder Int    @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  accord  Accord  @relation(fields: [accordId], references: [id])
+
+  @@index([productId])
+  @@index([accordId])
+}
+
+model ProductPerfumer {
+  id         String @id @default(cuid())
+  productId  String
+  perfumerId String
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  perfumer Perfumer @relation(fields: [perfumerId], references: [id])
+
+  @@index([productId])
+  @@index([perfumerId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  /// URL pública en Cloudflare R2 — nunca una imagen de Fragrantica.
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductVariant {
+  id        String      @id @default(cuid())
+  productId String
+  kind      VariantKind
+  sizeMl    Int?
+  priceArs  Decimal     @db.Decimal(10, 2)
+  /// Sin stock: el admin activa/desactiva la variante a mano.
+  isActive  Boolean     @default(true)
+  sortOrder Int         @default(0)
+  sku       String?
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Capa 3 — Pedidos, configuración y usuarios
+// ---------------------------------------------------------------------------
+
+model Order {
+  id            String      @id @default(cuid())
+  /// Correlativo legible para el cliente y el admin, ej. "PM-0042".
+  number        String      @unique
+  customerName  String
+  customerPhone String
+  status        OrderStatus @default(PENDING)
+  totalArs      Decimal     @db.Decimal(10, 2)
+  adminNotes    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  /// FKs opcionales: si el producto o la variante se borran despues, el
+  /// pedido no se rompe, sólo pierde el link de navegación.
+  productId    String?
+  variantId    String?
+  /// Snapshot al momento de la compra — nunca cambia con el catálogo.
+  productName  String
+  variantLabel String
+  unitPriceArs Decimal @db.Decimal(10, 2)
+  qty          Int
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+/// Fila única (singleton) con la configuración editable desde /admin/configuracion.
+model SiteSetting {
+  id                      String   @id @default("singleton")
+  whatsappNumber          String
+  whatsappMessageTemplate String   @db.Text
+  brandName               String
+  brandTagline            String
+  logoUrl                 String?
+  heroImageUrl            String?
+  instagramHandle         String?
+  shippingInfo            String?
+  announcementBar         String?
+  seoDefaultTitle         String?
+  seoDefaultDescription   String?
+  updatedAt               DateTime @updatedAt
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

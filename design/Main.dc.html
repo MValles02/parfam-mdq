@@ -1,256 +1,829 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
-  <style>
-    body { margin: 0; }
-    * { box-sizing: border-box; }
-    a { color: #000000; text-decoration: none; }
-    a:hover { color: #6B655C; }
-  </style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+          }
+          * {
+            box-sizing: border-box;
+          }
+          a {
+            color: #000000;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #6b655c;
+          }
+        </style>
+      </helmet>
 
-<div style="width: 1440px; background: #F2EEE9; color: #000000; font-family: 'Outfit', 'Century Gothic', system-ui, sans-serif;">
-
-  <!-- ===== Barra superior ===== -->
-  <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 64px; position: relative; z-index: 2;">
-    <div style="display: flex; flex-direction: column; gap: 2px;">
-      <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;">ParfamMdq</div>
-      <div style="font-size: 7px; font-weight: 600; letter-spacing: 0.42em; color: #6B655C;">PERFUMERIA</div>
-    </div>
-    <div style="display: flex; align-items: center; gap: 36px; font-size: 14px; font-weight: 500;">
-      <span>Catálogo</span>
-      <span>¿Qué es un tester?</span>
-      <span>Cómo comprar</span>
-      <span style="color: #6B655C;">Contacto</span>
-      <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #DCD5CA; border-radius: 4px; padding: 8px 14px; background: #FAF8F5;">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span style="font-size: 13px; font-weight: 600;">4</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Hero ===== -->
-  <div style="height: 720px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; position: relative;">
-    <div style="font-size: 132px; font-weight: 800; letter-spacing: -0.045em; line-height: 0.9;">ParfamMdq</div>
-    <div style="font-size: 17px; font-weight: 600; letter-spacing: 0.62em; margin-top: 22px; padding-left: 0.62em;">PERFUMERIA</div>
-    <div style="width: 48px; height: 1px; background: #000000; margin: 46px 0;"></div>
-    <div style="font-size: 21px; font-weight: 300; font-style: italic; color: #3A342C;">&ldquo;No solo es un perfume&rdquo;</div>
-
-    <div style="position: absolute; bottom: 44px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.34em; color: #6B655C;">VER CATÁLOGO</div>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-    </div>
-  </div>
-
-  <!-- ===== Catálogo ===== -->
-  <div style="padding: 0 64px 96px;">
-
-    <div style="display: flex; align-items: flex-end; justify-content: space-between; border-top: 1px solid #DCD5CA; padding-top: 40px; margin-bottom: 32px;">
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">Catálogo</div>
-        <div style="font-size: 14px; color: #6B655C;">{{count}} fragancias disponibles</div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.12em; color: #6B655C;">ORDENAR</span>
-        <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #DCD5CA; border-radius: 4px; padding: 9px 14px; background: #FAF8F5; font-size: 13px; font-weight: 500;">
-          <span>Novedades</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filtros -->
-    <div style="display: flex; flex-direction: column; gap: 18px; border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; padding: 22px 24px; margin-bottom: 40px;">
-
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <div style="width: 104px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">GÉNERO</div>
-        <div style="display: flex; gap: 8px;">
-          <sc-for list="{{genders}}" as="g" hint-placeholder-count="4">
-            <div onClick="{{g.pick}}" style="border: 1px solid {{g.border}}; background: {{g.bg}}; color: {{g.fg}}; border-radius: 4px; padding: 8px 18px; font-size: 13px; font-weight: 500; cursor: pointer;">{{g.label}}</div>
-          </sc-for>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <div style="width: 104px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #6B655C;">PRESENTACIÓN</div>
-        <div style="display: flex; gap: 8px;">
-          <sc-for list="{{kinds}}" as="k" hint-placeholder-count="4">
-            <div onClick="{{k.pick}}" style="border: 1px solid {{k.border}}; background: {{k.bg}}; color: {{k.fg}}; border-radius: 4px; padding: 8px 18px; font-size: 13px; font-weight: 500; cursor: pointer;">{{k.label}}</div>
-          </sc-for>
-        </div>
-      </div>
-
-      <div style="height: 1px; background: #DCD5CA;"></div>
-
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <sc-for list="{{selects}}" as="s" hint-placeholder-count="4">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 10px 14px; font-size: 13px; font-weight: 500; min-width: 210px;">
-            <span>{{s.label}}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B655C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      <div
+        style="
+          width: 1440px;
+          background: #f2eee9;
+          color: #000000;
+          font-family:
+            &quot;Outfit&quot;, &quot;Century Gothic&quot;, system-ui,
+            sans-serif;
+        "
+      >
+        <!-- ===== Barra superior ===== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 64px;
+            position: relative;
+            z-index: 2;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <div
+              style="
+                font-size: 20px;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                line-height: 1;
+              "
+            >
+              ParfamMdq
+            </div>
+            <div
+              style="
+                font-size: 7px;
+                font-weight: 600;
+                letter-spacing: 0.42em;
+                color: #6b655c;
+              "
+            >
+              PERFUMERIA
+            </div>
           </div>
-        </sc-for>
-        <div style="flex-grow: 1;"></div>
-        <div onClick="{{reset}}" style="font-size: 13px; font-weight: 500; color: #6B655C; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;">Limpiar filtros</div>
-      </div>
-    </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 36px;
+              font-size: 14px;
+              font-weight: 500;
+            "
+          >
+            <span>Catálogo</span>
+            <span>¿Qué es un tester?</span>
+            <span>Cómo comprar</span>
+            <span style="color: #6b655c">Contacto</span>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                border: 1px solid #dcd5ca;
+                border-radius: 4px;
+                padding: 8px 14px;
+                background: #faf8f5;
+              "
+            >
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#000000"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <path d="M3 6h18" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span style="font-size: 13px; font-weight: 600">4</span>
+            </div>
+          </div>
+        </div>
 
-    <!-- Grilla -->
-    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px;">
-      <sc-for list="{{products}}" as="p" hint-placeholder-count="8">
-        <div style="display: flex; flex-direction: column; border: 1px solid #DCD5CA; border-radius: 4px; background: #FAF8F5; overflow: hidden;">
+        <!-- ===== Hero ===== -->
+        <div
+          style="
+            height: 720px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            position: relative;
+          "
+        >
+          <div
+            style="
+              font-size: 132px;
+              font-weight: 800;
+              letter-spacing: -0.045em;
+              line-height: 0.9;
+            "
+          >
+            ParfamMdq
+          </div>
+          <div
+            style="
+              font-size: 17px;
+              font-weight: 600;
+              letter-spacing: 0.62em;
+              margin-top: 22px;
+              padding-left: 0.62em;
+            "
+          >
+            PERFUMERIA
+          </div>
+          <div
+            style="
+              width: 48px;
+              height: 1px;
+              background: #000000;
+              margin: 46px 0;
+            "
+          ></div>
+          <div
+            style="
+              font-size: 21px;
+              font-weight: 300;
+              font-style: italic;
+              color: #3a342c;
+            "
+          >
+            &ldquo;No solo es un perfume&rdquo;
+          </div>
 
-          <div style="height: 260px; display: flex; align-items: center; justify-content: center; background: #F2EEE9; border-bottom: 1px solid #DCD5CA; position: relative;">
-            <sc-if value="{{p.badge}}" hint-placeholder-val="{{true}}">
-              <div style="position: absolute; top: 12px; left: 12px; background: #000000; color: #F2EEE9; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; padding: 5px 9px; border-radius: 3px;">{{p.badge}}</div>
-            </sc-if>
-            <svg width="120" height="190" viewBox="0 0 120 190" fill="none">
-              <rect x="{{p.capX}}" y="6" width="{{p.capW}}" height="{{p.capH}}" rx="3" fill="#DCD5CA"/>
-              <rect x="50" y="{{p.neckY}}" width="20" height="16" fill="#E8E2D9"/>
-              <rect x="{{p.bodyX}}" y="{{p.bodyY}}" width="{{p.bodyW}}" height="{{p.bodyH}}" rx="{{p.bodyR}}" fill="#E8E2D9" stroke="#DCD5CA" stroke-width="1.5"/>
-              <rect x="{{p.labelX}}" y="{{p.labelY}}" width="{{p.labelW}}" height="34" rx="2" fill="#FAF8F5"/>
+          <div
+            style="
+              position: absolute;
+              bottom: 44px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <div
+              style="
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 0.34em;
+                color: #6b655c;
+              "
+            >
+              VER CATÁLOGO
+            </div>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#6B655C"
+              stroke-width="1.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m6 9 6 6 6-6" />
             </svg>
           </div>
+        </div>
 
-          <div style="display: flex; flex-direction: column; gap: 6px; padding: 18px 18px 20px;">
-            <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: #6B655C;">{{p.brand}}</div>
-            <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2;">{{p.name}}</div>
-            <div style="font-size: 12px; color: #6B655C; margin-bottom: 8px;">{{p.meta}}</div>
-            <div style="display: flex; align-items: baseline; gap: 6px; margin-top: auto;">
-              <span style="font-size: 11px; color: #6B655C;">desde</span>
-              <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">{{p.price}}</span>
+        <!-- ===== Catálogo ===== -->
+        <div style="padding: 0 64px 96px">
+          <div
+            style="
+              display: flex;
+              align-items: flex-end;
+              justify-content: space-between;
+              border-top: 1px solid #dcd5ca;
+              padding-top: 40px;
+              margin-bottom: 32px;
+            "
+          >
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div
+                style="
+                  font-size: 44px;
+                  font-weight: 800;
+                  letter-spacing: -0.03em;
+                  line-height: 1;
+                "
+              >
+                Catálogo
+              </div>
+              <div style="font-size: 14px; color: #6b655c">
+                {{count}} fragancias disponibles
+              </div>
             </div>
-            <div style="display: flex; gap: 6px; margin-top: 10px;">
-              <sc-for list="{{p.tags}}" as="t" hint-placeholder-count="2">
-                <div style="border: 1px solid #DCD5CA; border-radius: 3px; padding: 4px 8px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6B655C;">{{t}}</div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span
+                style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  letter-spacing: 0.12em;
+                  color: #6b655c;
+                "
+                >ORDENAR</span
+              >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  border: 1px solid #dcd5ca;
+                  border-radius: 4px;
+                  padding: 9px 14px;
+                  background: #faf8f5;
+                  font-size: 13px;
+                  font-weight: 500;
+                "
+              >
+                <span>Novedades</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#6B655C"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 18px;
+              border: 1px solid #dcd5ca;
+              border-radius: 4px;
+              background: #faf8f5;
+              padding: 22px 24px;
+              margin-bottom: 40px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 16px">
+              <div
+                style="
+                  width: 104px;
+                  font-size: 11px;
+                  font-weight: 700;
+                  letter-spacing: 0.14em;
+                  color: #6b655c;
+                "
+              >
+                GÉNERO
+              </div>
+              <div style="display: flex; gap: 8px">
+                <sc-for list="{{genders}}" as="g" hint-placeholder-count="4">
+                  <div
+                    onClick="{{g.pick}}"
+                    style="border: 1px solid {{g.border}}; background: {{g.bg}}; color: {{g.fg}}; border-radius: 4px; padding: 8px 18px; font-size: 13px; font-weight: 500; cursor: pointer;"
+                  >
+                    {{g.label}}
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 16px">
+              <div
+                style="
+                  width: 104px;
+                  font-size: 11px;
+                  font-weight: 700;
+                  letter-spacing: 0.14em;
+                  color: #6b655c;
+                "
+              >
+                PRESENTACIÓN
+              </div>
+              <div style="display: flex; gap: 8px">
+                <sc-for list="{{kinds}}" as="k" hint-placeholder-count="4">
+                  <div
+                    onClick="{{k.pick}}"
+                    style="border: 1px solid {{k.border}}; background: {{k.bg}}; color: {{k.fg}}; border-radius: 4px; padding: 8px 18px; font-size: 13px; font-weight: 500; cursor: pointer;"
+                  >
+                    {{k.label}}
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="height: 1px; background: #dcd5ca"></div>
+
+            <div style="display: flex; align-items: center; gap: 12px">
+              <sc-for list="{{selects}}" as="s" hint-placeholder-count="4">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 14px;
+                    border: 1px solid #dcd5ca;
+                    border-radius: 4px;
+                    background: #f2eee9;
+                    padding: 10px 14px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    min-width: 210px;
+                  "
+                >
+                  <span>{{s.label}}</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6B655C"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
               </sc-for>
+              <div style="flex-grow: 1"></div>
+              <div
+                onClick="{{reset}}"
+                style="
+                  font-size: 13px;
+                  font-weight: 500;
+                  color: #6b655c;
+                  text-decoration: underline;
+                  text-underline-offset: 3px;
+                  cursor: pointer;
+                "
+              >
+                Limpiar filtros
+              </div>
+            </div>
+          </div>
+
+          <!-- Grilla -->
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 28px;
+            "
+          >
+            <sc-for list="{{products}}" as="p" hint-placeholder-count="8">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  border: 1px solid #dcd5ca;
+                  border-radius: 4px;
+                  background: #faf8f5;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    height: 260px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f2eee9;
+                    border-bottom: 1px solid #dcd5ca;
+                    position: relative;
+                  "
+                >
+                  <sc-if value="{{p.badge}}" hint-placeholder-val="{{true}}">
+                    <div
+                      style="
+                        position: absolute;
+                        top: 12px;
+                        left: 12px;
+                        background: #000000;
+                        color: #f2eee9;
+                        font-size: 9px;
+                        font-weight: 700;
+                        letter-spacing: 0.16em;
+                        padding: 5px 9px;
+                        border-radius: 3px;
+                      "
+                    >
+                      {{p.badge}}
+                    </div>
+                  </sc-if>
+                  <svg
+                    width="120"
+                    height="190"
+                    viewBox="0 0 120 190"
+                    fill="none"
+                  >
+                    <rect
+                      x="{{p.capX}}"
+                      y="6"
+                      width="{{p.capW}}"
+                      height="{{p.capH}}"
+                      rx="3"
+                      fill="#DCD5CA"
+                    />
+                    <rect
+                      x="50"
+                      y="{{p.neckY}}"
+                      width="20"
+                      height="16"
+                      fill="#E8E2D9"
+                    />
+                    <rect
+                      x="{{p.bodyX}}"
+                      y="{{p.bodyY}}"
+                      width="{{p.bodyW}}"
+                      height="{{p.bodyH}}"
+                      rx="{{p.bodyR}}"
+                      fill="#E8E2D9"
+                      stroke="#DCD5CA"
+                      stroke-width="1.5"
+                    />
+                    <rect
+                      x="{{p.labelX}}"
+                      y="{{p.labelY}}"
+                      width="{{p.labelW}}"
+                      height="34"
+                      rx="2"
+                      fill="#FAF8F5"
+                    />
+                  </svg>
+                </div>
+
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                    padding: 18px 18px 20px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 10px;
+                      font-weight: 700;
+                      letter-spacing: 0.18em;
+                      color: #6b655c;
+                    "
+                  >
+                    {{p.brand}}
+                  </div>
+                  <div
+                    style="
+                      font-size: 18px;
+                      font-weight: 700;
+                      letter-spacing: -0.015em;
+                      line-height: 1.2;
+                    "
+                  >
+                    {{p.name}}
+                  </div>
+                  <div
+                    style="font-size: 12px; color: #6b655c; margin-bottom: 8px"
+                  >
+                    {{p.meta}}
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: baseline;
+                      gap: 6px;
+                      margin-top: auto;
+                    "
+                  >
+                    <span style="font-size: 11px; color: #6b655c">desde</span>
+                    <span
+                      style="
+                        font-size: 20px;
+                        font-weight: 700;
+                        letter-spacing: -0.02em;
+                      "
+                      >{{p.price}}</span
+                    >
+                  </div>
+                  <div style="display: flex; gap: 6px; margin-top: 10px">
+                    <sc-for list="{{p.tags}}" as="t" hint-placeholder-count="2">
+                      <div
+                        style="
+                          border: 1px solid #dcd5ca;
+                          border-radius: 3px;
+                          padding: 4px 8px;
+                          font-size: 10px;
+                          font-weight: 600;
+                          letter-spacing: 0.08em;
+                          color: #6b655c;
+                        "
+                      >
+                        {{t}}
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+            <div
+              style="
+                border: 1px dashed #dcd5ca;
+                border-radius: 4px;
+                padding: 64px;
+                text-align: center;
+                color: #6b655c;
+                font-size: 15px;
+              "
+            >
+              No hay fragancias con esos filtros. Probá limpiando alguno.
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- ===== Footer ===== -->
+        <div
+          style="
+            border-top: 1px solid #dcd5ca;
+            padding: 48px 64px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div
+              style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em"
+            >
+              ParfamMdq
+            </div>
+            <div style="font-size: 13px; color: #6b655c">
+              Perfumes originales en Mar del Plata.
+            </div>
+          </div>
+          <div style="display: flex; gap: 72px; font-size: 13px">
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div
+                style="
+                  font-size: 10px;
+                  font-weight: 700;
+                  letter-spacing: 0.16em;
+                  color: #6b655c;
+                "
+              >
+                TIENDA
+              </div>
+              <span>Catálogo</span>
+              <span>¿Qué es un tester?</span>
+              <span>Cómo comprar</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div
+                style="
+                  font-size: 10px;
+                  font-weight: 700;
+                  letter-spacing: 0.16em;
+                  color: #6b655c;
+                "
+              >
+                CONTACTO
+              </div>
+              <span>+54 9 223 616 3910</span>
+              <span>@parfam_mdq</span>
             </div>
           </div>
         </div>
-      </sc-for>
-    </div>
-
-    <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
-      <div style="border: 1px dashed #DCD5CA; border-radius: 4px; padding: 64px; text-align: center; color: #6B655C; font-size: 15px;">
-        No hay fragancias con esos filtros. Probá limpiando alguno.
       </div>
-    </sc-if>
+    </x-dc>
 
-  </div>
+    <script
+      data-dc-script
+      data-props='{"$preview":{"width":1440,"height":2450}}'
+    >
+      class Component extends DCLogic {
+        constructor(props) {
+          super(props);
+          this.state = { gender: "todos", kind: "todos" };
+        }
 
-  <!-- ===== Footer ===== -->
-  <div style="border-top: 1px solid #DCD5CA; padding: 48px 64px; display: flex; align-items: flex-start; justify-content: space-between;">
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em;">ParfamMdq</div>
-      <div style="font-size: 13px; color: #6B655C;">Perfumes originales en Mar del Plata.</div>
-    </div>
-    <div style="display: flex; gap: 72px; font-size: 13px;">
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #6B655C;">TIENDA</div>
-        <span>Catálogo</span>
-        <span>¿Qué es un tester?</span>
-        <span>Cómo comprar</span>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #6B655C;">CONTACTO</div>
-        <span>+54 9 223 616 3910</span>
-        <span>@parfam_mdq</span>
-      </div>
-    </div>
-  </div>
+        catalog() {
+          return [
+            {
+              brand: "XERJOFF",
+              name: "Accento Overdose",
+              meta: "EDP · 2018 · Frutal floral",
+              gender: "unisex",
+              kinds: ["decant", "frasco"],
+              price: "$18.400",
+              badge: "DECANT",
+              tags: ["5 ml", "10 ml"],
+            },
+            {
+              brand: "DIOR",
+              name: "Sauvage Elixir",
+              meta: "Parfum · 2021 · Especiado",
+              gender: "el",
+              kinds: ["frasco", "tester", "decant"],
+              price: "$26.900",
+              badge: "",
+              tags: ["10 ml", "60 ml"],
+            },
+            {
+              brand: "LANCÔME",
+              name: "La Vie Est Belle",
+              meta: "EDP · 2012 · Dulce gourmand",
+              gender: "ella",
+              kinds: ["frasco", "tester"],
+              price: "$94.000",
+              badge: "TESTER",
+              tags: ["50 ml", "75 ml"],
+            },
+            {
+              brand: "MUGLER",
+              name: "Angel",
+              meta: "EDP · 1992 · Gourmand",
+              gender: "ella",
+              kinds: ["decant"],
+              price: "$12.700",
+              badge: "",
+              tags: ["5 ml"],
+            },
+            {
+              brand: "TOM FORD",
+              name: "Tobacco Vanille",
+              meta: "EDP · 2007 · Ámbar especiado",
+              gender: "unisex",
+              kinds: ["decant", "tester"],
+              price: "$12.800",
+              badge: "DECANT",
+              tags: ["5 ml", "10 ml"],
+            },
+            {
+              brand: "CHANEL",
+              name: "Coco Mademoiselle",
+              meta: "EDP · 2001 · Chipre floral",
+              gender: "ella",
+              kinds: ["frasco", "decant"],
+              price: "$118.000",
+              badge: "",
+              tags: ["35 ml", "50 ml"],
+            },
+            {
+              brand: "YVES SAINT LAURENT",
+              name: "Black Opium",
+              meta: "EDP · 2014 · Dulce café",
+              gender: "ella",
+              kinds: ["frasco", "tester", "decant"],
+              price: "$87.500",
+              badge: "",
+              tags: ["30 ml", "50 ml"],
+            },
+            {
+              brand: "JEAN PAUL GAULTIER",
+              name: "Le Male Elixir",
+              meta: "Parfum · 2023 · Dulce aromático",
+              gender: "el",
+              kinds: ["frasco", "decant"],
+              price: "$23.900",
+              badge: "NUEVO",
+              tags: ["10 ml", "75 ml"],
+            },
+          ];
+        }
 
-</div>
-</x-dc>
+        shapes(i) {
+          const presets = [
+            {
+              capX: 46,
+              capW: 28,
+              capH: 30,
+              neckY: 36,
+              bodyX: 22,
+              bodyY: 52,
+              bodyW: 76,
+              bodyH: 128,
+              bodyR: 6,
+              labelX: 38,
+              labelY: 96,
+              labelW: 44,
+            },
+            {
+              capX: 50,
+              capW: 20,
+              capH: 38,
+              neckY: 44,
+              bodyX: 28,
+              bodyY: 60,
+              bodyW: 64,
+              bodyH: 120,
+              bodyR: 30,
+              labelX: 42,
+              labelY: 104,
+              labelW: 36,
+            },
+            {
+              capX: 44,
+              capW: 32,
+              capH: 24,
+              neckY: 30,
+              bodyX: 18,
+              bodyY: 46,
+              bodyW: 84,
+              bodyH: 134,
+              bodyR: 3,
+              labelX: 36,
+              labelY: 92,
+              labelW: 48,
+            },
+            {
+              capX: 48,
+              capW: 24,
+              capH: 34,
+              neckY: 40,
+              bodyX: 26,
+              bodyY: 56,
+              bodyW: 68,
+              bodyH: 124,
+              bodyR: 14,
+              labelX: 40,
+              labelY: 100,
+              labelW: 40,
+            },
+          ];
+          return presets[i % presets.length];
+        }
 
-<script data-dc-script data-props='{"$preview":{"width":1440,"height":2450}}'>
-class Component extends DCLogic {
-  constructor(props) {
-    super(props);
-    this.state = { gender: "todos", kind: "todos" };
-  }
+        chip(active) {
+          return active
+            ? { bg: "#000000", fg: "#F2EEE9", border: "#000000" }
+            : { bg: "#F2EEE9", fg: "#000000", border: "#DCD5CA" };
+        }
 
-  catalog() {
-    return [
-      { brand: "XERJOFF", name: "Accento Overdose", meta: "EDP · 2018 · Frutal floral", gender: "unisex", kinds: ["decant", "frasco"], price: "$18.400", badge: "DECANT", tags: ["5 ml", "10 ml"] },
-      { brand: "DIOR", name: "Sauvage Elixir", meta: "Parfum · 2021 · Especiado", gender: "el", kinds: ["frasco", "tester", "decant"], price: "$26.900", badge: "", tags: ["10 ml", "60 ml"] },
-      { brand: "LANCÔME", name: "La Vie Est Belle", meta: "EDP · 2012 · Dulce gourmand", gender: "ella", kinds: ["frasco", "tester"], price: "$94.000", badge: "TESTER", tags: ["50 ml", "75 ml"] },
-      { brand: "MUGLER", name: "Angel", meta: "EDP · 1992 · Gourmand", gender: "ella", kinds: ["decant"], price: "$12.700", badge: "", tags: ["5 ml"] },
-      { brand: "TOM FORD", name: "Tobacco Vanille", meta: "EDP · 2007 · Ámbar especiado", gender: "unisex", kinds: ["decant", "tester"], price: "$12.800", badge: "DECANT", tags: ["5 ml", "10 ml"] },
-      { brand: "CHANEL", name: "Coco Mademoiselle", meta: "EDP · 2001 · Chipre floral", gender: "ella", kinds: ["frasco", "decant"], price: "$118.000", badge: "", tags: ["35 ml", "50 ml"] },
-      { brand: "YVES SAINT LAURENT", name: "Black Opium", meta: "EDP · 2014 · Dulce café", gender: "ella", kinds: ["frasco", "tester", "decant"], price: "$87.500", badge: "", tags: ["30 ml", "50 ml"] },
-      { brand: "JEAN PAUL GAULTIER", name: "Le Male Elixir", meta: "Parfum · 2023 · Dulce aromático", gender: "el", kinds: ["frasco", "decant"], price: "$23.900", badge: "NUEVO", tags: ["10 ml", "75 ml"] },
-    ];
-  }
+        renderVals() {
+          const gender = this.state.gender;
+          const kind = this.state.kind;
 
-  shapes(i) {
-    const presets = [
-      { capX: 46, capW: 28, capH: 30, neckY: 36, bodyX: 22, bodyY: 52, bodyW: 76, bodyH: 128, bodyR: 6, labelX: 38, labelY: 96, labelW: 44 },
-      { capX: 50, capW: 20, capH: 38, neckY: 44, bodyX: 28, bodyY: 60, bodyW: 64, bodyH: 120, bodyR: 30, labelX: 42, labelY: 104, labelW: 36 },
-      { capX: 44, capW: 32, capH: 24, neckY: 30, bodyX: 18, bodyY: 46, bodyW: 84, bodyH: 134, bodyR: 3, labelX: 36, labelY: 92, labelW: 48 },
-      { capX: 48, capW: 24, capH: 34, neckY: 40, bodyX: 26, bodyY: 56, bodyW: 68, bodyH: 124, bodyR: 14, labelX: 40, labelY: 100, labelW: 40 },
-    ];
-    return presets[i % presets.length];
-  }
+          const genders = [
+            { id: "todos", label: "Todos" },
+            { id: "ella", label: "Para ella" },
+            { id: "el", label: "Para él" },
+            { id: "unisex", label: "Unisex" },
+          ].map((g) => ({
+            ...g,
+            ...this.chip(g.id === gender),
+            pick: () => this.setState({ gender: g.id }),
+          }));
 
-  chip(active) {
-    return active
-      ? { bg: "#000000", fg: "#F2EEE9", border: "#000000" }
-      : { bg: "#F2EEE9", fg: "#000000", border: "#DCD5CA" };
-  }
+          const kinds = [
+            { id: "todos", label: "Todas" },
+            { id: "frasco", label: "Frasco entero" },
+            { id: "tester", label: "Tester" },
+            { id: "decant", label: "Decant" },
+          ].map((k) => ({
+            ...k,
+            ...this.chip(k.id === kind),
+            pick: () => this.setState({ kind: k.id }),
+          }));
 
-  renderVals() {
-    const gender = this.state.gender;
-    const kind = this.state.kind;
+          const products = this.catalog()
+            .filter((p) => gender === "todos" || p.gender === gender)
+            .filter((p) => kind === "todos" || p.kinds.indexOf(kind) !== -1)
+            .map((p, i) => ({ ...p, ...this.shapes(i) }));
 
-    const genders = [
-      { id: "todos", label: "Todos" },
-      { id: "ella", label: "Para ella" },
-      { id: "el", label: "Para él" },
-      { id: "unisex", label: "Unisex" },
-    ].map((g) => ({
-      ...g,
-      ...this.chip(g.id === gender),
-      pick: () => this.setState({ gender: g.id }),
-    }));
-
-    const kinds = [
-      { id: "todos", label: "Todas" },
-      { id: "frasco", label: "Frasco entero" },
-      { id: "tester", label: "Tester" },
-      { id: "decant", label: "Decant" },
-    ].map((k) => ({
-      ...k,
-      ...this.chip(k.id === kind),
-      pick: () => this.setState({ kind: k.id }),
-    }));
-
-    const products = this.catalog()
-      .filter((p) => gender === "todos" || p.gender === gender)
-      .filter((p) => kind === "todos" || p.kinds.indexOf(kind) !== -1)
-      .map((p, i) => ({ ...p, ...this.shapes(i) }));
-
-    return {
-      genders,
-      kinds,
-      products,
-      count: products.length,
-      empty: products.length === 0,
-      selects: [
-        { label: "Marca" },
-        { label: "Familia olfativa" },
-        { label: "Nota" },
-        { label: "Precio" },
-      ],
-      reset: () => this.setState({ gender: "todos", kind: "todos" }),
-    };
-  }
-}
-</script>
-</body>
+          return {
+            genders,
+            kinds,
+            products,
+            count: products.length,
+            empty: products.length === 0,
+            selects: [
+              { label: "Marca" },
+              { label: "Familia olfativa" },
+              { label: "Nota" },
+              { label: "Precio" },
+            ],
+            reset: () => this.setState({ gender: "todos", kind: "todos" }),
+          };
+        }
+      }
+    </script>
+  </body>
 </html>

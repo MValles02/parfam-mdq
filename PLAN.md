@@ -105,32 +105,32 @@ si el buscador no encuentra la fragancia:
 
 ## Librerías (nada hecho a mano que ya exista)
 
-| Necesidad                       | Librería                                                                            |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| Framework / routing / SSR / SEO | `next` 16 (App Router, Server Actions)                                              |
-| UI base + accesibilidad         | `tailwindcss` v4, `shadcn/ui` (Radix), `tailwind-merge`, `class-variance-authority` |
-| Íconos                          | `lucide-react`                                                                      |
-| Tipografía                      | `next/font` con **Outfit** (Google Fonts)                                           |
-| Tema claro/oscuro               | `next-themes`                                                                       |
-| Formularios + validación        | `react-hook-form`, `zod`, `@hookform/resolvers`                                     |
-| Estado de filtros en la URL     | `nuqs`                                                                              |
-| Carrito persistente             | `zustand` + middleware `persist`                                                    |
-| Tablas del admin                | `@tanstack/react-table` (shadcn data-table)                                         |
-| Toasts                          | `sonner`                                                                            |
-| Galería de producto             | `embla-carousel-react` (shadcn carousel)                                            |
-| Autocompletado de notas         | `cmdk` (shadcn combobox)                                                            |
-| ORM + migraciones               | `prisma` + `@prisma/client`                                                         |
-| Auth                            | `next-auth@5` (Auth.js) + `@node-rs/argon2`                                         |
-| Subida a R2                     | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `react-dropzone`             |
-| Import del dataset              | `csv-parse` (streaming)                                                             |
-| Slugs                           | `slugify`                                                                           |
-| Validación de env               | `@t3-oss/env-nextjs`                                                                |
-| Teléfonos AR                    | `libphonenumber-js`                                                                 |
-| i18n                            | `next-intl`                                                                         |
-| Fechas                          | `date-fns` (locale `es`)                                                            |
-| Rate limit del checkout         | `lru-cache`                                                                         |
-| Calidad                         | `eslint`, `prettier`, `husky`, `lint-staged`                                        |
-| Smoke tests                     | `@playwright/test`                                                                  |
+| Necesidad                       | Librería                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Framework / routing / SSR / SEO | `next` 16 (App Router, Server Actions)                                                            |
+| UI base + accesibilidad         | `tailwindcss` v4, `shadcn/ui` (Radix), `tailwind-merge`, `class-variance-authority`               |
+| Íconos                          | `lucide-react`                                                                                    |
+| Tipografía                      | `next/font` con **Outfit** (Google Fonts)                                                         |
+| Tema claro/oscuro               | `next-themes`                                                                                     |
+| Formularios + validación        | `react-hook-form`, `zod`, `@hookform/resolvers`                                                   |
+| Estado de filtros en la URL     | `nuqs`                                                                                            |
+| Carrito persistente             | `zustand` + middleware `persist`                                                                  |
+| Tablas del admin                | `@tanstack/react-table` (shadcn data-table)                                                       |
+| Toasts                          | `sonner`                                                                                          |
+| Galería de producto             | `embla-carousel-react` (shadcn carousel)                                                          |
+| Autocompletado de notas         | `cmdk` (shadcn combobox)                                                                          |
+| ORM + migraciones               | `prisma` 7 + `@prisma/client` + `@prisma/adapter-pg` (driver adapter, obligatorio desde Prisma 7) |
+| Auth                            | `next-auth@5` (Auth.js) + `@node-rs/argon2`                                                       |
+| Subida a R2                     | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `react-dropzone`                           |
+| Import del dataset              | `csv-parse` (streaming)                                                                           |
+| Slugs                           | `slugify`                                                                                         |
+| Validación de env               | `@t3-oss/env-nextjs`                                                                              |
+| Teléfonos AR                    | `libphonenumber-js`                                                                               |
+| i18n                            | `next-intl`                                                                                       |
+| Fechas                          | `date-fns` (locale `es`)                                                                          |
+| Rate limit del checkout         | `lru-cache`                                                                                       |
+| Calidad                         | `eslint`, `prettier`, `husky`, `lint-staged`                                                      |
+| Smoke tests                     | `@playwright/test`                                                                                |
 
 ---
 
@@ -147,12 +147,18 @@ y el admin "adopta" las que vende.
 - `Note` — slug, `nameEn`, `nameEs?` (del diccionario, editable desde el panel), `usageCount`.
 - `Accord` — slug, `nameEn`, `nameEs`, `color` (nuestro hex).
 - `FragranceRef` — `pid`, `url`, `brandId`, nombre, año, `gender`, `ratingValue`/`ratingCount`
-  (internos, para ordenar el buscador), `descriptionEn` (interna), `hasPyramid`.
+  (internos, para ordenar el buscador), `descriptionEn` (interna), `hasPyramid`,
+  `originCountry` (de `fra_cleaned.Country`, informativo).
 - `FragranceRefNote` — ref × nota × `position` (TOP/MIDDLE/BASE) × orden.
-- `FragranceRefAccord` — ref × acorde × `rank`.
+- `FragranceRefAccord` — ref × acorde × `rank` (el dataset no trae porcentaje real, sólo el
+  orden de aparición).
 - `FragranceRefPerfumer` — ref × perfumista.
 
-Índice `pg_trgm` sobre nombre + marca para que el buscador responda rápido sobre 70k filas.
+> ⏳ **Pendiente para la Fase 3:** el buscador del admin sobre 70k filas va a necesitar un
+> índice `pg_trgm` (búsqueda difusa por nombre/marca) — Prisma no lo puede declarar en el
+> schema, hay que agregarlo a mano en una migración con `CREATE EXTENSION pg_trgm` +
+> `CREATE INDEX ... USING gin (name gin_trgm_ops)`. Por ahora sólo hay índices btree
+> estándar (`@@index([name])`), que alcanzan para lookups exactos pero no para "contiene".
 
 ### Capa 2 — Tienda (lo que edita el admin)
 
@@ -216,19 +222,22 @@ concentración, estación, ocasión, tipo de presentación, rango de precio y or
 
 ### ✅ Fase 0.5 — Entorno de desarrollo (hecha)
 
-Node 22.23 + pnpm 12.4 vía nvm/corepack. Next.js **16.3.5** con React 19, Tailwind v4,
-`src/` y alias `@/*`. shadcn/ui inicializado con el preset `radix-nova` (iconos Lucide).
-La paleta de marca ya está en `globals.css` como tokens oklch — crema `#F2EEE9` sobre tinta
-negra, más el modo oscuro derivado manteniendo el matiz cálido — y **Outfit** como familia
-tipográfica. Prettier + ESLint + husky + lint-staged, `docker-compose.dev.yml` con Postgres 17
-en el puerto **5433**, `src/lib/site.ts` con los defaults de marca y `AGENTS.md` con las
+Node **24.21** (LTS) + pnpm 12.4. Next.js **16.3.5** con React 19, Tailwind v4, `src/` y
+alias `@/*`. shadcn/ui inicializado con el preset `radix-nova` (iconos Lucide). La paleta de
+marca ya está en `globals.css` como tokens oklch — crema `#F2EEE9` sobre tinta negra, más el
+modo oscuro derivado manteniendo el matiz cálido — y **Outfit** como familia tipográfica.
+Prettier + ESLint + husky + lint-staged, `docker-compose.dev.yml` con Postgres 17 en el
+puerto **5433**, `src/lib/site.ts` con los defaults de marca y `AGENTS.md` con las
 convenciones del proyecto.
 
 **Verificado:** `pnpm build` compila, `pnpm typecheck` y `pnpm lint` en limpio, y `pnpm dev`
 sirve la home con la marca en :3000.
 
-> ⚠️ **Pendiente:** el usuario `mateo` no está en el grupo `docker`, así que `pnpm db:up`
-> todavía no corre. Se resuelve con `sudo usermod -aG docker mateo` y reconectar por SSH.
+> 📌 **Node:** hay un binario de Node 24 en `~/.local/bin` que gana por PATH sobre el Node 22
+> que se había instalado con nvm — el `.bashrc` de Debian corta la ejecución para shells no
+> interactivas antes de llegar al bloque de nvm, así que nunca se activaba solo. En vez de
+> pelear con eso, el proyecto quedó parado en ese Node 24 (LTS, funciona sin problemas); si
+> hace falta otra versión, hay que apuntar directo a un binario, no depender de nvm.
 
 > 📌 **Ojo con Next 16:** el scaffold genera un bloque en `AGENTS.md` avisando que hay
 > breaking changes respecto de versiones anteriores. Antes de escribir código específico del
@@ -242,21 +251,48 @@ Artifact editable, y de ahí salen los tokens y el layout que después se codean
 
 **Verificación:** el canvas abre, se puede editar y refleja la identidad de las piezas de Canva.
 
-### Fase 1 — Esquema, diccionarios e importador
+### ✅ Fase 1 — Esquema, diccionarios e importador (hecha)
 
-1. `prisma/schema.prisma` con las tres capas y primera migración.
-2. `data/dictionaries/accords.es.json` (~90 acordes con traducción y color) y
-   `notes.es.json` (~500 notas frecuentes).
-3. `scripts/import-fragrantica.ts`: streaming con `csv-parse`, en dos pasadas —
-   `fra_perfumes` primero (marca y nombre normalizados desde la URL, acordes, rating,
-   descripción, año y pirámide por regex) y después `fra_cleaned` por PID, que **pisa** la
-   pirámide con la versión estructurada y suma país y perfumistas. Idempotente por `pid`,
-   con `--limit` y barra de progreso.
-4. Seed: usuario admin (por env) + `SiteSetting` con los valores reales de la marca.
+1. `prisma/schema.prisma` con las tres capas. **Prisma 7 cambió el modelo de conexión**: ya
+   no admite `url` en el `datasource` del schema — la URL vive en `prisma.config.ts` (para
+   Migrate/CLI) y en un driver adapter (`@prisma/adapter-pg`) que arma `src/lib/db.ts` para
+   runtime. El generador también cambió de `prisma-client-js` (deprecado) a `prisma-client`,
+   que emite TypeScript plano a `src/generated/prisma/` en vez de meterse en `node_modules`
+   — queda fuera de git y se rearma con `prisma generate` (`postinstall` y antes de `build`).
+2. `data/dictionaries/accords.es.json` (93 acordes, todos traducidos, con color propio en
+   oklch) y `notes.es.json` (500 notas, cubren ~97% de las apariciones reales). Se sumó
+   `note-aliases.json` para fusionar typos del dataset (`vanila`→`vanilla`,
+   `sandalowood`→`sandalwood`, etc.) en una sola nota canónica.
+3. `scripts/lib/fragrantica-parse.ts` (funciones puras: URL → marca/nombre/pid, normalización
+   de género, parseo de pirámide por regex desde la descripción, parseo de listas al estilo
+   `repr()` de Python) con su propio smoke test, y `scripts/lib/read-fragrantica-csv.ts` que
+   lee y fusiona los dos CSV — **`fra_cleaned.csv` está en Windows-1252, no UTF-8** (se
+   decodifica con `TextDecoder`, no con `Buffer.toString('latin1')`, que rompe comillas
+   tipográficas y otros caracteres del rango 0x80-0x9F).
+4. `scripts/import-fragrantica.ts`: `fra_perfumes.csv` es la base (unión completa de PIDs),
+   `fra_cleaned.csv` enriquece/pisa por PID donde tiene mejor dato (pirámide estructurada,
+   país, perfumistas, rating, año). Idempotente por lote (borra y recrea por `pid`, lo que
+   cascadea a las tablas de unión) y transaccional; `--limit` y `--batch-size` para pruebas.
+5. `prisma/seed.ts`: usuario admin desde `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` (con
+   `@node-rs/argon2`, sólo si no existe ya) + `SiteSetting` singleton con los valores reales
+   de la marca, con `upsert(..., update: {})` para no pisar ediciones futuras del admin.
 
-**Verificación:** correr con `--limit 1000` y revisar en Prisma Studio que la pirámide de un
-perfume conocido quede bien; contrastar los totales del import contra los del README
-(69.948 refs, 46.578 con pirámide); después la carga completa midiendo tiempo.
+**Verificado** contra la base local: `--limit 200` y `--limit 10.000` primero, después la
+corrida completa (69.946 fragancias, 3m13s) y re-ejecutada para confirmar idempotencia
+(mismos conteos, sin duplicar). Resultado real, contra el estimado de la Fase 0.75:
+
+| Métrica                 |     Estimado |                                                     Real |
+| ----------------------- | -----------: | -------------------------------------------------------: |
+| FragranceRef            |       69.948 | 69.946 (3 URLs mal formadas + ~154 duplicados en el CSV) |
+| Con pirámide de notas   | 46.578 (67%) |                                           46.888 (67,0%) |
+| Marcas                  |            — |                                                    1.748 |
+| Perfumistas             |            — |                                                    1.355 |
+| Notas distintas         |       ~1.884 |               1.882 (1.398 sin traducir, caen al inglés) |
+| Acordes                 |           93 |           93 (siempre completo, no depende de `--limit`) |
+| Relaciones sin resolver |            — |                                                        0 |
+
+Se verificó a mano una fragancia conocida (Sauvage, Angel, Organza) en Prisma Studio: marca,
+pirámide por nivel, acordes con su color y perfumista, todo correcto.
 
 ### Fase 2 — Auth y shell del admin
 
@@ -358,8 +394,9 @@ Validadas al arrancar con `@t3-oss/env-nextjs`.
 
 ## Pendientes tuyos
 
-1. 🔴 Habilitar Docker sin sudo para levantar la base local:
-   `sudo usermod -aG docker mateo` y reconectar la sesión SSH.
-2. 🟡 Bucket de R2 cuando lleguemos a la Fase 3 (la cuenta ya está conectada al Dokploy).
-3. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
-4. 🟢 Fotos propias de los productos para la carga de la Fase 8.
+1. 🟡 Bucket de R2 cuando lleguemos a la Fase 3 (la cuenta ya está conectada al Dokploy).
+2. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
+3. 🟢 Fotos propias de los productos para la carga de la Fase 8.
+4. 🟢 Cuando arranque la Fase 2 (auth), definir `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`
+   reales en el `.env` de cada entorno — el `.env` local tiene credenciales de prueba
+   (`admin@parfammdq.com`) que no son para producción.

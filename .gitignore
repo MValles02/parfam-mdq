@@ -30,6 +30,9 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 
+# Prisma: cliente generado, se rearma con `prisma generate` (postinstall)
+/src/generated/prisma
+
 # Testing
 /coverage
 /playwright-report/

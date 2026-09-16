@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ESTADO_PRODUCTO } from "@/lib/catalogo";
 import { listarAcordes, productoParaEditar } from "@/lib/admin/productos";
 import { r2Configurado } from "@/lib/r2";
+import { env } from "@/lib/env";
 import { ProductoForm } from "../_components/producto-form";
 
 export async function generateMetadata(
@@ -47,6 +48,7 @@ export default async function Page(props: PageProps<"/admin/productos/[id]">) {
         producto={producto}
         acordes={acordes}
         r2Listo={r2Configurado()}
+        basePublica={env.R2_PUBLIC_URL ?? null}
       />
     </>
   );

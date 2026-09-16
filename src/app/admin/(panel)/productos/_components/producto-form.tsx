@@ -115,7 +115,7 @@ function valoresIniciales(p: ProductoEditable | null): ProductoFormInput {
     })),
     images: p.images.map((i) => ({
       id: i.id,
-      url: i.url,
+      storageKey: i.storageKey,
       alt: i.alt,
       isPrimary: i.isPrimary,
     })),
@@ -134,10 +134,13 @@ export function ProductoForm({
   producto,
   acordes,
   r2Listo,
+  basePublica,
 }: {
   producto: ProductoEditable | null;
   acordes: Acorde[];
   r2Listo: boolean;
+  /** Host publico de R2, solo para las vistas previas del panel de fotos. */
+  basePublica: string | null;
 }) {
   const router = useRouter();
   const [guardando, guardar] = useTransition();
@@ -658,6 +661,7 @@ export function ProductoForm({
               render={({ field }) => (
                 <PanelImagenes
                   r2Listo={r2Listo}
+                  basePublica={basePublica}
                   valor={(field.value ?? []) as ImagenPanel[]}
                   onChange={field.onChange}
                 />

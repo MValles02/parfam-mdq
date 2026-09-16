@@ -18,7 +18,8 @@ import { borrarImagenSubida, pedirUrlDeSubida } from "../imagenes-actions";
 
 export type ImagenPanel = {
   id: string | null; // null = todavia no guardada en la base
-  url: string;
+  /** Clave del objeto en R2. Es lo unico que se guarda en la base. */
+  storageKey: string;
   alt: string | null;
   isPrimary: boolean;
 };
@@ -72,10 +73,19 @@ export function PanelImagenes(props: {
   valor: ImagenPanel[];
   onChange: (imagenes: ImagenPanel[]) => void;
   disabled?: boolean;
+  /**
+   * Host publico del bucket, para armar la vista previa. Viene del servidor
+   * porque la base guarda claves, no URLs — asi cambiar de dominio no obliga
+   * a tocar ninguna fila.
+   */
+  basePublica: string | null;
   /** Si es false, la zona de subida se muestra deshabilitada con un aviso. */
   r2Listo?: boolean;
 }) {
-  const { valor, onChange, disabled = false, r2Listo } = props;
+  const { valor, onChange, disabled = false, basePublica, r2Listo } = props;
+
+  const vistaPrevia = (clave: string) =>
+    basePublica ? `${basePublica.replace(/\/$/, "")}/${clave}` : undefined;
 
   const [subidas, setSubidas] = useState<SubidaEnCurso[]>([]);
   const [eliminando, setEliminando] = useState<Set<string>>(new Set());
@@ -124,7 +134,7 @@ export function PanelImagenes(props: {
         const listaActual = valorRef.current;
         const nuevaImagen: ImagenPanel = {
           id: null,
-          url: pedido.datos.urlPublica,
+          storageKey: pedido.datos.storageKey,
           alt: null,
           isPrimary: listaActual.length === 0,
         };
@@ -178,13 +188,13 @@ export function PanelImagenes(props: {
 
   async function eliminarImagen(indice: number) {
     const imagen = valor[indice]!;
-    setEliminando((prev) => new Set(prev).add(imagen.url));
+    setEliminando((prev) => new Set(prev).add(imagen.storageKey));
 
     // Sólo hay que limpiar el objeto de R2 si nunca se guardó en la base: si
     // ya tiene `id`, borrarlo del bucket es responsabilidad del guardado del
     // producto (que compara contra lo que había antes).
     if (imagen.id === null) {
-      const resultado = await borrarImagenSubida(imagen.url);
+      const resultado = await borrarImagenSubida(imagen.storageKey);
       if (!resultado.ok) {
         toast.error(resultado.mensaje);
       }
@@ -192,7 +202,7 @@ export function PanelImagenes(props: {
 
     setEliminando((prev) => {
       const copia = new Set(prev);
-      copia.delete(imagen.url);
+      copia.delete(imagen.storageKey);
       return copia;
     });
 
@@ -252,15 +262,15 @@ export function PanelImagenes(props: {
       {valor.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {valor.map((imagen, indice) => {
-            const seEstaBorrando = eliminando.has(imagen.url);
+            const seEstaBorrando = eliminando.has(imagen.storageKey);
             return (
               <div
-                key={imagen.id ?? imagen.url}
+                key={imagen.id ?? imagen.storageKey}
                 className="group relative aspect-square overflow-hidden rounded border border-border bg-card"
               >
                 {/* TODO(Fase 7): pasar a next/image cuando next.config tenga los remotePatterns de R2 */}
                 <img
-                  src={imagen.url}
+                  src={vistaPrevia(imagen.storageKey)}
                   alt={imagen.alt ?? ""}
                   className="h-full w-full object-cover"
                 />

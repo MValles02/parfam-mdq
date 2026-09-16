@@ -9,6 +9,7 @@ import {
   VariantKind,
 } from "@/generated/prisma/enums";
 import { PRESENTACION } from "@/lib/catalogo";
+import { esClaveDeProducto } from "@/lib/r2";
 
 /**
  * Contrato unico del formulario de producto: lo usa react-hook-form en el
@@ -76,7 +77,17 @@ export const notaSchema = z.object({
 
 export const imagenSchema = z.object({
   id: z.string().nullable().default(null),
-  url: z.url("La imagen necesita una URL válida."),
+  /**
+   * Clave del objeto en R2, no la URL: el host público es configuración y no
+   * tiene por qué quedar congelado en la base. La clave llega del cliente, así
+   * que se valida el prefijo — es lo que impide apuntar a un objeto de otro
+   * lado del bucket.
+   */
+  storageKey: z
+    .string()
+    .min(1)
+    .max(512)
+    .refine(esClaveDeProducto, "Esa imagen no es válida."),
   alt: textoOpcional(160),
   isPrimary: z.boolean().default(false),
 });

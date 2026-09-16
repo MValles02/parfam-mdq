@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Toaster } from "@/components/ui/sonner";
 import {
   SidebarInset,
   SidebarProvider,
@@ -25,21 +27,27 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
     // TooltipProvider. Va acá y no en el layout raíz para no cargar ese JS
     // de cliente en toda la tienda.
     <TooltipProvider>
-      <SidebarProvider>
-        <AdminSidebar>
-          <UserMenu
-            name={session.user.name ?? "Admin"}
-            email={session.user.email ?? ""}
-          />
-        </AdminSidebar>
+      {/* nuqs mantiene los filtros de las tablas en la URL (ver AGENTS.md).
+          El adapter va acá y no en el layout raíz porque hoy el único estado
+          en la URL es el del panel. */}
+      <NuqsAdapter>
+        <SidebarProvider>
+          <AdminSidebar>
+            <UserMenu
+              name={session.user.name ?? "Admin"}
+              email={session.user.email ?? ""}
+            />
+          </AdminSidebar>
 
-        <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
-            <SidebarTrigger />
-          </header>
-          <div className="flex-1">{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
+          <SidebarInset>
+            <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
+              <SidebarTrigger />
+            </header>
+            <div className="flex-1">{children}</div>
+          </SidebarInset>
+          <Toaster position="top-right" richColors />
+        </SidebarProvider>
+      </NuqsAdapter>
     </TooltipProvider>
   );
 }

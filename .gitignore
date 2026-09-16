@@ -3,10 +3,14 @@ node_modules/
 .pnpm-store/
 
 # Next.js
-.next/
-out/
-build/
+/.next/
+/out/
+/build
+.vercel
+*.tsbuildinfo
 next-env.d.ts
+.pnp
+.pnp.*
 
 # Entorno
 .env

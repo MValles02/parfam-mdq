@@ -1,0 +1,19 @@
+{
+  "_comment": "El dataset trae errores de tipeo que crean notas duplicadas (p. ej. 'sandalowood' junto a 'sandalwood'). El importador normaliza la clave de la izquierda a la de la derecha antes de crear/buscar el Note, sumando su uso al slug canonico. Lista curada a mano a partir del top 500; se puede ampliar si aparecen mas casos al importar el dataset completo.",
+  "sandalowood": "sandalwood",
+  "sandal": "sandalwood",
+  "myrhh": "myrrh",
+  "hiacynth": "hyacinth",
+  "cardamon": "cardamom",
+  "vanila": "vanilla",
+  "vanille": "vanilla",
+  "rhuburb": "rhubarb",
+  "cinammon": "cinnamon",
+  "vetyver": "vetiver",
+  "cashmirwood": "cashmere wood",
+  "acácia": "acacia",
+  "ylang ylang": "ylang-ylang",
+  "lily of the valley": "lily-of-the-valley",
+  "oak moss": "oakmoss",
+  "orris": "orris root"
+}

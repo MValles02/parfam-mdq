@@ -126,7 +126,7 @@
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 7px; margin-top: 16px;">
-          <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #6B655C;">DESCRIPCION PARA EL CLIENTE</label>
+          <label style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #6B655C;">DESCRIPCIÓN PARA EL CLIENTE</label>
           <div style="border: 1px solid #DCD5CA; border-radius: 4px; background: #F2EEE9; padding: 14px; min-height: 92px; font-size: 14px; line-height: 1.55; color: #3A342C;">{{description}}</div>
           <div style="font-size: 11px; color: #6B655C;">Escribila vos: el texto del catálogo de referencia está en inglés y no se publica.</div>
         </div>
@@ -223,7 +223,7 @@
 </div>
 </x-dc>
 
-<script data-dc-script data-props='{"$preview":{"width":1440,"height":1460}}'>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -277,7 +277,7 @@ class Component extends DCLogic {
         ...v,
         rowBg: on ? "#F2EEE9" : "#EFEAE3",
         fg: on ? "#000000" : "#A39B8E",
-        switchBg: on ? "#000000" : "#D8D2C9",
+        switchBg: on ? "#000000" : "#DCD5CA",
         switchAlign: on ? "flex-end" : "flex-start",
         switchFg: on ? "#000000" : "#A39B8E",
         switchLabel: on ? "Activa" : "Oculta",
@@ -305,7 +305,7 @@ class Component extends DCLogic {
         { label: "NOMBRE", value: adopted || "—", fg: "#000000", auto: true },
         { label: "MARCA", value: "Dior", fg: "#000000", auto: true },
         { label: "AÑO", value: "2021", fg: "#000000", auto: true },
-        { label: "CONCENTRACION", value: "Parfum", fg: "#000000", auto: false },
+        { label: "CONCENTRACIÓN", value: "Parfum", fg: "#000000", auto: false },
         { label: "GENERO", value: "Para él", fg: "#000000", auto: true },
         { label: "PERFUMISTA", value: "François Demachy", fg: "#000000", auto: true },
       ],
@@ -316,7 +316,7 @@ class Component extends DCLogic {
           { label: "Pomelo", color: "#D9B64A" },
           { label: "Canela", color: "#C2512F" },
         ] },
-        { title: "NOTAS DE CORAZON", notes: [
+        { title: "NOTAS DE CORAZÓN", notes: [
           { label: "Lavanda", color: "#8E86C4" },
           { label: "Nuez moscada", color: "#C2512F" },
           { label: "Cardamomo", color: "#C2512F" },

@@ -30,7 +30,7 @@
       <span>Cómo comprar</span>
       <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #DCD5CA; border-radius: 4px; padding: 8px 14px; background: #FAF8F5;">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span style="font-size: 13px; font-weight: 600;">2</span>
+        <span style="font-size: 13px; font-weight: 600;">4</span>
       </div>
     </div>
   </div>
@@ -45,7 +45,7 @@
       <div style="height: 620px; display: flex; align-items: center; justify-content: center; background: #FAF8F5; border: 1px solid #DCD5CA; border-radius: 4px;">
         <svg width="250" height="400" viewBox="0 0 120 190" fill="none">
           <rect x="44" y="6" width="32" height="26" rx="3" fill="#DCD5CA"/>
-          <rect x="50" y="32" width="20" height="16" fill="#E5DFD6"/>
+          <rect x="50" y="32" width="20" height="16" fill="#E8E2D9"/>
           <rect x="18" y="46" width="84" height="134" rx="4" fill="#E8E2D9" stroke="#DCD5CA" stroke-width="1.5"/>
           <rect x="36" y="92" width="48" height="34" rx="2" fill="#FAF8F5"/>
         </svg>
@@ -76,7 +76,7 @@
 
       <div style="height: 1px; background: #DCD5CA; margin: 30px 0 26px;"></div>
 
-      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #6B655C; margin-bottom: 14px;">ELEGI TU PRESENTACION</div>
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #6B655C; margin-bottom: 14px;">ELEGÍ TU PRESENTACIÓN</div>
 
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <sc-for list="{{variants}}" as="v" hint-placeholder-count="4">
@@ -214,7 +214,7 @@
 </div>
 </x-dc>
 
-<script data-dc-script data-props='{"$preview":{"width":1440,"height":2360}}'>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":2500}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -239,7 +239,7 @@ class Component extends DCLogic {
       return {
         ...v,
         border: on ? "#000000" : "#DCD5CA",
-        bg: v.active ? "#FAF8F5" : "#EEEAE4",
+        bg: v.active ? "#FAF8F5" : "#EFEAE3",
         fg: v.active ? "#000000" : "#A39B8E",
         dotBorder: on ? "#000000" : "#DCD5CA",
         dotBg: on ? "#000000" : "transparent",
@@ -251,18 +251,18 @@ class Component extends DCLogic {
     const current = data[sel];
 
     const accordColors = [
-      { label: "Especiado cálido", bg: "#C2512F", fg: "#FFFFFF" },
-      { label: "Amaderado", bg: "#7A5C3E", fg: "#FFFFFF" },
+      { label: "Especiado cálido", bg: "#C2512F", fg: "#F2EEE9" },
+      { label: "Amaderado", bg: "#7A5C3E", fg: "#F2EEE9" },
       { label: "Cítrico", bg: "#D9B64A", fg: "#000000" },
-      { label: "Aromático", bg: "#6E9B8A", fg: "#FFFFFF" },
-      { label: "Ámbar", bg: "#B5743A", fg: "#FFFFFF" },
-      { label: "Dulce", bg: "#C46B72", fg: "#FFFFFF" },
+      { label: "Aromático", bg: "#6E9B8A", fg: "#F2EEE9" },
+      { label: "Ámbar", bg: "#B5743A", fg: "#F2EEE9" },
+      { label: "Dulce", bg: "#C46B72", fg: "#F2EEE9" },
     ];
 
     const bar = (label, value, caption) => ({
       label,
       caption,
-      steps: [0, 1, 2, 3, 4].map((i) => ({ color: i < value ? "#000000" : "#E0DAD1" })),
+      steps: [0, 1, 2, 3, 4].map((i) => ({ color: i < value ? "#000000" : "#DCD5CA" })),
     });
 
     return {
@@ -286,7 +286,7 @@ class Component extends DCLogic {
           ],
         },
         {
-          title: "NOTAS DE CORAZON", when: "1 a 3 horas",
+          title: "NOTAS DE CORAZÓN", when: "1 a 3 horas",
           notes: [
             { label: "Lavanda", color: "#8E86C4" },
             { label: "Nuez moscada", color: "#C2512F" },
@@ -319,7 +319,7 @@ class Component extends DCLogic {
       ],
       related: [
         { brand: "DIOR", name: "Sauvage EDP", price: "$24.500" },
-        { brand: "TOM FORD", name: "Tobacco Vanille", price: "$21.500" },
+        { brand: "TOM FORD", name: "Tobacco Vanille", price: "$12.800" },
         { brand: "JEAN PAUL GAULTIER", name: "Le Male Elixir", price: "$23.900" },
         { brand: "XERJOFF", name: "Accento Overdose", price: "$18.400" },
       ],

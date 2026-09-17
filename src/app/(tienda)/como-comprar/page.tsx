@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 import { metadataDePagina, migasJsonLd, jsonLd } from "@/lib/seo";
-import { linkWhatsapp } from "@/lib/whatsapp";
+import { linkWhatsappA } from "@/lib/whatsapp";
 
 const TITULO = "Cómo comprar";
 const RUTA = "/como-comprar";
@@ -80,7 +81,9 @@ const PREGUNTAS = [
   },
 ];
 
-export default function ComoComprarPage() {
+export default async function ComoComprarPage() {
+  const config = await obtenerConfiguracionSitio();
+
   return (
     <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
       <script
@@ -123,7 +126,10 @@ export default function ComoComprarPage() {
       </ol>
 
       <a
-        href={linkWhatsapp("¡Hola! Tengo una consulta antes de comprar.")}
+        href={linkWhatsappA(
+          config.whatsappNumber,
+          "¡Hola! Tengo una consulta antes de comprar.",
+        )}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-12 inline-flex items-center gap-2 rounded bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/80"

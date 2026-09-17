@@ -20,7 +20,7 @@ import { esClaveDeProducto } from "@/lib/r2";
 const ANIO_MAX = new Date().getFullYear() + 2;
 
 /** "" del <input> vacio equivale a "sin dato", no a un string vacio guardado. */
-const textoOpcional = (max: number) =>
+export const textoOpcional = (max: number) =>
   z
     .string()
     .trim()

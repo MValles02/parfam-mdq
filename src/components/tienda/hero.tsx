@@ -1,17 +1,23 @@
 import { ChevronDown } from "lucide-react";
 import { Logotipo } from "@/components/tienda/logotipo";
-import { siteDefaults } from "@/lib/site";
+import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 
 /**
  * Hero de la home (design/Main.dc.html, bloque "Hero"; version mobile en
  * design/HomeMobile.dc.html). Todo centrado, con el link ancla que baja al
- * catalogo. El nombre y el tagline salen de `siteDefaults`, no se escriben
- * a mano.
+ * catalogo.
+ *
+ * El logotipo (el nombre de marca) sigue siendo tipografia fija -- la
+ * identidad visual es a proposito asi, ver "Identidad visual" en PLAN.md --
+ * pero el tagline es editable desde `/admin/configuracion` a partir de la
+ * Fase 6, asi que sale de `SiteSetting.brandTagline`.
  *
  * El logotipo es el <h1> de la home: es lo que la pagina dice que es. Por eso
  * la seccion de catalogo de abajo entra en h2 (ver `nivelTitulo`).
  */
-export function Hero() {
+export async function Hero() {
+  const config = await obtenerConfiguracionSitio();
+
   return (
     <div className="relative flex h-[520px] flex-col items-center justify-center px-5 text-center lg:h-[720px]">
       <Logotipo tamanio="hero" etiqueta="h1" />
@@ -19,7 +25,7 @@ export function Hero() {
       <div className="my-8 h-px w-9 bg-foreground lg:my-11 lg:w-12" />
 
       <p className="max-w-[90vw] text-[17px] font-light text-muted-foreground italic lg:text-[21px]">
-        &ldquo;{siteDefaults.tagline}&rdquo;
+        &ldquo;{config.brandTagline}&rdquo;
       </p>
 
       <a

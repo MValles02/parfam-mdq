@@ -28,7 +28,9 @@ export const itemCheckoutSchema = z.object({
  * su número ("223 616-3910", "0223 15 6163910", "+54 9 223…") contra la
  * región AR — no hace falta (ni conviene) parsearlo a mano.
  */
-const telefono = z
+// Se exporta: `src/lib/validations/configuracion.ts` la reusa para el número
+// de WhatsApp de `SiteSetting` (mismo criterio, AGENTS.md).
+export const telefono = z
   .string()
   .trim()
   .min(6, "Ese teléfono no parece completo.")

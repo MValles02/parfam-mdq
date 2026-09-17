@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { precioArs } from "@/lib/catalogo";
 import { useCarrito } from "@/lib/carrito";
-import { linkWhatsapp } from "@/lib/whatsapp";
+import { linkWhatsappA } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 
 type Variante = {
@@ -49,9 +49,14 @@ function mensajeConsulta(producto: ProductoComprar, variante?: Variante) {
 export function Comprar({
   producto,
   variantes,
+  whatsappNumber,
 }: {
   producto: ProductoComprar;
   variantes: Variante[];
+  /** `SiteSetting.whatsappNumber`, resuelto por el server component padre:
+   * este componente es cliente (estado local de variante/cantidad) y no
+   * puede llamar a Prisma directo. */
+  whatsappNumber: string;
 }) {
   const idBase = useId();
   // La primera variante viene seleccionada de entrada: es el estado inicial
@@ -70,7 +75,7 @@ export function Comprar({
         </p>
         <Button asChild className="h-auto w-full gap-2 py-5 text-[15px]">
           <a
-            href={linkWhatsapp(mensajeConsulta(producto))}
+            href={linkWhatsappA(whatsappNumber, mensajeConsulta(producto))}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -219,7 +224,10 @@ export function Comprar({
           className="h-auto w-full gap-2 py-4 text-[15px]"
         >
           <a
-            href={linkWhatsapp(mensajeConsulta(producto, varianteActual))}
+            href={linkWhatsappA(
+              whatsappNumber,
+              mensajeConsulta(producto, varianteActual),
+            )}
             target="_blank"
             rel="noopener noreferrer"
           >

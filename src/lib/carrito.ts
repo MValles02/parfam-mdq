@@ -26,10 +26,21 @@ export type ItemCarrito = {
   qty: number;
 };
 
+const CANTIDAD_MAXIMA = 99;
+
 type EstadoCarrito = {
   items: ItemCarrito[];
   agregar: (item: Omit<ItemCarrito, "qty">, qty?: number) => void;
   quitar: (variantId: string) => void;
+  /** Cantidad exacta (no incremento) para el stepper del drawer/`/carrito`. */
+  actualizarCantidad: (variantId: string, qty: number) => void;
+  /**
+   * Pisa el precio guardado de un item. Lo usa la reconciliacion contra la
+   * base (`src/lib/tienda/usar-reconciliacion-carrito.ts`, Fase 5): el
+   * carrito es un snapshot para mostrar, y si el admin cambio el precio
+   * despues de que el cliente agrego el item, esto lo deja al dia.
+   */
+  actualizarPrecio: (variantId: string, unitPriceArs: string) => void;
   vaciar: () => void;
 };
 
@@ -45,7 +56,12 @@ export const useCarrito = create<EstadoCarrito>()(
           if (existente) {
             return {
               items: estado.items.map((i) =>
-                i.variantId === item.variantId ? { ...i, qty: i.qty + qty } : i,
+                i.variantId === item.variantId
+                  ? {
+                      ...i,
+                      qty: Math.min(CANTIDAD_MAXIMA, i.qty + qty),
+                    }
+                  : i,
               ),
             };
           }
@@ -54,6 +70,20 @@ export const useCarrito = create<EstadoCarrito>()(
       quitar: (variantId) =>
         set((estado) => ({
           items: estado.items.filter((i) => i.variantId !== variantId),
+        })),
+      actualizarCantidad: (variantId, qty) =>
+        set((estado) => ({
+          items: estado.items.map((i) =>
+            i.variantId === variantId
+              ? { ...i, qty: Math.min(CANTIDAD_MAXIMA, Math.max(1, qty)) }
+              : i,
+          ),
+        })),
+      actualizarPrecio: (variantId, unitPriceArs) =>
+        set((estado) => ({
+          items: estado.items.map((i) =>
+            i.variantId === variantId ? { ...i, unitPriceArs } : i,
+          ),
         })),
       vaciar: () => set({ items: [] }),
     }),

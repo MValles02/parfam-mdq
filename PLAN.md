@@ -694,20 +694,160 @@ CPU frenada, no la carga de la página.
 > ~40 productos van a ser varias (Lancôme, Hermès, L'Occitane...). **Decidido: la edición de
 > marcas entra en la Fase 6**, antes de la carga real de la Fase 8.
 
-### Fase 5 — Carrito y checkout por WhatsApp
+### ✅ Fase 5 — Carrito y checkout por WhatsApp (hecha)
 
-1. Carrito con Zustand + persist, drawer y badge en el header. **El store mínimo y el badge ya
-   existen desde la Fase 4** (`src/lib/carrito.ts`): falta el drawer, `/carrito`, y volver a
-   subir el `<Toaster />` al layout de la tienda.
-2. `/checkout`: nombre + teléfono (validado con `libphonenumber-js`), resumen, honeypot.
-3. Server Action: valida con Zod, **recalcula precios desde la DB**, rechaza variantes
-   inactivas, crea la `Order` en PENDING y devuelve el link `wa.me`.
-4. Mensaje desde plantilla configurable (`{{numero}}`, `{{nombre}}`, `{{items}}`, `{{total}}`).
-5. `/pedido/[number]/gracias`: limpia el carrito y ofrece reintento si el popup fue bloqueado.
-6. Admin de pedidos: listado, detalle, estados, link al chat.
+El drawer del carrito, `/carrito`, `/checkout`, la Server Action de creación de pedidos y el
+admin de pedidos, todo funcionando de punta a punta contra el servidor real (`next build` +
+`next start`), con checkouts concurrentes probados de verdad.
 
-**Verificación:** checkout completo contra un número de prueba; el mensaje llega bien
-formateado, el pedido aparece en `/admin/pedidos` y cambiar el precio después no lo altera.
+#### El número de pedido: una `SEQUENCE` de Postgres, no una columna calculada
+
+Migración a mano `numero_pedido_secuencia` (mismo criterio que las migraciones de la Fase 3):
+`CREATE SEQUENCE "Order_number_seq"`. `crearPedido` pide `nextval('"Order_number_seq"')` dentro
+de la misma transacción que crea la `Order`, y arma `PM-0042` con `padStart(4, "0")`. Es atómica
+por diseño — dos llamadas concurrentes a `nextval()` nunca devuelven el mismo valor, sin lock
+explícito ni reintento — y que un rollback no libere el número (`nextval` no es transaccional en
+Postgres) es aceptable: un pedido que falló a mitad de camino no tiene por qué reciclarlo.
+
+**Probado de verdad**, como pedía el criterio de terminado: 5 checkouts lanzados en paralelo
+contra la app completa (`Promise.all` de 5 flujos de Playwright independientes, cada uno con su
+propio contexto de navegador) dieron 5 números distintos y consecutivos, sin colisiones ni
+duplicados.
+
+#### Precios desincronizados: reconciliación proactiva + snapshot como única verdad
+
+`src/lib/tienda/carrito-servidor.ts` (`revalidarItemsCarrito`) es la única función que sabe si
+una variante del carrito sigue siendo vendible (`isActive` + producto `PUBLISHED`) y cuál es su
+precio real. Se usa en dos lugares con el mismo contrato:
+
+- **Proactivo, en el cliente** (`useReconciliacionCarrito`, un hook compartido por el drawer,
+  `/carrito` y `/checkout`): al hidratar, revalida el carrito completo contra la base.
+  - Variante inactiva/eliminada/despublicada → se saca sola del carrito con un toast explicando
+    por qué. No hay nada que confirmar.
+  - Precio distinto → se actualiza el carrito al precio real (nuevo método `actualizarPrecio` en
+    `src/lib/carrito.ts`) y en `/checkout` aparece un banner con el precio anterior tachado y el
+    nuevo, con un botón "Entendido, continuar" que **bloquea el envío hasta que se confirma** —
+    es la lectura que se le dio a "pedir confirmación antes de cerrar" del AGENTS.md.
+- **Definitivo, en el servidor** (`crearPedido`): vuelve a resolver cada variante contra la base
+  dentro de la Server Action, ignorando cualquier precio que haya mandado el cliente. Si algo
+  sigue siendo inválido a esta altura (JS deshabilitado, pestaña vieja, llamada directa a la
+  acción) devuelve la lista de variantes inválidas y el cliente las saca del carrito para poder
+  reintentar. El total del pedido **siempre** sale de acá, nunca de lo que mostró la
+  reconciliación del cliente — esa es sólo cortesía de UX.
+
+**Probado con precios de verdad**: agregar un producto, cambiarle el precio en la base con el
+carrito ya armado, y confirmar en `/checkout` que aparece el banner, que el botón de envío queda
+deshabilitado hasta confirmar, y que el `OrderItem` creado usa el precio nuevo — y que un cambio
+de precio _después_ de cerrado el pedido no le toca un dígito (se releyó desde la base con el
+producto ya vendido a otro precio y el pedido siguió mostrando el original). Mismo test para una
+variante que se desactiva con el producto ya en el carrito: se saca sola, sin romper el resto.
+
+#### El popup de WhatsApp
+
+`FormularioCheckout` abre `window.open("", "_blank")` como la primera línea del handler de click
+— antes de cualquier `await`, tal como describe la trampa del AGENTS.md — y recién le pone
+`.location.href` cuando vuelve la Server Action. Si la validación del formulario falla, se cierra
+la ventana en blanco (`onInvalid` de `handleSubmit`). Probado con `window.open` interceptado para
+simular el bloqueo real de un navegador: el flujo igual navega a `/pedido/[number]/gracias` con
+el link en la URL, y la página muestra un botón "Abrir WhatsApp" bien visible y clickeable en vez
+de reintentar un `window.open` automático (que se bloquearía seguro, al no venir de un gesto
+directo del usuario).
+
+#### `/pedido/[number]/gracias`: decisión sobre el número adivinable
+
+Esta página **nunca consulta la base por `number`**. Todo lo que muestra sale del `link` que le
+pasa `/checkout` por query string, recién generado — nombre, teléfono e items del pedido no
+viajan para acá. Sin ese `link` (alguien entra directo a `/pedido/PM-0043/gracias` adivinando el
+siguiente número), cae al mismo mensaje genérico para cualquier número exista o no, con un botón
+de WhatsApp que abre una consulta genérica al número de la tienda — no hay forma de que un
+tercero saque nada de un pedido ajeno desde acá, ni siquiera confirmar que existe.
+
+#### El teléfono: prefijo fijo en la UI, no adivinar el formato
+
+El input de teléfono replica el mockup: `+54 9` como prefijo fijo y el cliente sólo tipea el
+número local. Eso evita el problema real de `libphonenumber-js` con los mil formatos en que un
+argentino escribe su celular (`0223 15 6163910` vs `223 616 3910`) — como la UI ya fija el
+código de país y el `9` de celular, el string que se valida es casi siempre no ambiguo. La
+validación estricta (`isValidPhoneNumber(v, "AR")`) vive sólo en el servidor, sobre el string ya
+armado con el prefijo; el cliente valida apenas un largo mínimo, y si el servidor rechaza el
+teléfono el error vuelve por campo (`setError`) en vez de un cartel genérico. Se guarda en
+`Order.customerPhone` como E.164 (`+5492236163910`), y `telefonoVisible()` (nueva función en
+`src/lib/whatsapp.ts`, con `libphonenumber-js`) lo formatea para mostrar en el admin.
+
+#### El verde de WhatsApp: token nuevo, y el hex del mockup no pasaba contraste
+
+`--whatsapp` / `--whatsapp-foreground` en `globals.css`, igual en claro y oscuro (es un botón
+sólido como `--primary`, no una etiqueta tenue como `--success`, así que el contraste es interno
+al botón y no depende del fondo de la página). El `#1DA851` del mockup da **2,68:1** de contraste
+contra el texto crema del botón — muy por debajo del 4,5:1 de WCAG AA, ni siquiera pasa como
+texto grande. Se oscureció a `#107D3A` (4,53:1), mismo criterio que `colorDeChip()` de la Fase 4.
+
+#### Honeypot + rate limit
+
+Campo `empresa` (nombre elegido para no darle a un bot una pista de qué evitar), oculto fuera de
+pantalla con `aria-hidden` + `tabIndex={-1}`, leído con un `useRef` fuera de react-hook-form así
+un error de validación en un campo invisible nunca aparece en el `formState`. Si viene lleno, el
+mensaje de rechazo es el mismo genérico que cualquier otro error. Rate limit de 5 intentos cada
+10 minutos por IP (`checkout:${ip}`, mismo `rateLimit()` de `src/lib/rate-limit.ts` que ya usaba
+el login) — una compra real no manda más de un par de pedidos seguidos, así que esto sólo frena
+scripts.
+
+#### Lo que salió distinto a lo planeado
+
+- **`/checkout` reusa el header y el footer completos del storefront**, no la barra mínima (sólo
+  logo + aviso de "no pedimos datos de pago") que dibuja `design/Checkout.dc.html`. Separar esa
+  barra hubiera significado sacar `Header`/`Footer` del layout compartido de `(tienda)` y
+  armar un layout aparte sólo para esta ruta — demasiada cirugía estructural para una sola
+  pantalla, con el storefront entero ya construido sobre ese layout. El aviso de seguridad del
+  mockup quedó como un `Alert` dentro del contenido de la página en vez de estar en la barra
+  superior.
+- **El honeypot no es parte de `checkoutSchema`**: si lo fuera, un envío de bot fallaría la
+  validación de Zod con un error real en un campo que ningún humano ve, lo que es una pista rara
+  en el `formState` del lado del cliente. Se lee aparte, a mano, en la Server Action.
+- **La confirmación de precios cambiados es una barrera en el cliente (banner + botón), no una
+  segunda ronda contra el servidor** con un flag `confirmado`. El servidor ya recalcula el total
+  desde la base sin importar qué haya confirmado el cliente, así que la "confirmación" es
+  puramente informativa — no hacía falta el viaje de ida y vuelta extra.
+
+#### Verificado contra el servidor de producción (`next build` + `next start`)
+
+Con Playwright manejando Chromium en Docker, contra datos reales (`pnpm db:seed-dev`) y con el
+número de WhatsApp de prueba que pasó el dueño del proyecto (`+54 9 223 306 2103`) cargado
+temporalmente en `SiteSetting.whatsappNumber` durante las pruebas, restaurado al número real
+(`+54 9 223 616 3910`) al terminar:
+
+- Agregar desde la ficha, abrir el drawer (desktop y mobile, mismo `<Sheet>` con dos triggers),
+  cambiar cantidades con el stepper, borrar un ítem: todo persiste al recargar y al navegar.
+- Checkout completo de punta a punta: el link `wa.me` generado trae el mensaje bien formado desde
+  la plantilla real de `SiteSetting` (marca, items con nombre/variante/cantidad/subtotal, total,
+  nombre, número de pedido), y el pedido aparece en `/admin/pedidos` con ese mismo número.
+- Precio cambiado con el carrito ya armado → banner + confirmación → el pedido usa el precio
+  nuevo. Variante desactivada con el carrito ya armado → se saca sola con un toast.
+- Un cambio de precio _después_ de cerrado el pedido no le toca un dígito al `OrderItem` ya
+  creado (snapshot verificado a mano contra la base).
+- 5 checkouts en paralelo → 5 números de pedido distintos, sin colisiones.
+- Honeypot completo → no crea pedido, sin romper la página.
+- Rate limit → al sexto intento en la ventana de 10 minutos, mensaje claro en español.
+- Popup de WhatsApp bloqueado (simulado) → `/pedido/[number]/gracias` igual muestra el botón de
+  reintento con el link correcto.
+- Admin de pedidos: listado con conteos por estado, búsqueda por número/nombre, filtro por tabs,
+  detalle con selector de estado, botón "Abrir chat" al teléfono del cliente, ítems con link al
+  producto cuando sigue existiendo, notas del admin editables.
+- Mobile (390px): drawer, `/carrito` y `/checkout` sin scroll horizontal, sin errores de consola
+  ni de hidratación.
+- `pnpm typecheck`, `pnpm lint` y `pnpm build` en limpio, cero warnings.
+
+#### Cómo se repartió el trabajo
+
+Dos subagentes en paralelo con modelo liviano (`general-purpose`, Sonnet), cada uno con archivos
+delimitados de antemano: uno hizo el drawer del carrito, `/carrito` y la integración con el
+header; el otro, el admin de pedidos completo (listado, detalle, cambio de estado, notas, link al
+chat). El diseño de la Server Action de checkout, la secuencia del número de pedido, el manejo de
+precios desincronizados y la verificación final quedaron en mano del orquestador, como pedía la
+consigna. El agente del admin de pedidos encontró y arregló solo un bug real: un Client Component
+(`SelectorEstado`) importaba las etiquetas de estado directo de `src/lib/admin/pedidos.ts`, que
+también trae `prisma` — Turbopack intentaba meter el driver de Postgres en el bundle del browser.
+Se resolvió pasando las etiquetas como prop desde el Server Component padre.
 
 ### Fase 6 — Configuración del sitio
 
@@ -770,7 +910,8 @@ Validadas al arrancar con `@t3-oss/env-nextjs`.
 1. ✅ **Bucket de R2 — listo.** `parfam-mdq-imagenes` servido por `img.parfammdq.com`, con un
    token acotado a ese bucket. Las credenciales están en el `.env` local; falta cargarlas en
    Dokploy cuando se cree la app (Fase 7).
-2. 🟢 Un número de WhatsApp de prueba para el checkout (si no, usamos el real).
+2. ✅ **Número de WhatsApp de prueba — listo.** `+54 9 223 306 2103`, usado durante la
+   verificación de la Fase 5 y restaurado al real al terminar (ver esa fase).
 3. 🟢 Fotos propias de los productos para la carga de la Fase 8.
 4. 🟢 Cuando arranque la Fase 2 (auth), definir `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`
    reales en el `.env` de cada entorno — el `.env` local tiene credenciales de prueba

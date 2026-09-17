@@ -688,12 +688,11 @@ le aplica encima un ×4 de CPU. Las métricas medidas **de verdad** con throttli
 0,9 s, CLS 0,001**. Lo que baja el puntaje de mobile es el TBT (~280 ms) de hidratar React con la
 CPU frenada, no la carga de la página.
 
-> ⚠️ **Pendiente de producto, no de código: los nombres de marca no tienen tildes.** El dataset
-> guarda la marca ya en formato slug (`lancome`, `jean-paul-gaultier`), así que no hay tilde que
-> recuperar: la tienda muestra "Lancome" donde debería decir "Lancôme". **No hay forma de
-> corregir el nombre de una marca desde el panel**, y con ~40 productos van a ser varias
-> (Lancôme, Hermès, L'Occitane...). Habría que sumar la edición de marcas, probablemente junto
-> con la Fase 6.
+> ⚠️ **Los nombres de marca no tienen tildes.** El dataset guarda la marca ya en formato slug
+> (`lancome`, `jean-paul-gaultier`), así que no hay tilde que recuperar: la tienda muestra
+> "Lancome" donde debería decir "Lancôme", y hoy no hay forma de corregirlo desde el panel. Con
+> ~40 productos van a ser varias (Lancôme, Hermès, L'Occitane...). **Decidido: la edición de
+> marcas entra en la Fase 6**, antes de la carga real de la Fase 8.
 
 ### Fase 5 — Carrito y checkout por WhatsApp
 
@@ -712,10 +711,16 @@ formateado, el pedido aparece en `/admin/pedidos` y cambiar el precio después n
 
 ### Fase 6 — Configuración del sitio
 
-Formulario único sobre `SiteSetting`, cacheado con `unstable_cache` e invalidado al guardar.
+1. Formulario único sobre `SiteSetting`, cacheado con `unstable_cache` e invalidado al guardar.
+2. **Edición de marcas.** Viene de la Fase 4: el dataset guarda la marca en formato slug, así
+   que la tienda muestra "Lancome" en vez de "Lancôme" y no hay forma de arreglarlo a mano.
+   Alcanza con poder editar el `name` de una `Brand` (el `slug` **no** se toca: es la URL de
+   `/marca/[slug]` y ya está en el sitemap). Al guardar hay que revalidar la tienda, igual que
+   hacen las acciones de producto con `revalidarTienda()`.
 
 **Verificación:** cambiar el número de WhatsApp desde el panel y ver que el siguiente checkout
-usa el nuevo sin redeploy.
+usa el nuevo sin redeploy; y corregir "Lancome" a "Lancôme" y ver el cambio en la grilla, en la
+ficha y en `/marca/lancome`, con la URL intacta.
 
 ### Fase 7 — Deploy
 

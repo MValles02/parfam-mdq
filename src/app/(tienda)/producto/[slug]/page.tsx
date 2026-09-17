@@ -12,7 +12,6 @@ import { productoPorSlug, relacionados } from "@/lib/tienda/consultas";
 import { ChipAcorde } from "@/components/tienda/chip-acorde";
 import { TarjetaProductoCard } from "@/components/tienda/tarjeta-producto";
 import { Separator } from "@/components/ui/separator";
-import { Toaster } from "@/components/ui/sonner";
 import { Galeria } from "@/components/tienda/producto/galeria";
 import { Comprar } from "@/components/tienda/producto/comprar";
 import { Piramide } from "@/components/tienda/producto/piramide";
@@ -163,13 +162,6 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
             <p className="mt-6 text-xs text-muted-foreground">
               Envío en Mar del Plata · Retiro a convenir · 100% original
             </p>
-
-            {/* El Toaster va acá y no en el layout de la tienda: hoy el unico
-                que avisa algo es "agregado al carrito", y montarlo en el
-                layout le cargaba el JS de sonner a la home y al catalogo sin
-                que lo usaran. Cuando la Fase 5 sume el drawer del carrito,
-                vuelve al layout. */}
-            <Toaster position="top-right" richColors />
           </div>
         </div>
 

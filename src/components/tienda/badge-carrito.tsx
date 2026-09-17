@@ -5,9 +5,10 @@ import { useCantidadCarrito } from "@/lib/carrito";
 import { cn } from "@/lib/utils";
 
 /**
- * Indicador de unidades en el carrito (icono de bolsa + cantidad). Todavia no
- * es un link: el drawer y /carrito llegan en la Fase 5 (ver AGENTS.md), asi
- * que por ahora es puramente informativo.
+ * Indicador de unidades en el carrito (icono de bolsa + cantidad). No es un
+ * link: `header.tsx` lo envuelve en un `<button>` (trigger del `<Sheet>` del
+ * drawer, Fase 5) sin tocar este componente, asi que sigue siendo puramente
+ * informativo puertas adentro.
  *
  * `variante="chip"` es el formato de la barra desktop (design/Main.dc.html);
  * `variante="boton"` es el cuadrado con el numero en un circulo, como en

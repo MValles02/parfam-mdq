@@ -931,7 +931,7 @@ catálogo y en la ficha del producto (título, breadcrumb, JSON-LD y el nombre d
 producto) — sin tocar el `alt` de las fotos, que es texto propio cargado a mano en la Fase 3 y no
 deriva del nombre de la marca.
 
-### Fase 7 — Deploy (código hecho, infra pendiente)
+### Fase 7 — Deploy (el sitio está en producción; falta cerrar la verificación)
 
 El repo ya tiene todo lo que hace falta para producir y desplegar la imagen; lo que falta es
 infraestructura (Dokploy, DNS, la importación de referencias), que se hace a mano y queda
@@ -1112,6 +1112,211 @@ las dos cosas a la vez: el push de CI y el pull de Dokploy.
   detalle sin consecuencias en producción, donde cada deploy es un contenedor nuevo, pero anotado
   por si alguna vez confunde.
 
+#### La infra: qué se hizo y cómo repetirlo
+
+`https://parfammdq.com` quedó andando con SSL. Esta parte se hizo entre los dos: Mateo por la UI
+de Dokploy y Cloudflare lo que llevaba secretos o tocaba la cuenta, el resto por el MCP de Dokploy.
+
+**El MCP de Dokploy no estaba roto: lo bloqueaba el propio allowlist de la VPS.** Daba 403 en
+_todas_ las lecturas, lo que parecía una API key vencida. No era eso. El diagnóstico, que sirve
+para la próxima:
+
+- La UI de Dokploy también daba 403 **sin ningún header de autenticación**, así que no era la key.
+- Cloudflare está delante de `dokploy.mateovalles.cloud`, pero con `cf-cache-status: DYNAMIC`:
+  reenviaba al origen. Pegándole al origen directo (`--resolve … 127.0.0.1`) daba **200** en `/`
+  y **401** en `/api/…`, o sea Dokploy contestando bien.
+- La causa estaba en `/etc/dokploy/traefik/dynamic/dokploy.yml`: un middleware `dokploy-vpn-only`
+  con un `ipAllowList` de `172.18.0.1/32` (el gateway de Docker) y dos IPs `100.x` del Tailnet.
+  **El panel es VPN-only a propósito.** El navegador de Mateo entra por Tailscale; el MCP salía a
+  internet y volvía como una IP de Cloudflare, que el allowlist rechaza con ese `403 Forbidden`
+  de 9 bytes que tira `ipAllowList`.
+
+La solución no tocó nada de la seguridad: una línea en `/etc/hosts` de la VPS
+(`127.0.0.1 dokploy.mateovalles.cloud`) para que el nombre resuelva local. Desde el host la
+request entra por el NAT de Docker y Traefik ve `172.18.0.1`, que ya está permitida; el
+certificado de Let's Encrypt valida igual porque el SNI es correcto. Desde internet el panel sigue
+dando 403. Se revierte borrando la línea.
+
+Los writes del MCP los bloquea el classifier de auto mode (`Production Deploy`), así que se
+habilitó una lista **acotada** en `.claude/settings.local.json` (gitignoreado): `postgres-deploy`,
+`application-{update,deploy,redeploy,start,stop}` y `rollback-rollback`. Nada de
+`delete`/`remove`/`clean`, porque el server es compartido con otra app.
+
+**Lo que quedó configurado**, para poder repetirlo:
+
+- **GitHub** — variables del repo `NEXT_PUBLIC_SITE_URL=https://parfammdq.com` y
+  `R2_PUBLIC_URL=https://img.parfammdq.com` (variables, no secrets: Next las inlinea y quedan a la
+  vista en el HTML igual), más el secret `GHCR_TOKEN` con el PAT.
+- **Dokploy** — proyecto `parfam-mdq`, entorno `production`:
+  - Servicio **Postgres 17-alpine** llamado `database`, base y usuario `parfam`, volumen propio,
+    **sin puerto externo**. Su hostname interno es su `appName`:
+    `parfammdq-database-oqwwzm:5432`. De ahí sale el `DATABASE_URL` de la app.
+  - Aplicación `web`, **tipo Docker** apuntando a `ghcr.io/mvalles02/parfam-mdq:latest`. Las
+    credenciales de GHCR van **inline en el provider Docker** (`registryUrl: ghcr.io`, usuario
+    `MValles02`, el PAT como password), no como Registry compartido: `registryId` queda en `null`
+    y eso es correcto, son dos formas equivalentes.
+  - Dominios `parfammdq.com` y `www.parfammdq.com`, puerto 3000, HTTPS con Let's Encrypt.
+  - `autoDeploy: true` con trigger `push`, `replicas: 1`.
+  - Swarm: `updateConfigSwarm` con `Order: start-first`, `FailureAction: rollback`,
+    `Monitor: 120s`, `Parallelism: 1`; `rollbackConfigSwarm` con `FailureAction: pause`.
+    **`healthCheckSwarm` queda vacío (`{"Test": []}`) a propósito**: en la API de Docker un `Test`
+    vacío significa "heredá el de la imagen" (distinto de `["NONE"]`, que lo desactiva), así que
+    los tiempos del healthcheck viven en un solo lugar, el Dockerfile, y no se pueden
+    desincronizar. Verificado: el spec del servicio queda con `Healthcheck: {}` y el contenedor
+    reporta `healthy`.
+- **DNS** — `A` de `parfammdq.com` y de `www` a `148.113.237.96`, **en DNS only (nube gris)**.
+  Se eligió gris y no naranja porque con el proxy de Cloudflare y el SSL/TLS en _Flexible_,
+  Cloudflare habla HTTP al origen, Traefik responde 308 a HTTPS y se entra en un loop de
+  redirecciones. Si alguna vez se quiere el CDN, hay que prenderlo con SSL/TLS en **Full (strict)**
+  y el certificado de LE ya emitido. `img.parfammdq.com` sigue apuntando a R2 y no se tocó
+  (verificado sirviendo un objeto real en 200).
+
+#### 🐛 El certificado no se emitía, y no era el DNS
+
+Con el DNS ya corregido, `https://parfammdq.com` seguía sirviendo `CN=TRAEFIK DEFAULT CERT` (el
+autofirmado), así que todo daba `000` por fallo de verificación TLS. Los logs de Traefik mostraban
+el error real, pero **de 40 minutos antes**:
+
+```
+acme: error: 400 :: urn:ietf:params:acme:error:dns ::
+no valid A records found for parfammdq.com
+```
+
+Es decir: el primer intento de ACME salió cuando el DNS todavía apuntaba a Cloudflare, falló, y
+Traefik **no volvió a intentar**. Dos cosas no funcionaron para despertarlo:
+
+1. Un `application-redeploy` de Dokploy **no reescribe** el archivo de Traefik de la app (quedó con
+   el timestamp original), así que el file provider nunca recargó.
+2. Un `domain-update` con los **mismos valores** sí reescribe el archivo, pero con contenido
+   idéntico — y Traefik deduplica: si la configuración no cambió, no hace nada. Cero líneas de
+   ACME en los logs.
+
+Lo que sí funcionó: forzar un cambio **real** de configuración. Se puso el dominio en
+`https: false` / `certificateType: none` (lo que borra el router `…-websecure-1` del archivo) y
+después se volvió a `https: true` / `letsencrypt`. Traefik lo vio como un router nuevo y pidió el
+certificado. Resultado: `issuer=C=US, O=Let's Encrypt, CN=YR1`, `subject=CN=parfammdq.com`, válido
+hasta el 16/12/2026, y lo mismo para `www`.
+
+La alternativa era reiniciar Traefik, que se descartó porque es compartido con la otra app de la
+VPS. Si vuelve a pasar (por ejemplo al agregar un dominio antes de que propague el DNS), el
+recurso es ese: sacar y reponer el HTTPS del dominio, no redeployar.
+
+#### El bootstrap de la base
+
+El PLAN asumía clonar el repo en la VPS. No hizo falta: **la sesión ya corría en la VPS** (ahí
+viven Dokploy, Traefik y la otra app), así que se usó el working copy con sus `node_modules` ya
+instalados, montado en un contenedor efímero sobre la red overlay de Dokploy, que es `attachable`:
+
+```bash
+APP=$(docker ps --filter "name=parfammdq-web" --filter "health=healthy" -q | head -1)
+docker inspect "$APP" --format '{{range .Config.Env}}{{println .}}{{end}}' \
+  | grep -E '^(DATABASE_URL|AUTH_SECRET|AUTH_TRUST_HOST|NEXT_PUBLIC_SITE_URL|R2_[A-Z_]+)=' > /tmp/prod.env
+chmod 600 /tmp/prod.env
+docker run --rm --network dokploy-network --env-file /tmp/prod.env \
+  -v "$PWD:/repo" -w /repo node:24 ./node_modules/.bin/tsx prisma/seed.ts
+rm -f /tmp/prod.env
+```
+
+El entorno se saca del contenedor que ya está corriendo en vez de escribirlo a mano: así la
+password de la base no pasa por ningún archivo del repo ni por la terminal. **Ojo con el
+`grep`**: el patrón tiene que ser `R2_[A-Z_]+`, no `R2_` — con `R2_` la alternancia exige un `=`
+inmediatamente después y ninguna variable de R2 matchea (pasó, y hace parecer que faltan).
+
+Hay una razón por la que esto no puede correr dentro de la imagen: el seed necesita `tsx` y
+`@node-rs/argon2`, y el runner no los trae. Y las credenciales del admin no tienen por qué vivir
+en las env vars de la app: son sólo para este bootstrap.
+
+Resultados contra la base de producción:
+
+- Las **4 migraciones aplicadas desde cero** por el entrypoint del contenedor (visto en sus logs,
+  y confirmado en `_prisma_migrations`).
+- `SiteSetting` sembrada con los valores reales de la marca.
+- **69.946 referencias importadas en 195 s**: 1.748 marcas, 1.882 notas, 93 acordes, 1.355
+  perfumistas, 451.650 relaciones ref→nota y 461.671 ref→acorde, 46.888 fragancias con pirámide
+  (67,0%). Incluyó el recálculo de `usageCount` (el fix del bug de la Fase 1).
+
+**La prueba de que la decisión del build sin base funciona en producción**: la imagen se compiló
+en CI sin ningún Postgres, y al sembrar `SiteSetting` el sitio pasó a mostrar el Instagram real en
+el footer y `<title>Carrito — ParfamMdq</title>` (que sale de `SiteSetting.brandName`) **sin
+redeploy ni reinicio**. Con la opción (a) del seed en CI, esas páginas habrían seguido mostrando
+los valores del build hasta que alguien guardara en el panel.
+
+#### ✅ El rollback, probado a propósito — y son dos redes, no una
+
+Se hicieron dos pruebas con el sitio ya vivo (buen momento: sin productos ni tráfico todavía) y un
+monitor pegándole a `/api/health` cada 2 segundos.
+
+**Prueba 1 — imagen que no existe** (`:rollback-test-no-existe`, que es el ejemplo que proponía el
+PLAN). **No ejercita el rollback.** Dokploy hace `docker pull` _antes_ de tocar Swarm y aborta ahí:
+
+```
+Pulling ghcr.io/mvalles02/parfam-mdq:rollback-test-no-existe
+Login Succeeded
+Error response from daemon: ... not found
+❌ Pulling image failed
+```
+
+El servicio de Swarm nunca se modificó (siguió en `:latest`, `updateState=completed`). Es una red
+de seguridad más temprana y mejor: una imagen inexistente no llega ni a intentarse. Pero hay que
+saber que **ese test no prueba el `FailureAction`**.
+
+**Prueba 2 — imagen que baja bien pero nunca queda sana**: se le puso un `healthCheckSwarm` de
+`["CMD-SHELL", "exit 1"]` sobre la misma imagen real. Esto sí ejercita todo el camino:
+
+| Hora     | `UpdateStatus.State` | Healthcheck del spec   | Contenedor viejo      |
+| -------- | -------------------- | ---------------------- | --------------------- |
+| 19:43:48 | `updating`           | `[CMD-SHELL exit 1]`   | `Up 22 min (healthy)` |
+| 19:44:18 | `rollback_started`   | vuelve al de la imagen | `Up 22 min (healthy)` |
+| 19:45:29 | `rollback_completed` | el de la imagen        | `Up 23 min (healthy)` |
+
+Swarm vio el healthcheck fallando, dio el update por fallido, disparó el rollback y revirtió el
+spec entero —incluido el healthcheck malo—, y el `start-first` **nunca** retiró el contenedor
+viejo. El rollback tardó ~30 s y no los 2 minutos del `Monitor`, porque el task falló de una en vez
+de agotar la ventana. Esto confirma además que **Swarm respeta el `HEALTHCHECK` que viene de la
+imagen** para decidir si un task está listo, que es la apuesta de dejar `healthCheckSwarm` vacío.
+
+**Uptime durante las dos pruebas y el deploy de restauración: 300 muestras, cero respuestas
+distintas de 200.** El sitio no se cayó un segundo.
+
+**🐛 Y una trampa que sale de acá: el rollback de Swarm no se sincroniza hacia Dokploy.** Después
+del rollback, Dokploy seguía teniendo guardado el `healthCheckSwarm` roto, y marcaba el deployment
+como `status: "done"`. O sea:
+
+- La UI de Dokploy **no es señal confiable** de que un deploy salió bien para este modo de falla:
+  dice "done" aunque Swarm haya revertido.
+- Y la configuración guardada en Dokploy es la que se aplica en el **siguiente** deploy, así que
+  después de un rollback hay que arreglar la causa en Dokploy a mano — si no, el próximo push
+  vuelve a romper. Se limpió poniendo `healthCheckSwarm` en `{"Test": []}` y redeployando.
+
+#### Lo que queda de esta fase
+
+El sitio está en producción y el rollback está probado, pero la verificación no está cerrada.
+Falta, en este orden:
+
+1. **El usuario admin.** La base de producción no tiene ninguno: el seed corrió sin
+   `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` a propósito, porque son credenciales que elige Mateo y
+   no tienen por qué pasar por la sesión. Se corre el mismo comando del bootstrap con esas dos
+   variables agregadas. Hasta que exista, no se puede probar el login.
+2. **El login del panel en producción**, que es el test real de `@node-rs/argon2` en musl contra
+   la imagen desplegada (en local ya se verificó, pero contra otra base y otro contenedor).
+3. **Una subida de foto a R2 desde el panel.** Las nueve variables están cargadas en el contenedor
+   y con los largos correctos, y `img.parfammdq.com` sirve objetos, pero la ruta de escritura
+   (presigned PUT con el token acotado al bucket) no se probó contra producción.
+4. **Un checkout de punta a punta.** `SiteSetting.whatsappNumber` tiene hoy el número **real del
+   negocio**, así que esto no se hace sin cambiarlo antes por el de prueba desde
+   `/admin/configuracion` y restaurarlo al terminar — mismo criterio que en las fases 5 y 6.
+5. **Cerrar el circuito push → deploy.** Falta cargar el webhook de redespliegue que genera Dokploy
+   como secret `DOKPLOY_WEBHOOK_URL` en GitHub. Hasta entonces el workflow publica la imagen y
+   avisa que omite el redespliegue (está escrito para no fallar por eso), y el deploy se dispara a
+   mano desde Dokploy.
+
+**Umami y los backups de Postgres a R2 quedan para una sesión aparte.** No son bloqueantes para
+tener el sitio andando, y cada uno trae infra propia en una VPS ya compartida: un servicio más
+para Umami, y para los backups un bucket distinto, una política de retención y un cron. Las
+variables de Umami ya están cableadas en `src/lib/env.ts` y en el workflow de Actions, así que
+sumarlo después es cargar dos variables del repo y un `workflow_dispatch` — no hay que tocar
+código.
+
 #### Nota para cuando se escale (no hacer ahora)
 
 El `revalidateTag`/`revalidatePath` de las fases 5 y 6 invalida el cache **de la instancia que
@@ -1119,88 +1324,6 @@ atiende la Server Action**. Con una réplica no hay problema, y durante un deplo
 dos contenedores conviven un rato pero el nuevo arranca con el cache vacío, así que es tolerable.
 Si alguna vez se fija más de una réplica, esto deja de funcionar y hace falta un `cacheHandler`
 compartido (Redis) — ver `self-hosting.md` § Configuring Caching.
-
-#### Pendiente: la infra (se hace a mano)
-
-El MCP de Dokploy devuelve 403 en todas las lecturas, así que esta parte va por la UI.
-
-**1. GitHub — variables y secrets del repo** (`Settings → Secrets and variables → Actions`):
-
-| Nombre                 | Tipo     | Valor                              |
-| ---------------------- | -------- | ---------------------------------- |
-| `NEXT_PUBLIC_SITE_URL` | Variable | `https://parfammdq.com`            |
-| `R2_PUBLIC_URL`        | Variable | `https://img.parfammdq.com`        |
-| `DOKPLOY_WEBHOOK_URL`  | Secret   | el que genera Dokploy en el paso 4 |
-
-`NEXT_PUBLIC_UMAMI_URL` / `NEXT_PUBLIC_UMAMI_WEBSITE_ID` quedan sin cargar hasta que exista
-Umami; vacías no rompen nada (`src/lib/env.ts` las trata como opcionales).
-
-**2. GHCR — el package queda privado.** El repo es privado, así que el package nace privado y
-conviene dejarlo así: la imagen tiene el bundle compilado del panel. Dokploy necesita entonces una
-credencial de registry: un **PAT clásico con `read:packages`** cargado en Dokploy como Registry
-(`Settings → Registry → Add`), con `ghcr.io` de host y el usuario de GitHub. Un PAT
-fine-grained no sirve para GHCR.
-
-**3. Dokploy — Postgres.** Crear el servicio **Postgres 17** dentro del proyecto. Anotar el
-`DATABASE_URL` interno que da Dokploy (resuelve por nombre de servicio en la red de Docker, no por
-`localhost`). **No** exponer puerto externo.
-
-**4. Dokploy — la app.** Tipo **Docker** (no Git, no Nixpacks: la imagen ya viene hecha):
-
-- Imagen: `ghcr.io/mvalles02/parfam-mdq:latest`, con la credencial de registry del paso 2.
-- Puerto interno: `3000`.
-- Dominios: `parfammdq.com` y `www.parfammdq.com`, puerto 3000, HTTPS con Let's Encrypt y
-  redirección a HTTPS.
-- Env vars (Environment):
-  ```
-  DATABASE_URL=<el interno de Dokploy, paso 3>
-  AUTH_SECRET=<openssl rand -base64 32, uno NUEVO, no el de local>
-  AUTH_TRUST_HOST=true
-  NEXT_PUBLIC_SITE_URL=https://parfammdq.com
-  R2_ACCOUNT_ID=<.env local>
-  R2_ACCESS_KEY_ID=<.env local>
-  R2_SECRET_ACCESS_KEY=<.env local>
-  R2_BUCKET=parfam-mdq-imagenes
-  R2_PUBLIC_URL=https://img.parfammdq.com
-  ```
-  `PORT` y `HOSTNAME` no hace falta ponerlas: la imagen ya trae `PORT=3000` y
-  `HOSTNAME=0.0.0.0`. Sin `HOSTNAME=0.0.0.0` el server escucharía en localhost dentro del
-  contenedor y ni Traefik ni el `HEALTHCHECK` lo alcanzarían.
-- Swarm settings: **Health Check** `CMD-SHELL` sobre `/api/health`, **Update Config** con
-  `Order: start-first` y `Failure Action: rollback`, `Replicas: 1`.
-- Copiar el **webhook de redeploy** que genera Dokploy al secret `DOKPLOY_WEBHOOK_URL` de GitHub.
-
-**5. DNS.** `A` de `parfammdq.com` a la IP de la VPS y `CNAME` de `www` a `parfammdq.com`.
-`img.parfammdq.com` ya apunta a R2 desde la Fase 3 y no se toca.
-
-**6. Bootstrap de la base, una sola vez, desde la VPS.** La imagen aplica migraciones pero **no**
-siembra: el seed necesita `tsx` y `@node-rs/argon2`, que no están en el runner, y las credenciales
-del admin no tienen por qué vivir en la app. Se corre desde un clon del repo en la VPS, que es el
-mismo clon que necesita la importación (los CSV no entran a la imagen):
-
-```bash
-git clone git@github.com:MValles02/parfam-mdq.git && cd parfam-mdq
-pnpm install
-# .env con el DATABASE_URL de produccion + ADMIN_SEED_EMAIL / ADMIN_SEED_PASSWORD reales
-pnpm db:seed               # usuario admin + fila singleton de SiteSetting
-pnpm db:import-fragrantica  # las 69.946 referencias, ~1 vez y listo
-```
-
-El seed es idempotente (el usuario sólo se crea si no existe; `SiteSetting` usa `upsert` con
-`update: {}`), así que re-correrlo no pisa nada de lo que se haya cambiado desde el panel. Borrar
-el `.env` del clon al terminar.
-
-**7. Umami y backups — quedan para una sesión aparte.** No son bloqueantes para tener el sitio
-andando y cada uno trae su propia infra (un servicio más en la VPS compartida, un bucket y una
-política de retención). Las variables de Umami ya están cableadas en el workflow y en
-`src/lib/env.ts`, así que sumarlo es cargar dos variables y rebuildear con `workflow_dispatch`.
-
-**Verificación pendiente** (en este orden): push a `main` → Actions verde → imagen en GHCR con los
-dos tags → Dokploy redespliega → `https://parfammdq.com` con SSL, `/api/health` en 200, catálogo
-con filtros, ficha, carrito, checkout con número de prueba, login del panel y una subida de foto a
-R2 desde el panel (la pieza que más depende de que las env vars estén bien puestas). Después, un
-deploy roto a propósito para confirmar que el rollback vuelve solo a la imagen anterior sin dejar
-el sitio caído.
 
 ### Fase 8 — Cierre
 

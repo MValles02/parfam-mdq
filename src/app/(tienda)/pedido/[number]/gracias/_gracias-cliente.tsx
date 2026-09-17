@@ -5,7 +5,7 @@ import Link from "next/link";
 import { MessageCircle, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCarrito, useHidratado } from "@/lib/carrito";
-import { linkWhatsapp } from "@/lib/whatsapp";
+import { linkWhatsappA } from "@/lib/whatsapp";
 
 /**
  * `/pedido/[number]/gracias` es una URL pública con un número adivinable
@@ -19,9 +19,12 @@ import { linkWhatsapp } from "@/lib/whatsapp";
 export function GraciasCliente({
   numero,
   link,
+  whatsappNumber,
 }: {
   numero: string;
   link: string | null;
+  /** `SiteSetting.whatsappNumber`, para el fallback de abajo (ver `href`). */
+  whatsappNumber: string;
 }) {
   const hidratado = useHidratado();
   const vaciar = useCarrito((estado) => estado.vaciar);
@@ -41,7 +44,9 @@ export function GraciasCliente({
   // (AGENTS.md trampa #1): acá no hay gesto del usuario todavía, así que
   // reintentar un window.open automático se bloquearía seguro. Lo que
   // corresponde es un botón bien visible para el reintento manual.
-  const href = link ?? linkWhatsapp(`¡Hola! Quería consultar por mi pedido.`);
+  const href =
+    link ??
+    linkWhatsappA(whatsappNumber, "¡Hola! Quería consultar por mi pedido.");
 
   return (
     <div className="mx-auto flex max-w-[560px] flex-col items-center gap-6 px-5 py-24 text-center">

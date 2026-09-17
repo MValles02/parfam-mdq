@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AtSign, MapPin, MessageCircle } from "lucide-react";
+import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 import { metadataDePagina, migasJsonLd, jsonLd, urlAbsoluta } from "@/lib/seo";
-import { linkInstagram, linkWhatsapp, whatsappVisible } from "@/lib/whatsapp";
+import { linkInstagramA, linkWhatsappA, telefonoVisible } from "@/lib/whatsapp";
 import { siteDefaults } from "@/lib/site";
 
 const TITULO = "Contacto";
@@ -20,17 +21,19 @@ const migas = [
   { nombre: TITULO, ruta: RUTA },
 ];
 
-const organizacionJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Store",
-  name: siteDefaults.legalName,
-  url: urlAbsoluta("/"),
-  telephone: siteDefaults.whatsapp,
-  areaServed: siteDefaults.city,
-  sameAs: [linkInstagram()],
-};
+export default async function ContactoPage() {
+  const config = await obtenerConfiguracionSitio();
 
-export default function ContactoPage() {
+  const organizacionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: siteDefaults.legalName,
+    url: urlAbsoluta("/"),
+    telephone: config.whatsappNumber,
+    areaServed: siteDefaults.city,
+    sameAs: [linkInstagramA(config.instagramHandle)],
+  };
+
   return (
     <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
       <script
@@ -62,7 +65,10 @@ export default function ContactoPage() {
       </p>
 
       <a
-        href={linkWhatsapp("¡Hola! Quería hacerles una consulta.")}
+        href={linkWhatsappA(
+          config.whatsappNumber,
+          "¡Hola! Quería hacerles una consulta.",
+        )}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-10 flex items-center justify-center gap-2.5 rounded bg-primary px-6 py-4 text-base font-semibold text-primary-foreground hover:bg-primary/80"
@@ -75,23 +81,26 @@ export default function ContactoPage() {
         <div className="flex items-center gap-3">
           <MessageCircle className="size-[18px] shrink-0 text-muted-foreground" />
           <a
-            href={linkWhatsapp("¡Hola! Quería hacerles una consulta.")}
+            href={linkWhatsappA(
+              config.whatsappNumber,
+              "¡Hola! Quería hacerles una consulta.",
+            )}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[15px] font-medium hover:text-muted-foreground"
           >
-            {whatsappVisible()}
+            {telefonoVisible(config.whatsappNumber)}
           </a>
         </div>
         <div className="flex items-center gap-3">
           <AtSign className="size-[18px] shrink-0 text-muted-foreground" />
           <a
-            href={linkInstagram()}
+            href={linkInstagramA(config.instagramHandle)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[15px] font-medium hover:text-muted-foreground"
           >
-            @{siteDefaults.instagram}
+            @{config.instagramHandle}
           </a>
         </div>
         <div className="flex items-center gap-3">

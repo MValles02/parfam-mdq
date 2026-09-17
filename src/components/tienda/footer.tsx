@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logotipo } from "@/components/tienda/logotipo";
-import { linkInstagram, linkWhatsapp, whatsappVisible } from "@/lib/whatsapp";
+import { obtenerConfiguracionSitio } from "@/lib/configuracion";
+import { linkInstagramA, linkWhatsappA, telefonoVisible } from "@/lib/whatsapp";
 import { siteDefaults } from "@/lib/site";
 
 const LINKS_TIENDA = [
@@ -13,8 +14,9 @@ const TITULO_COLUMNA =
   "text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase";
 
 /** Footer de la tienda (design/Main.dc.html y design/HomeMobile.dc.html). */
-export function Footer() {
+export async function Footer() {
   const anioActual = new Date().getFullYear();
+  const config = await obtenerConfiguracionSitio();
 
   return (
     <footer className="border-t border-border">
@@ -46,20 +48,20 @@ export function Footer() {
             <div className="flex flex-col gap-2.5">
               <span className={TITULO_COLUMNA}>Contacto</span>
               <a
-                href={linkWhatsapp()}
+                href={linkWhatsappA(config.whatsappNumber)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-muted-foreground"
               >
-                {whatsappVisible()}
+                {telefonoVisible(config.whatsappNumber)}
               </a>
               <a
-                href={linkInstagram()}
+                href={linkInstagramA(config.instagramHandle)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-muted-foreground"
               >
-                @{siteDefaults.instagram}
+                @{config.instagramHandle}
               </a>
             </div>
           </div>
@@ -76,21 +78,21 @@ export function Footer() {
             Perfumes originales en Mar del Plata.
             <br />
             <a
-              href={linkWhatsapp()}
+              href={linkWhatsappA(config.whatsappNumber)}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground"
             >
-              {whatsappVisible()}
+              {telefonoVisible(config.whatsappNumber)}
             </a>{" "}
             ·{" "}
             <a
-              href={linkInstagram()}
+              href={linkInstagramA(config.instagramHandle)}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground"
             >
-              @{siteDefaults.instagram}
+              @{config.instagramHandle}
             </a>
           </p>
         </div>

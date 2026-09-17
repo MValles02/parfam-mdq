@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CONCENTRACION, GENERO } from "@/lib/catalogo";
+import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 import {
   jsonLd,
   metadataDePagina,
@@ -50,7 +51,10 @@ export async function generateMetadata(
 
 export default async function Page(props: PageProps<"/producto/[slug]">) {
   const { slug } = await props.params;
-  const producto = await productoPorSlug(slug);
+  const [producto, config] = await Promise.all([
+    productoPorSlug(slug),
+    obtenerConfiguracionSitio(),
+  ]);
   if (!producto) notFound();
 
   const productosRelacionados = await relacionados({
@@ -157,6 +161,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
                 imagen: producto.imagenes[0]?.url ?? null,
               }}
               variantes={producto.variantes}
+              whatsappNumber={config.whatsappNumber}
             />
 
             <p className="mt-6 text-xs text-muted-foreground">

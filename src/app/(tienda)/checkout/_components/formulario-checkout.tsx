@@ -35,7 +35,13 @@ const PREFIJO = "+54 9";
  * usuario nunca ve sería una pista rara en el formState. Se lee a mano al
  * enviar.
  */
-export function FormularioCheckout() {
+export function FormularioCheckout({
+  shippingInfo,
+}: {
+  /** `SiteSetting.shippingInfo`, ya resuelto por el server component padre
+   * (con fallback si el admin no cargó nada, ver `obtenerConfiguracionSitio`). */
+  shippingInfo: string;
+}) {
   const router = useRouter();
   const hidratado = useHidratado();
   const items = useCarrito((estado) => estado.items);
@@ -303,7 +309,7 @@ export function FormularioCheckout() {
         <div className="my-5 h-px bg-border" />
 
         <ul className="flex flex-col gap-3 text-[13px] leading-relaxed text-foreground/90">
-          <li>Coordinamos envío en Mar del Plata o retiro a convenir.</li>
+          <li>{shippingInfo}</li>
           <li>Todos los productos son originales.</li>
           <li>Guardamos el pedido con un número para seguirlo por chat.</li>
         </ul>

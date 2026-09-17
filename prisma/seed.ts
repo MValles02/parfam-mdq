@@ -55,6 +55,7 @@ async function seedSiteSettings() {
       brandName: siteDefaults.name,
       brandTagline: siteDefaults.tagline,
       instagramHandle: siteDefaults.instagram,
+      shippingInfo: "Coordinamos envío en Mar del Plata o retiro a convenir.",
       seoDefaultTitle: `${siteDefaults.name} — ${siteDefaults.tagline}`,
       seoDefaultDescription: siteDefaults.description,
     },

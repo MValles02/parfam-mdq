@@ -849,18 +849,87 @@ consigna. El agente del admin de pedidos encontró y arregló solo un bug real: 
 también trae `prisma` — Turbopack intentaba meter el driver de Postgres en el bundle del browser.
 Se resolvió pasando las etiquetas como prop desde el Server Component padre.
 
-### Fase 6 — Configuración del sitio
+### ✅ Fase 6 — Configuración del sitio y edición de marcas (hecha)
 
-1. Formulario único sobre `SiteSetting`, cacheado con `unstable_cache` e invalidado al guardar.
-2. **Edición de marcas.** Viene de la Fase 4: el dataset guarda la marca en formato slug, así
-   que la tienda muestra "Lancome" en vez de "Lancôme" y no hay forma de arreglarlo a mano.
-   Alcanza con poder editar el `name` de una `Brand` (el `slug` **no** se toca: es la URL de
-   `/marca/[slug]` y ya está en el sitemap). Al guardar hay que revalidar la tienda, igual que
-   hacen las acciones de producto con `revalidarTienda()`.
+1. Formulario único sobre `SiteSetting` en `/admin/configuracion`, cacheado con `unstable_cache`
+   (`src/lib/configuracion.ts`) e invalidado al guardar con
+   `revalidateTag("site-settings", { expire: 0 })` — sin `profile: "max"` (stale-while-revalidate)
+   a propósito: el checkout del pedido siguiente tiene que ver el dato nuevo ya, no eventualmente.
+   `unstable_cache` sigue siendo la API correcta acá: Next 16 la reemplaza por `"use cache"`, pero
+   sólo si el proyecto activa `cacheComponents: true` en `next.config.ts`, y este no lo hace (ver
+   node_modules/next/dist/docs/01-app/02-guides/caching-without-cache-components.md).
+2. **Edición de marcas** en `/admin/marcas` (listado + buscador + diálogo de edición). Sólo se
+   edita `name`; el `slug` no se toca (`/marca/[slug]` y el sitemap dependen de él). Sin
+   búsqueda, la lista muestra sólo las marcas con productos reales (hoy 6, de las 1.748 que trae
+   el dataset de referencia); buscando por nombre o slug alcanza las 1.748, para poder corregir
+   una marca antes de asignarle el primer producto.
 
-**Verificación:** cambiar el número de WhatsApp desde el panel y ver que el siguiente checkout
-usa el nuevo sin redeploy; y corregir "Lancome" a "Lancôme" y ver el cambio en la grilla, en la
-ficha y en `/marca/lancome`, con la URL intacta.
+#### Qué columnas de `SiteSetting` se cablearon y cuáles no
+
+De las 11 columnas, terminaron con un consumidor real:
+
+- `whatsappNumber` / `whatsappMessageTemplate` / `brandName` — ya venían de la Fase 5 (checkout).
+- `brandTagline` — hero de la home (`components/tienda/hero.tsx`) y el `<title>` del root layout.
+- `instagramHandle` — footer y `/contacto`.
+- `shippingInfo` — resumen del checkout (reemplaza el texto que estaba escrito a mano en
+  `formulario-checkout.tsx`).
+- `seoDefaultTitle` / `seoDefaultDescription` — `generateMetadata()` del root layout
+  (`src/app/layout.tsx`), que es el fallback/template que heredan las páginas que no ponen su
+  propio título completo (ej. `/carrito`, con sólo `title: "Carrito"`, termina en
+  "Carrito — {brandName}" con la descripción heredada del default). Las páginas que arman su
+  metadata completa con `metadataDePagina()` (home, contacto, producto, marca, etc.) siguen sin
+  depender de este default — es sólo el piso para lo que no se especifica.
+
+Quedaron **sin UI, a propósito**:
+
+- `logoUrl` / `heroImageUrl` — no tienen consumidor ni mockup: la identidad visual es tipográfica
+  a propósito (Outfit ExtraBold, sin SVG de logo — ver "Identidad visual" más arriba, Fase 0.5).
+  Convertir el logo en una imagen subida es un cambio de diseño, no un campo de formulario más;
+  quedan en la base sin editor hasta que se decida ese cambio.
+- `announcementBar` — no aparece en ningún mockup (`design/*.dc.html`); no había dónde mostrarlo
+  sin inventar un componente nuevo fuera de esta fase.
+
+#### `linkWhatsapp()` / `linkInstagram()`: se retiraron las versiones estáticas
+
+El comentario que dejó la Fase 5 en `src/lib/whatsapp.ts` decía que `linkWhatsapp()` (sin
+parámetro, con el número de `siteDefaults`) se usaba "hasta que exista `/admin/configuracion`
+editable". Ya existe, así que tocaba decidir. Un relevamiento de los call sites mostró que eran
+sólo seis, todos fuera del checkout (que ya usaba `linkWhatsappA(numero, …)` desde la Fase 5):
+`footer.tsx`, `/contacto`, `/como-comprar`, `producto/comprar.tsx` (CTA de la ficha) y
+`gracias/_gracias-cliente.tsx` (fallback si el popup no se abrió). Con tan pocos, la decisión fue
+migrar los seis al número real de `SiteSetting.whatsappNumber` en vez de dejar una versión
+estática sin usuarios:
+
+- Las páginas Server Component (`footer.tsx`, `/contacto`, `/como-comprar`) llaman directo a
+  `obtenerConfiguracionSitio()`.
+- Los Client Components (`Comprar`, `GraciasCliente`) no pueden llamar a Prisma: reciben
+  `whatsappNumber` por prop desde su página padre (`producto/[slug]/page.tsx` y
+  `pedido/[number]/gracias/page.tsx`, ambas ya `async`).
+
+`linkWhatsapp()` y `whatsappVisible()` (las versiones sin parámetro) y `linkInstagram()` se
+borraron: sin call sites, dejarlas era código muerto. Quedan `linkWhatsappA(numero, mensaje?)`,
+`linkInstagramA(handle)` y `telefonoVisible(e164)`, todas parametrizadas.
+
+#### Cómo se repartió el trabajo
+
+Todo el diseño (cacheo, qué columnas cablear, validación del teléfono, decisión sobre
+`linkWhatsapp()`) y la implementación quedaron en el orquestador — el alcance real (tocar el root
+layout, tres Client Components que no pueden leer la base directo, y el retiro de las versiones
+estáticas de `whatsapp.ts`) sólo se vio completo al revisar el código real, no en el plan inicial.
+
+**Verificación** (contra `pnpm build` + `next start`, con Playwright en Docker): logueado como
+admin, se cambiaron todos los campos del formulario a valores de prueba y se confirmó, sin
+reiniciar el servidor — home (tagline nuevo en el hero), footer (Instagram nuevo), `/carrito`
+(título con el `brandName` nuevo vía template, descripción heredada del `seoDefaultDescription`
+nuevo), y un pedido real de punta a punta (agregar al carrito → checkout, con el `shippingInfo`
+nuevo visible → el link de WhatsApp resultante con el número y la plantilla nuevos, incluyendo el
+`{{marca}}` reemplazado). Se restauraron los valores originales al final (mismo criterio que la
+Fase 5 con el número de WhatsApp de prueba), y `shippingInfo` quedó cargado con el texto real que
+antes estaba hardcodeado (antes vacío en la base). Por separado, se corrigió "Lancome" →
+"Lancôme" desde `/admin/marcas` y se confirmó en `/marca/lancome` (URL intacta), en la grilla del
+catálogo y en la ficha del producto (título, breadcrumb, JSON-LD y el nombre de marca junto al
+producto) — sin tocar el `alt` de las fotos, que es texto propio cargado a mano en la Fase 3 y no
+deriva del nombre de la marca.
 
 ### Fase 7 — Deploy
 

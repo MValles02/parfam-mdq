@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { siteDefaults } from "@/lib/site";
 
@@ -75,8 +76,31 @@ async function leerConfiguracionSitio(): Promise<ConfiguracionSitio> {
   };
 }
 
-export const obtenerConfiguracionSitio = unstable_cache(
+const configuracionCacheada = unstable_cache(
   leerConfiguracionSitio,
   ["site-settings"],
   { tags: [TAG_CONFIGURACION_SITIO] },
 );
+
+/**
+ * `connection()` corta el prerender acá (Fase 7). Sin esto, toda ruta que
+ * lea la configuración -- y son todas, porque el `generateMetadata()` del
+ * root layout la lee -- se prerenderiza en `next build` y queda con el valor
+ * que tenía la base EN EL BUILD. Como el build corre en CI, ese valor sería
+ * el del seed: cada deploy revertiría el footer, el título y el texto de
+ * envío hasta que alguien volviera a guardar en `/admin/configuracion`.
+ *
+ * Con `connection()` el dato se lee siempre en runtime, contra la base real,
+ * y el build deja de necesitar Postgres. El costo es que las cinco páginas
+ * que antes salían prerenderizadas (`/carrito`, `/checkout`, `/contacto`,
+ * `/como-comprar`, `/que-es-un-tester`) pasan a renderizarse por request; la
+ * consulta en sí la sigue ahorrando `unstable_cache` con su tag, así que lo
+ * que se paga es el render, no un viaje a la base por visita.
+ *
+ * Ver node_modules/next/dist/docs/01-app/03-api-reference/04-functions/connection.md
+ * y PLAN.md § Fase 7.
+ */
+export async function obtenerConfiguracionSitio(): Promise<ConfiguracionSitio> {
+  await connection();
+  return configuracionCacheada();
+}

@@ -1,16 +1,26 @@
 import type { MetadataRoute } from "next";
+import { unstable_cache } from "next/cache";
 import { urlAbsoluta } from "@/lib/seo";
 import { urlsDelSitio } from "@/lib/tienda/consultas";
 
 /**
  * `sitemap.ts` es un Route Handler cacheado por defecto (ver
- * node_modules/next/dist/docs/.../sitemap.md). Como lee de la base con
- * `urlsDelSitio()`, necesita revalidarse: una hora es suficiente para que un
- * producto nuevo o despublicado aparezca/desaparezca sin recalcular en cada
- * request, que es gratis para el crawler pero caro para nosotros (`force-dynamic`
- * evitado a proposito).
+ * node_modules/next/dist/docs/.../sitemap.md), y hasta la Fase 7 se apoyaba en
+ * `export const revalidate = 3600` para eso. El problema: con `revalidate`,
+ * Next lo prerenderiza en `next build`, y era la primera ruta que hacia
+ * explotar un build sin Postgres -- que es justo el caso del build en CI.
+ *
+ * La revalidacion de una hora no se perdio, se bajo una capa: ahora la ruta se
+ * resuelve por request (`force-dynamic`) pero la consulta vive en
+ * `unstable_cache` con el mismo `revalidate: 3600`. Para el crawler el
+ * resultado es el mismo (un producto nuevo tarda como mucho una hora en
+ * aparecer) y lo unico que se paga de mas es armar el XML, que es memoria.
  */
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+
+const urlsCacheadas = unstable_cache(urlsDelSitio, ["sitemap-urls"], {
+  revalidate: 3600,
+});
 
 const PAGINAS_ESTATICAS: {
   ruta: string;
@@ -25,7 +35,7 @@ const PAGINAS_ESTATICAS: {
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { productos, marcas } = await urlsDelSitio();
+  const { productos, marcas } = await urlsCacheadas();
 
   const estaticas: MetadataRoute.Sitemap = PAGINAS_ESTATICAS.map((p) => ({
     url: urlAbsoluta(p.ruta),

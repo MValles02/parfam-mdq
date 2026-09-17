@@ -93,3 +93,42 @@ const formatoPesos = new Intl.NumberFormat("es-AR", {
 export function precioArs(valor: string | number) {
   return formatoPesos.format(Number(valor));
 }
+
+/**
+ * Normaliza un nombre propio que viene del dataset ("françois demachy",
+ * "PAUL PARQUET") para mostrarlo: "François Demachy", "Paul Parquet".
+ *
+ * Hace falta porque `Perfumer.name` quedo con mayusculas inconsistentes en el
+ * import de la Fase 1 -- 718 de las 1.355 filas estan enteras en minuscula,
+ * segun de cual de los dos CSV vino el dato. Se arregla al mostrar y no en la
+ * base para no pisar correcciones que el admin pueda hacer a mano; el
+ * importador tendria que normalizarlo antes de la importacion de produccion.
+ *
+ * Las particulas ("de", "van", "di"...) quedan en minuscula salvo que abran el
+ * nombre, que es como se escriben en castellano y en frances.
+ */
+const PARTICULAS = new Set([
+  "de",
+  "del",
+  "la",
+  "le",
+  "van",
+  "von",
+  "di",
+  "da",
+  "dos",
+  "y",
+]);
+
+export function nombrePropio(nombre: string): string {
+  return nombre
+    .toLocaleLowerCase("es-AR")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((palabra, i) =>
+      i > 0 && PARTICULAS.has(palabra)
+        ? palabra
+        : palabra.replace(/^\p{L}/u, (l) => l.toLocaleUpperCase("es-AR")),
+    )
+    .join(" ");
+}

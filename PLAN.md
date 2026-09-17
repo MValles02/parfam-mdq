@@ -117,7 +117,7 @@ si el buscador no encuentra la fragancia:
 | Carrito persistente             | `zustand` + middleware `persist`                                                                  |
 | Tablas del admin                | `@tanstack/react-table` (shadcn data-table)                                                       |
 | Toasts                          | `sonner`                                                                                          |
-| Galería de producto             | `embla-carousel-react` (shadcn carousel)                                                          |
+| Galería de producto             | `embla-carousel-react` (shadcn carousel, con el `setState`-en-efecto reescrito, ver Fase 4)       |
 | Autocompletado de notas         | `cmdk` (shadcn combobox)                                                                          |
 | ORM + migraciones               | `prisma` 7 + `@prisma/client` + `@prisma/adapter-pg` (driver adapter, obligatorio desde Prisma 7) |
 | Auth                            | `next-auth@5` (Auth.js) + `@node-rs/argon2`                                                       |
@@ -511,32 +511,195 @@ en el repo — los de verdad llegan en la Fase 8.
   `list=` de los `<datalist>` usaba el `field.id` de `useFieldArray`, que es un UUID nuevo en
   cada render — el build pasaba igual y sólo se veía en el navegador.
 
-> 📌 `pnpm build`, `pnpm typecheck` y `pnpm lint` en limpio (quedan 2 warnings a propósito de
-> `no-img-element`, con su `TODO(Fase 7)`: las miniaturas usan `<img>` porque `next.config.ts`
-> todavía no tiene los `remotePatterns` de R2 y `next/image` rompería).
+> 📌 `pnpm build`, `pnpm typecheck` y `pnpm lint` en limpio (quedaban 2 warnings a propósito de
+> `no-img-element`: las miniaturas usaban `<img>` porque `next.config.ts` todavía no tenía los
+> `remotePatterns` de R2 y `next/image` habría roto).
 
-> 📌 Para la Fase 7: `next.config.ts` necesita `remotePatterns` con **`img.parfammdq.com`**
-> para poder pasar las miniaturas a `next/image`. Hoy van con `<img>` común justamente por eso
-> (son los 2 warnings de `no-img-element`, cada uno con su `TODO(Fase 7)`).
+> ✅ **Resuelto en la Fase 4:** `next.config.ts` ya arma los `remotePatterns` desde
+> `R2_PUBLIC_URL`, las miniaturas del panel pasaron a `next/image` y los 2 warnings de
+> `no-img-element` desaparecieron.
 
-### Fase 4 — Storefront
+### ✅ Fase 4 — Storefront (hecha)
 
-1. Tema con los valores reales: `--background: #F2EEE9`, `--foreground: #000000`, Outfit,
-   modo oscuro derivado.
-2. Home: hero con el logotipo y el tagline + catálogo con filtros (sidebar en desktop, drawer
-   en mobile), grilla responsive, skeletons y paginado.
-3. Ficha: galería con Embla, selector de variante con precio, pirámide agrupada por nivel,
-   chips de acordes con el color del diccionario, ficha técnica, barras de carácter,
-   agregar al carrito, relacionados.
-4. `/que-es-un-tester` y páginas de contenido.
-5. SEO: metadata por página, JSON-LD `Product` + `Offer`, sitemap dinámico, OG images.
+La tienda pública entera: `/`, `/catalogo`, `/producto/[slug]`, `/marca/[slug]`,
+`/que-es-un-tester`, `/como-comprar`, `/contacto`, más `sitemap.xml`, `robots.txt` y las OG
+images. El tema ya estaba resuelto desde la Fase 0.5, así que lo que se sumó acá fue el
+`ThemeProvider` de `next-themes` (sin toggle: el sitio sigue la preferencia del sistema
+operativo, porque el modo oscuro derivado ya estaba en `globals.css` y el diseño aprobado no
+tiene selector).
 
-**Verificación:** recorrido en mobile y desktop, filtros que sobreviven al refresh, Lighthouse
-≥90 en Performance y SEO.
+#### La capa de consultas: una sola, ordenada y paginada en memoria
+
+`src/lib/tienda/consultas.ts` es el único lugar donde la tienda toca la base, y garantiza de
+entrada las dos reglas que no se negocian: sólo `PUBLISHED`, sólo variantes `isActive`, con los
+`Decimal` ya pasados a string y las URLs de fotos armadas con `urlPublica()`.
+
+`listarCatalogo` trae **todas** las filas que matchean y ordena y pagina en JavaScript, en vez
+de resolverlo en SQL. La razón es concreta: ordenar por precio es ordenar por el **mínimo de
+las variantes activas**, una agregación sobre otra tabla que Prisma no sabe expresar en un
+`orderBy`. Con un catálogo de decenas de productos —no las 70k de referencia— una consulta y un
+`sort` salen más baratos que las dos o tres consultas que haría falta encadenar. Si el catálogo
+pasa de unos cientos de productos, eso se reescribe con SQL crudo; está anotado en el archivo.
+
+Detalle que sí importó: cuando están puestos **presentación y precio a la vez**, los dos van en
+el mismo `some` sobre las variantes. Lo que se pregunta es si hay _una_ variante que cumpla las
+dos cosas, no un decant por un lado y algo barato por el otro.
+
+#### Los filtros viven en la URL, con los parsers compartidos
+
+`src/lib/tienda/filtros.ts` define los parsers de `nuqs` **una sola vez** y los usan las dos
+puntas: el Server Component con `cargarFiltros(searchParams)` y los controles de cliente con
+`useQueryStates(parsersCatalogo)`. Duplicarlos habría dejado que un default distinto de cada
+lado devolviera resultados distintos a los que muestra la UI.
+
+#### Lo que salió distinto a lo planeado
+
+- **No hay sidebar de filtros.** El plan decía "sidebar en desktop, drawer en mobile", pero el
+  mockup aprobado (`design/Main.dc.html`) tiene un **panel horizontal** arriba de la grilla:
+  dos filas de chips (género y presentación) y una fila de selects. Se siguió el mockup, que es
+  el diseño aprobado. En mobile sí es un drawer (`Sheet` con `side="bottom"`, sin sumar `vaul`).
+- **Quedaron fuera tres filtros que el plan listaba**: concentración, estación y ocasión. El
+  mockup muestra cuatro selects (marca, familia olfativa, nota, precio) y esos tres no entran en
+  la fila sin romper el diseño. Los datos igual se muestran en la ficha técnica. Si hacen falta
+  como filtro, el modelo de `filtros.ts` ya está preparado para sumarlos.
+- **Se agregó el buscador de texto al drawer de mobile.** El mockup sólo lo dibuja en la lupa
+  del header; sin esto, buscar por texto habría quedado siendo una función de escritorio.
+- **Se agregó un menú hamburguesa en mobile.** El mockup dibuja sólo lupa y carrito en la barra:
+  sin un tercer botón, `/contacto`, `/como-comprar` y `/que-es-un-tester` eran inalcanzables
+  desde el teléfono.
+- **Las notas de la pirámide van sin punto de color**, como ya se había decidido en la Fase 3:
+  el diccionario sólo le puso color a los 93 acordes, e inventarle uno a cada nota sería mostrar
+  un dato que no existe. Los chips de acordes sí llevan su color real.
+- **Las variantes inactivas no se muestran.** El mockup dibuja una fila deshabilitada con
+  "Sin stock por ahora", pero la regla es "sólo variantes `isActive`". Un publicado al que le
+  desactivaron todo muestra "Consultanos el precio por WhatsApp" en vez de precios.
+- **El carrito arrancó en esta fase, no en la 5.** Es un store mínimo de Zustand con `persist`
+  (`src/lib/carrito.ts`): agregar un ítem y contar unidades, que es lo que necesitan el botón de
+  la ficha y el badge del header. El drawer, `/carrito` y el checkout siguen siendo Fase 5; el
+  badge por ahora es un indicador, no un link.
+- **Rangos de precio recalibrados.** Los cuatro escalones originales (hasta 20k / 20-50k /
+  50-100k / +100k) dejaban el primero vacío contra la escala real. Quedaron en hasta 50k /
+  50-100k / 100-200k / +200k, con un `TODO(Fase 8)` para revisarlos con los precios definitivos.
+
+#### 🐛 Cuatro cosas que aparecieron acá
+
+**1. El badge "NUEVO" se rompía solo en la Fase 8.** La primera versión lo calculaba con
+`createdAt` del producto: como los ~40 productos se cargan el mismo día, el catálogo entero
+habría quedado con el cartel durante un mes. Pasó a mirar el **año de lanzamiento** (los últimos
+3), que es un dato del perfume y no de cuándo lo cargamos — y además es lo que el mockup muestra
+en Le Male Elixir.
+
+**2. `Perfumer.name` quedó con mayúsculas inconsistentes en el import de la Fase 1**: 718 de las
+1.355 filas están enteras en minúscula (`françois demachy`), según de cuál de los dos CSV vino
+el dato. La ficha lo mostraba así. Se normaliza al mostrar con `nombrePropio()` en
+`src/lib/catalogo.ts`, que respeta las partículas (`de`, `van`, `di`). **Pendiente:** el
+importador debería normalizarlo antes de la importación de producción de la Fase 7, o el panel
+va a seguir mostrando los nombres en minúscula.
+
+**3. Los chips de acordes no llegaban a contraste accesible.** Elegir entre tinta y crema por
+luminancia no alcanza: **40 de los 93 colores** del diccionario son tonos medios que no llegan a
+4,5:1 contra ninguno de los dos extremos (el mejor caso da 4,01), y el texto del chip es de
+12 px. `colorDeChip()` (`src/lib/color.ts`) ahora calcula la razón de contraste WCAG de verdad y,
+si hace falta, aleja el fondo del color del texto lo justo para cruzar el umbral: el ajuste
+máximo sobre el diccionario actual es de un **8 %**, imperceptible, y los 93 quedan en ≥4,5:1.
+
+**4. El `carousel` de shadcn traía `setState` adentro de un `useEffect`** — el mismo problema que
+tuvo `use-mobile.ts` en la Fase 2, que la regla `react-hooks/set-state-in-effect` de React 19
+marca como error. Se reescribió con `useSyncExternalStore` suscrito a los eventos de Embla, y de
+paso el contexto expone `indiceActual`, que es lo que usan las miniaturas de la galería para
+marcar la foto activa sin tocar estado.
+
+#### Una carrera en el buscador que no se ve en el build
+
+Con debounce de 300 ms y `shallow: false`, el `q` nuevo tarda el viaje al servidor en volver. Si
+el usuario siguió tipeando mientras tanto, el valor viejo que vuelve **le pisa las teclas de
+más**. El buscador ahora recuerda lo último que escribió él mismo en la URL y sólo adopta el
+valor de afuera cuando el cambio vino de afuera de verdad: recarga, back/forward o "Limpiar
+filtros".
+
+#### Performance: lo que se sacó del camino
+
+- **`remotePatterns` con `img.parfammdq.com`** en `next.config.ts`, leído de `R2_PUBLIC_URL` para
+  que el host siga siendo configuración. Con eso el storefront usa `next/image` y **se saldaron
+  los 2 warnings de `no-img-element`** que quedaban del panel (las miniaturas de la tabla y del
+  panel de imágenes ya van por `next/image`). Ese pendiente para la Fase 7 está cerrado.
+- **Se sacó Geist Mono**, que el scaffold cargaba en todas las páginas y no usaba nadie: 23 KB
+  de fuente por visita.
+- **Favicon propio** (`src/app/icon.tsx`, generado con `next/og` y la misma Outfit ExtraBold de
+  las OG): 643 bytes contra los 25,6 KB del `.ico` por defecto de Next, que además mostraba el
+  logo de Next en la pestaña.
+- **El `<Toaster />` de sonner se bajó del layout a la ficha**, que es la única página que hoy
+  muestra un toast. Vuelve al layout cuando la Fase 5 sume el drawer del carrito.
+
+#### SEO
+
+Metadata por página con canonical y Open Graph (`src/lib/seo.ts`), JSON-LD de `Product` +
+`AggregateOffer` y `BreadcrumbList` en la ficha, `Store` en `/contacto`, sitemap dinámico con
+`revalidate = 3600` y `robots.txt` que bloquea `/admin/` y `/api/`.
+
+> 📌 **Dos cosas de Next 16 que conviene saber.** La OG image de un segmento dinámico **no vive
+> en la ruta limpia**: Next le agrega un sufijo hash (`/producto/[slug]/opengraph-image-kfynqz`),
+> así que pegarle con curl a `/producto/x/opengraph-image` da 404 y no es un bug. Y una página
+> que declara `openGraph.images` en su metadata **pisa** la imagen generada por la convención de
+> archivo: `metadataDePagina()` a propósito no la setea nunca.
+
+> 📌 **Para la Fase 7:** `src/assets/fonts/Outfit-ExtraBold.ttf` (con su `OFL.txt`) se lee en
+> runtime con `readFile(join(process.cwd(), ...))` para las OG images y el favicon. El build
+> `standalone` no arrastra `src/` automáticamente: el Dockerfile necesita un
+> `COPY --from=builder /app/src/assets ./src/assets`.
+
+#### Datos de desarrollo
+
+`scripts/seed-dev.ts` (`pnpm db:seed-dev`) adopta 6 referencias reales de las 69.946 —Sauvage
+Elixir, Angel, Tobacco Vanille, La Vie Est Belle, Le Male Elixir y Coco Mademoiselle— con sus
+notas, acordes y perfumistas copiados, descripciones propias en español, 22 variantes (una
+inactiva a propósito) y 15 fotos PNG generadas por el script y subidas a R2 bajo
+`productos/dev/`. Coco Mademoiselle queda en **borrador**, para poder verificar que un borrador
+no es accesible. Es idempotente y tiene `--limpiar`.
+
+#### Verificado contra el servidor de producción (`next build` + `next start`)
+
+Con Playwright manejando Chromium en Docker (el navegador del host no arranca), **30 chequeos en
+verde y cero errores de consola o de hidratación**:
+
+- Las 7 rutas públicas responden 200; `/producto/chanel-coco-mademoiselle` (borrador) y
+  `/marca/chanel` responden **404 entrando al slug directo**, no sólo faltando en la grilla.
+- Filtrar por género reduce la grilla de 5 a 2, queda en la URL (`?genero=MEN`) y **sobrevive al
+  refresh**.
+- La galería pasa fotos: click en la miniatura 2 la marca como activa y el carrusel se desplaza.
+- El selector de variante cambia el precio ($ 312.000 → $ 62.000) y "Agregar al carrito" deja el
+  badge del header en "Carrito: 1 unidad", que **persiste al navegar y al recargar**.
+- Mobile a 390 px: sin scroll horizontal en home ni ficha, el drawer de filtros abre y sus chips
+  escriben la URL, y el menú de navegación abre.
+- Modo oscuro: `<html class="dark">` con el sistema en oscuro y el fondo cambia.
+
+**Lighthouse** (contra el build de producción, en esta VPS):
+
+| Página      | Escritorio (P / A11y / BP / SEO) | Mobile (Performance) |
+| ----------- | -------------------------------- | -------------------- |
+| `/`         | **100 / 100 / 100 / 100**        | 84-93 (~89)          |
+| `/catalogo` | **100 / 100 / 100 / 100**        | 82-91 (~89)          |
+| Ficha       | **100 / 100 / 100 / 100**        | 88-97 (~92)          |
+
+Escritorio da 100 en las cuatro categorías. El número de mobile oscila mucho entre corridas
+idénticas porque la VPS comparte 4 vCPU con Dokploy, Traefik, Postgres y otra app, y Lighthouse
+le aplica encima un ×4 de CPU. Las métricas medidas **de verdad** con throttling aplicado por CDP
+(4× CPU, 1,6 Mbps, 150 ms RTT) son buenas y estables: **FCP 0,9 s, LCP 0,77-0,96 s, Speed Index
+0,9 s, CLS 0,001**. Lo que baja el puntaje de mobile es el TBT (~280 ms) de hidratar React con la
+CPU frenada, no la carga de la página.
+
+> ⚠️ **Pendiente de producto, no de código: los nombres de marca no tienen tildes.** El dataset
+> guarda la marca ya en formato slug (`lancome`, `jean-paul-gaultier`), así que no hay tilde que
+> recuperar: la tienda muestra "Lancome" donde debería decir "Lancôme". **No hay forma de
+> corregir el nombre de una marca desde el panel**, y con ~40 productos van a ser varias
+> (Lancôme, Hermès, L'Occitane...). Habría que sumar la edición de marcas, probablemente junto
+> con la Fase 6.
 
 ### Fase 5 — Carrito y checkout por WhatsApp
 
-1. Carrito con Zustand + persist, drawer y badge en el header.
+1. Carrito con Zustand + persist, drawer y badge en el header. **El store mínimo y el badge ya
+   existen desde la Fase 4** (`src/lib/carrito.ts`): falta el drawer, `/carrito`, y volver a
+   subir el `<Toaster />` al layout de la tienda.
 2. `/checkout`: nombre + teléfono (validado con `libphonenumber-js`), resumen, honeypot.
 3. Server Action: valida con Zod, **recalcula precios desde la DB**, rechaza variantes
    inactivas, crea la `Order` en PENDING y devuelve el link `wa.me`.
@@ -556,7 +719,9 @@ usa el nuevo sin redeploy.
 
 ### Fase 7 — Deploy
 
-1. `next.config.ts` con `output: 'standalone'` y `remotePatterns` del dominio de R2.
+1. `next.config.ts` con `output: 'standalone'` (los `remotePatterns` del dominio de R2 ya
+   quedaron en la Fase 4). El Dockerfile además tiene que copiar `src/assets/fonts/`, que las
+   OG images y el favicon leen en runtime y el build standalone no arrastra solo.
 2. Dockerfile multi-stage (deps → builder → runner sobre `node:22-alpine`, usuario no-root,
    `HEALTHCHECK`) y `/api/health` que verifica la DB. Los CSV quedan fuera de la imagen.
 3. Entrypoint con `prisma migrate deploy` antes de arrancar.

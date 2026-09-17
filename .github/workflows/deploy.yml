@@ -7,6 +7,10 @@ name: Deploy
 on:
   push:
     branches: [main]
+    # Un commit que solo toca documentacion no tiene por que rebuildear la
+    # imagen ni redesplegar. Si el commit mezcla .md con codigo, igual corre.
+    paths-ignore:
+      - "**.md"
   # Para poder reconstruir sin un commit (por ejemplo si cambia un build arg).
   workflow_dispatch:
 

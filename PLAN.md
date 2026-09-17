@@ -1069,6 +1069,26 @@ El paso del webhook no falla si el secret `DOKPLOY_WEBHOOK_URL` todavía no exis
 obligado (Dokploy necesita una imagen ya publicada en GHCR para poder crear la app, y recién
 entonces genera el webhook), y el workflow lo respeta en vez de pedir dos ediciones.
 
+Un `paths-ignore: ["**.md"]` evita que un commit de sólo documentación rebuildee la imagen y
+dispare un deploy.
+
+**🐛 El `GITHUB_TOKEN` no sirve para publicar en GHCR acá.** Los tres primeros runs fallaron con
+`denied: permission_denied: write_package`, con el build entero en verde y sólo el `docker push`
+rechazado. No era lo que parecía:
+
+- El runner **sí** emite el token con `Packages: write` (visible en el log de "Set up job"), así
+  que el bloque `permissions:` del job estaba bien.
+- Tampoco era el default del repo: se probó con `default_workflow_permissions` en `write` y el
+  error fue idéntico. Se dejó de vuelta en `read`, que es lo correcto — el bloque `permissions:`
+  del job ya acota el token a `contents: read` + `packages: write`.
+- Tampoco eran las versiones de las actions (se subieron igual a los majors que corren sobre
+  Node 24, que de paso sacó el aviso de deprecación del runner).
+
+El `GITHUB_TOKEN` no puede **crear** un package nuevo en un namespace personal. La solución fue un
+PAT clásico con `write:packages` en el secret `GHCR_TOKEN` — que es el **mismo** token que Dokploy
+necesita para bajar la imagen, así que no sumó una credencial más. Si alguna vez vence, se cortan
+las dos cosas a la vez: el push de CI y el pull de Dokploy.
+
 #### Verificado en local, antes de tocar nada de la VPS
 
 `docker build` + `docker run` contra el Postgres de `docker-compose.dev.yml`:

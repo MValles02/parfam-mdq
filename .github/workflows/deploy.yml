@@ -1,0 +1,80 @@
+# Build de la imagen de produccion y redespliegue en Dokploy (PLAN.md, Fase 7).
+#
+# La VPS es compartida y tiene 4 vCPU: por eso la imagen se compila aca y el
+# server solo baja el artefacto ya hecho.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # Para poder reconstruir sin un commit (por ejemplo si cambia un build arg).
+  workflow_dispatch:
+
+concurrency:
+  # Dos deploys pisandose dejarian a Dokploy tirando de un `latest` a medio
+  # subir. Se encolan; no se cancela uno en curso.
+  group: deploy-main
+  cancel-in-progress: false
+
+env:
+  # GHCR exige el nombre en minusculas, aunque el owner del repo sea MValles02.
+  IMAGEN: ghcr.io/mvalles02/parfam-mdq
+
+jobs:
+  imagen:
+    name: Buildear y publicar en GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Traer el repo
+        uses: actions/checkout@v4
+
+      - name: Preparar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Entrar a GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # NEXT_PUBLIC_SITE_URL y R2_PUBLIC_URL NO son secretos, son variables del
+      # repo (Settings -> Variables): Next las inlinea en el bundle del cliente
+      # y quedan a la vista en el HTML igual. Pero tienen que estar ACA, en el
+      # build: ponerlas solo en Dokploy no alcanza, y cambiarlas obliga a
+      # rebuildear la imagen (por eso existe el `workflow_dispatch`).
+      - name: Buildear y publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGEN }}:${{ github.sha }}
+            ${{ env.IMAGEN }}:latest
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            R2_PUBLIC_URL=${{ vars.R2_PUBLIC_URL }}
+            NEXT_PUBLIC_UMAMI_URL=${{ vars.NEXT_PUBLIC_UMAMI_URL }}
+            NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # El webhook lo genera Dokploy cuando se crea la app, que es despues del
+      # primer push (Dokploy necesita una imagen que ya exista en GHCR para
+      # poder crearla). Mientras el secret no este cargado, el job publica la
+      # imagen y no falla por esto.
+      - name: Avisar a Dokploy
+        env:
+          WEBHOOK: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "DOKPLOY_WEBHOOK_URL todavia no esta cargado: se omite el redespliegue."
+            exit 0
+          fi
+          curl -fsS -X POST "$WEBHOOK"
+          echo "Webhook de redespliegue enviado."

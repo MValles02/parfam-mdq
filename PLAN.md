@@ -931,26 +931,256 @@ catálogo y en la ficha del producto (título, breadcrumb, JSON-LD y el nombre d
 producto) — sin tocar el `alt` de las fotos, que es texto propio cargado a mano en la Fase 3 y no
 deriva del nombre de la marca.
 
-### Fase 7 — Deploy
+### Fase 7 — Deploy (código hecho, infra pendiente)
 
-1. `next.config.ts` con `output: 'standalone'` (los `remotePatterns` del dominio de R2 ya
-   quedaron en la Fase 4). El Dockerfile además tiene que copiar `src/assets/fonts/`, que las
-   OG images y el favicon leen en runtime y el build standalone no arrastra solo.
-2. Dockerfile multi-stage (deps → builder → runner sobre `node:22-alpine`, usuario no-root,
-   `HEALTHCHECK`) y `/api/health` que verifica la DB. Los CSV quedan fuera de la imagen.
-3. Entrypoint con `prisma migrate deploy` antes de arrancar.
-4. GitHub Actions: build + push a `ghcr.io/MValles02/parfam-mdq:{sha,latest}` con cache de
-   capas y `curl` al webhook de Dokploy.
-5. Dokploy: Postgres como servicio, app tipo **Docker** apuntando a GHCR, env vars, dominio
-   `parfammdq.com` + `www` con Let's Encrypt, healthcheck, `FailureAction: rollback` y update
-   order `start-first`.
-6. DNS: A de `parfammdq.com` a la IP de la VPS, CNAME de `www`.
-7. La importación corre una sola vez contra la DB de producción, desde la VPS.
-8. Umami en `stats.parfammdq.com` + backups programados de Postgres hacia R2.
+El repo ya tiene todo lo que hace falta para producir y desplegar la imagen; lo que falta es
+infraestructura (Dokploy, DNS, la importación de referencias), que se hace a mano y queda
+documentada más abajo para poder repetirla.
 
-**Verificación:** push a `main` → Actions verde → imagen en GHCR → Dokploy redespliega solo →
-`https://parfammdq.com` con SSL, `/api/health` en 200 y checkout funcionando. Probar un deploy
-roto a propósito para confirmar el rollback.
+#### 🎯 La decisión central: el build ya no necesita la base
+
+Hasta esta fase, `pnpm build` no compilaba sin un Postgres accesible: reventaba en
+`/sitemap.xml` y, detrás de eso, en las cinco páginas que el storefront prerenderizaba
+(`/carrito`, `/checkout`, `/contacto`, `/como-comprar`, `/que-es-un-tester`). No era culpa de
+esas páginas: el `generateMetadata()` del root layout y el `Footer` del layout de `(tienda)` leen
+`SiteSetting` vía `obtenerConfiguracionSitio()` desde la Fase 6, así que **cualquier** ruta
+estática arrastraba una consulta a la base al build.
+
+Eso choca de frente con buildear en CI, donde no hay base. Las tres salidas posibles eran:
+
+- **(a) Un Postgres efímero en Actions**, con `migrate deploy` + `seed` antes del `next build`.
+  Descartada. Anda, pero el HTML prerenderizado sale con los valores del **seed**, y esas páginas
+  sólo se invalidan por `revalidateTag("site-settings")` cuando alguien guarda en el panel: cada
+  deploy revertiría el footer, el `<title>` y el texto de envío a los valores del seed hasta la
+  próxima vez que se tocara la configuración. Un cambio de número de WhatsApp hecho hoy
+  desaparecería en el deploy de mañana. Además obliga a mantener un servicio de CI y un seed
+  ficticio sólo para que compile.
+- **(c) Buildear en el server** contra la base real. Descartada: contradice la razón por la que el
+  PLAN eligió CI (la VPS tiene 4 vCPU compartidos con otra app), y un build de Next ahí compite
+  con el sitio que está sirviendo.
+- **(b) Que ninguna ruta lea la base en tiempo de prerender.** Elegida.
+
+La implementación de (b) son dos cambios chicos:
+
+1. **`src/lib/configuracion.ts`** — `obtenerConfiguracionSitio()` ahora hace `await connection()`
+   antes de leer el cache. `connection()` corta el prerender: todo lo que lea la configuración se
+   resuelve en runtime, contra la base real. Como el root layout la lee, con una sola línea
+   quedan cubiertas todas las rutas, incluidas `/_not-found` y `/_global-error`, que no tienen
+   dónde poner un `export const dynamic`. Es además lo que recomienda la propia doc de Next para
+   "una imagen, varios entornos"
+   (`node_modules/next/dist/docs/01-app/02-guides/self-hosting.md` § Environment Variables).
+2. **`src/app/sitemap.ts`** — `export const revalidate = 3600` hacía que Next lo prerenderizara en
+   el build (era la primera ruta en explotar). Pasó a `export const dynamic = "force-dynamic"`,
+   con la consulta envuelta en `unstable_cache(..., { revalidate: 3600 })`. La revalidación de una
+   hora no se perdió: se bajó una capa. Para el crawler el comportamiento es idéntico y lo único
+   que se paga de más es armar el XML.
+
+**Qué cambió en cómo se sirven las páginas.** Las cinco páginas de arriba pasaron de estáticas a
+server-rendered on demand. No es el cambio que suena: la home, `/catalogo`, `/producto/[slug]` y
+`/marca/[slug]` —las páginas que importan para SEO y para Lighthouse— **ya eran dinámicas** desde
+la Fase 4, porque leen `searchParams` y los datos del catálogo. Las que se movieron son cinco
+páginas de texto de bajísimo tráfico más el carrito y el checkout, que de todos modos se arman en
+el cliente desde `localStorage`. La consulta a `SiteSetting` la sigue ahorrando `unstable_cache`
+con su tag, así que lo que se paga por visita es el render, no un viaje a Postgres.
+
+**El contrato de la Fase 6 quedó intacto**, y de hecho más simple: `revalidateTag("site-settings",
+{ expire: 0 })` al guardar en `/admin/configuracion` ahora sólo tiene que invalidar el cache de
+datos, no además regenerar HTML prerenderizado. Verificado: se cambió `instagramHandle` directo en
+la base y un contenedor nuevo —que es lo que produce un deploy— lo sirvió sin rebuild ni
+intervención.
+
+**Sobre `src/lib/env.ts`**: sigue validando todas las variables al importarse, también durante el
+build. El Dockerfile le pasa `DATABASE_URL` y `AUTH_SECRET` como placeholders inline en el `RUN`
+(`DATABASE_URL_BUILD` / `FIRMA_PLACEHOLDER_BUILD`), no como `ENV`, para que no queden en los
+metadatos de la imagen. **No se usó `skipValidation`**: el placeholder es seguro justamente porque
+nada se conecta a esa URL durante el build, y si algún día una ruta volviera a consultar la base
+en prerender, el build fallaría con un `ECONNREFUSED` ruidoso en vez de pasar en silencio.
+
+#### Qué variable va en el build y cuál en runtime
+
+Esta separación es la que más fácil se rompe, porque los síntomas aparecen tarde:
+
+| Variable                                                                                                                   | Dónde                                       | Por qué                                                                                                                                                                                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                                                                                                     | **build arg** (repo variable)               | Next la inlinea en el bundle del cliente. Cambiar el dominio obliga a rebuildear.                                                                                                                                                                    |
+| `R2_PUBLIC_URL`                                                                                                            | **build arg** (repo variable) **y** runtime | `next.config.ts` arma `images.remotePatterns` con ella y queda serializada en `server.js` del standalone. Sin ella en el build, `next/image` rechaza las fotos. En runtime la usa el código que arma la URL pública a partir de la clave del objeto. |
+| `NEXT_PUBLIC_UMAMI_URL` / `NEXT_PUBLIC_UMAMI_WEBSITE_ID`                                                                   | build arg (opcional)                        | Mismo caso que `NEXT_PUBLIC_SITE_URL`. Ya cableadas en el workflow para no tener que tocarlo cuando entre Umami.                                                                                                                                     |
+| `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | **runtime** (env vars de Dokploy)           | Secretos o dependientes del entorno. Nunca en la imagen.                                                                                                                                                                                             |
+| `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD`                                                                                 | ninguno de los dos                          | Sólo para el bootstrap manual desde la VPS (ver más abajo). No van en la app.                                                                                                                                                                        |
+
+El Dockerfile falla explícitamente si `NEXT_PUBLIC_SITE_URL` o `R2_PUBLIC_URL` no llegan como
+build arg: sin ese guard, una imagen con `localhost` adentro se sube a GHCR igual y el problema
+recién se ve en producción, con los canonical rotos.
+
+`AUTH_TRUST_HOST=true` es obligatoria en producción: detrás del Traefik de Dokploy, Auth.js
+descarta la cookie si no confía en el `Host`, y el síntoma es un login que "entra" pero rebota a
+`/admin/login` en la navegación siguiente. Quedó documentada en `.env.example`.
+
+#### La imagen
+
+`Dockerfile` multi-stage sobre `node:22-alpine`:
+
+- **deps** — `pnpm install --frozen-lockfile` con el store cacheado por BuildKit. El
+  `postinstall` (`prisma generate`) necesita `prisma/schema.prisma` **y** `prisma.config.ts`
+  copiados antes del install, y además un `DATABASE_URL` resoluble: `prisma.config.ts` evalúa
+  `env("DATABASE_URL")` apenas la CLI carga el config, así que sin el placeholder el `install`
+  falla con `PrismaConfigEnvError`.
+- **builder** — `pnpm build` con los build args reales.
+- **migrador** — la CLI de Prisma sola, instalada con npm en la versión exacta que declara el
+  `package.json` del repo (`node -p "require('./package.json').devDependencies.prisma"`), para que
+  no se desincronice del `prisma migrate dev` de desarrollo.
+- **runner** — usuario no-root (`nextjs`, uid 1001), `openssl` (lo pide el schema engine de Prisma
+  en musl), y `HEALTHCHECK` contra `/api/health` usando el `fetch` nativo de Node, sin instalar
+  `curl`.
+
+Dos cosas que no se resolvieron copiando archivos a mano:
+
+- **Las fuentes.** `src/app/icon.tsx`, `src/app/opengraph-image.tsx` y la OG de producto hacen
+  `readFile(join(process.cwd(), "src/assets/fonts/Outfit-ExtraBold.ttf"))`, y el trace de
+  `@vercel/nft` no resuelve un path armado así. Se declararon en `next.config.ts` con
+  `outputFileTracingIncludes: { "/*": ["src/assets/fonts/*.ttf"] }`, que es el mecanismo que Next
+  documenta para esto. El `server.js` del standalone hace `process.chdir(__dirname)`, así que con
+  `WORKDIR /app` el `process.cwd()` de runtime resuelve bien. Verificado pidiendo la OG de un
+  producto al contenedor: 200 y 36 KB de PNG.
+- **Las migraciones.** El standalone no trae ni la CLI ni `prisma/migrations/`. Todo lo de
+  migraciones vive junto en `/app/migraciones` (su propio `node_modules`, más `prisma.config.ts`,
+  `schema.prisma` y `migrations/` copiados del repo), y el entrypoint hace `cd` ahí antes de
+  correr `prisma migrate deploy`. Que estén en el mismo directorio no es cosmético: es lo que hace
+  que el `import "dotenv/config"` de `prisma.config.ts` resuelva y que sus rutas relativas
+  (`prisma/schema.prisma`, `prisma/migrations`) apunten a donde tienen que apuntar.
+
+`docker-entrypoint.sh` corre `prisma migrate deploy` y después `exec node server.js`. `migrate
+deploy` es idempotente y toma un advisory lock de Postgres, así que los dos contenedores que
+conviven durante un deploy `start-first` no se pisan.
+
+`.dockerignore` deja afuera los 38 MB de `data/fragrantica/`, `design/`, `brand/`, `.env*` y el
+resto del material de trabajo. Imagen resultante: ~144 MB de contenido.
+
+#### El pipeline
+
+`.github/workflows/deploy.yml`: push a `main` (o `workflow_dispatch`) → build con Buildx y cache
+de capas en `type=gha` → push a `ghcr.io/mvalles02/parfam-mdq:{sha,latest}` → `POST` al webhook de
+Dokploy. **En minúsculas**: GHCR rechaza el nombre con mayúsculas aunque el owner sea `MValles02`.
+
+Un `concurrency: deploy-main` con `cancel-in-progress: false` evita que dos deploys simultáneos
+dejen a Dokploy tirando de un `latest` a medio subir.
+
+El paso del webhook no falla si el secret `DOKPLOY_WEBHOOK_URL` todavía no existe: hay un orden
+obligado (Dokploy necesita una imagen ya publicada en GHCR para poder crear la app, y recién
+entonces genera el webhook), y el workflow lo respeta en vez de pedir dos ediciones.
+
+#### Verificado en local, antes de tocar nada de la VPS
+
+`docker build` + `docker run` contra el Postgres de `docker-compose.dev.yml`:
+
+- Las 4 migraciones aplican **desde cero** contra una base vacía recién creada, y el sitio sirve
+  igual sin ninguna fila (`SiteSetting` cae a los defaults del código, que es el estado día 0 de
+  producción).
+- `/api/health` en 200, y el `HEALTHCHECK` de Docker en `healthy`.
+- Home, catálogo, ficha de producto, marca, `/contacto`, `/carrito`, `/checkout`, `/sitemap.xml`,
+  `/robots.txt`, el favicon y las dos OG images (la del sitio y la de producto): todas 200.
+- **Login del panel andando**, que es el test real de `@node-rs/argon2` en musl — el binding
+  equivocado no se nota hasta el primer login. Con Playwright: redirección a `/admin/login`,
+  login, y navegación posterior a `/admin/configuracion` y `/admin/pedidos` sin perder la sesión.
+  Cero errores de consola y cero respuestas ≥ 400.
+- **Con la base caída**: `/api/health` devuelve 503 con `{"estado":"error","base":"sin conexión"}`
+  y el `HEALTHCHECK` de Docker pasa a `unhealthy` a los ~80 s (3 reintentos × 30 s). Al volver la
+  base, 200 otra vez sin reiniciar el contenedor.
+- **La trampa del dato viejo, cerrada**: se cambió `instagramHandle` en la base y un contenedor
+  nuevo lo sirvió al instante. Un `docker restart` del mismo contenedor **no** lo veía, porque
+  `unstable_cache` persiste en `/app/.next/cache/fetch-cache` y esa capa sobrevive al restart —
+  detalle sin consecuencias en producción, donde cada deploy es un contenedor nuevo, pero anotado
+  por si alguna vez confunde.
+
+#### Nota para cuando se escale (no hacer ahora)
+
+El `revalidateTag`/`revalidatePath` de las fases 5 y 6 invalida el cache **de la instancia que
+atiende la Server Action**. Con una réplica no hay problema, y durante un deploy `start-first` los
+dos contenedores conviven un rato pero el nuevo arranca con el cache vacío, así que es tolerable.
+Si alguna vez se fija más de una réplica, esto deja de funcionar y hace falta un `cacheHandler`
+compartido (Redis) — ver `self-hosting.md` § Configuring Caching.
+
+#### Pendiente: la infra (se hace a mano)
+
+El MCP de Dokploy devuelve 403 en todas las lecturas, así que esta parte va por la UI.
+
+**1. GitHub — variables y secrets del repo** (`Settings → Secrets and variables → Actions`):
+
+| Nombre                 | Tipo     | Valor                              |
+| ---------------------- | -------- | ---------------------------------- |
+| `NEXT_PUBLIC_SITE_URL` | Variable | `https://parfammdq.com`            |
+| `R2_PUBLIC_URL`        | Variable | `https://img.parfammdq.com`        |
+| `DOKPLOY_WEBHOOK_URL`  | Secret   | el que genera Dokploy en el paso 4 |
+
+`NEXT_PUBLIC_UMAMI_URL` / `NEXT_PUBLIC_UMAMI_WEBSITE_ID` quedan sin cargar hasta que exista
+Umami; vacías no rompen nada (`src/lib/env.ts` las trata como opcionales).
+
+**2. GHCR — el package queda privado.** El repo es privado, así que el package nace privado y
+conviene dejarlo así: la imagen tiene el bundle compilado del panel. Dokploy necesita entonces una
+credencial de registry: un **PAT clásico con `read:packages`** cargado en Dokploy como Registry
+(`Settings → Registry → Add`), con `ghcr.io` de host y el usuario de GitHub. Un PAT
+fine-grained no sirve para GHCR.
+
+**3. Dokploy — Postgres.** Crear el servicio **Postgres 17** dentro del proyecto. Anotar el
+`DATABASE_URL` interno que da Dokploy (resuelve por nombre de servicio en la red de Docker, no por
+`localhost`). **No** exponer puerto externo.
+
+**4. Dokploy — la app.** Tipo **Docker** (no Git, no Nixpacks: la imagen ya viene hecha):
+
+- Imagen: `ghcr.io/mvalles02/parfam-mdq:latest`, con la credencial de registry del paso 2.
+- Puerto interno: `3000`.
+- Dominios: `parfammdq.com` y `www.parfammdq.com`, puerto 3000, HTTPS con Let's Encrypt y
+  redirección a HTTPS.
+- Env vars (Environment):
+  ```
+  DATABASE_URL=<el interno de Dokploy, paso 3>
+  AUTH_SECRET=<openssl rand -base64 32, uno NUEVO, no el de local>
+  AUTH_TRUST_HOST=true
+  NEXT_PUBLIC_SITE_URL=https://parfammdq.com
+  R2_ACCOUNT_ID=<.env local>
+  R2_ACCESS_KEY_ID=<.env local>
+  R2_SECRET_ACCESS_KEY=<.env local>
+  R2_BUCKET=parfam-mdq-imagenes
+  R2_PUBLIC_URL=https://img.parfammdq.com
+  ```
+  `PORT` y `HOSTNAME` no hace falta ponerlas: la imagen ya trae `PORT=3000` y
+  `HOSTNAME=0.0.0.0`. Sin `HOSTNAME=0.0.0.0` el server escucharía en localhost dentro del
+  contenedor y ni Traefik ni el `HEALTHCHECK` lo alcanzarían.
+- Swarm settings: **Health Check** `CMD-SHELL` sobre `/api/health`, **Update Config** con
+  `Order: start-first` y `Failure Action: rollback`, `Replicas: 1`.
+- Copiar el **webhook de redeploy** que genera Dokploy al secret `DOKPLOY_WEBHOOK_URL` de GitHub.
+
+**5. DNS.** `A` de `parfammdq.com` a la IP de la VPS y `CNAME` de `www` a `parfammdq.com`.
+`img.parfammdq.com` ya apunta a R2 desde la Fase 3 y no se toca.
+
+**6. Bootstrap de la base, una sola vez, desde la VPS.** La imagen aplica migraciones pero **no**
+siembra: el seed necesita `tsx` y `@node-rs/argon2`, que no están en el runner, y las credenciales
+del admin no tienen por qué vivir en la app. Se corre desde un clon del repo en la VPS, que es el
+mismo clon que necesita la importación (los CSV no entran a la imagen):
+
+```bash
+git clone git@github.com:MValles02/parfam-mdq.git && cd parfam-mdq
+pnpm install
+# .env con el DATABASE_URL de produccion + ADMIN_SEED_EMAIL / ADMIN_SEED_PASSWORD reales
+pnpm db:seed               # usuario admin + fila singleton de SiteSetting
+pnpm db:import-fragrantica  # las 69.946 referencias, ~1 vez y listo
+```
+
+El seed es idempotente (el usuario sólo se crea si no existe; `SiteSetting` usa `upsert` con
+`update: {}`), así que re-correrlo no pisa nada de lo que se haya cambiado desde el panel. Borrar
+el `.env` del clon al terminar.
+
+**7. Umami y backups — quedan para una sesión aparte.** No son bloqueantes para tener el sitio
+andando y cada uno trae su propia infra (un servicio más en la VPS compartida, un bucket y una
+política de retención). Las variables de Umami ya están cableadas en el workflow y en
+`src/lib/env.ts`, así que sumarlo es cargar dos variables y rebuildear con `workflow_dispatch`.
+
+**Verificación pendiente** (en este orden): push a `main` → Actions verde → imagen en GHCR con los
+dos tags → Dokploy redespliega → `https://parfammdq.com` con SSL, `/api/health` en 200, catálogo
+con filtros, ficha, carrito, checkout con número de prueba, login del panel y una subida de foto a
+R2 desde el panel (la pieza que más depende de que las env vars estén bien puestas). Después, un
+deploy roto a propósito para confirmar que el rollback vuelve solo a la imagen anterior sin dejar
+el sitio caído.
 
 ### Fase 8 — Cierre
 

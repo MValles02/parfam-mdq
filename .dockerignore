@@ -1,0 +1,35 @@
+# Lo que no hace falta para buildear la imagen. Cuanto mas chico el contexto,
+# mas rapido el `docker build` y menos capas se invalidan de gusto.
+
+.git
+.github
+node_modules
+.next
+out
+build
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
+
+# Secretos: no entran a la imagen ni por accidente. Las variables reales las
+# pone Dokploy en runtime y CI en los build args (PLAN.md, Fase 7).
+.env
+.env.*
+!.env.example
+
+# 38 MB de CSV de referencia. La importacion de las 69.946 fragancias corre
+# UNA vez contra la base de produccion desde un clon del repo en la VPS, no
+# desde el contenedor (PLAN.md, Fase 7).
+data
+
+# Material de trabajo que no participa del build.
+design
+brand
+.husky
+.vscode
+.idea
+docker-compose.dev.yml
+Dockerfile
+.dockerignore
+*.md

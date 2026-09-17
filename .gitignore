@@ -33,6 +33,10 @@ pnpm-debug.log*
 # Prisma: cliente generado, se rearma con `prisma generate` (postinstall)
 /src/generated/prisma
 
+# Ajustes locales de Claude Code (permisos del MCP de Dokploy): son de esta
+# maquina, no del proyecto.
+.claude/settings.local.json
+
 # Testing
 /coverage
 /playwright-report/

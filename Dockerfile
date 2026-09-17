@@ -141,7 +141,14 @@ EXPOSE 3000
 # Pega contra /api/health, que hace un SELECT 1: un servidor que levanta pero
 # no llega a Postgres tiene que dar rojo, o el rollback de Dokploy no se
 # dispara nunca. `start-period` le da aire a las migraciones.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
+#
+# Los tiempos importan para el rollback: un contenedor roto queda `unhealthy`
+# a los ~70s (40s de start-period + 3 reintentos cada 10s), y el `Monitor` del
+# update config de Swarm tiene que ser MAS largo que eso o el deploy se da por
+# bueno antes de que el healthcheck alcance a fallar. Swarm hereda este
+# HEALTHCHECK, asi que estos son los valores de verdad; lo que se cargue en
+# Dokploy tiene que decir lo mismo.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

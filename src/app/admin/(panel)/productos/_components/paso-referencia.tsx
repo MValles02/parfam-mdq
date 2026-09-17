@@ -12,7 +12,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { adoptarReferenciaAction, buscarReferenciasAction } from "../actions";
 import { Paso } from "./campo";
-import { FrascoPlaceholder } from "./frasco-placeholder";
+import { FrascoPlaceholder } from "@/components/frasco-placeholder";
 
 function metaDeReferencia(r: ResultadoReferencia) {
   return [r.brandName, r.year ?? null, r.gender ? GENERO[r.gender] : null]

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone, type Accept, type FileRejection } from "react-dropzone";
 import {
@@ -67,6 +68,27 @@ function subirConProgreso(
     xhr.onerror = () => reject(new Error("Error de red al subir la imagen."));
     xhr.send(archivo);
   });
+}
+
+/**
+ * Miniatura de una imagen ya subida. Sale por `next/image` desde que
+ * next.config.ts tiene los remotePatterns del dominio de R2 (Fase 4); antes
+ * iba con un <img> comun porque el optimizador rechazaba el host.
+ *
+ * `url` puede ser undefined si R2 no esta configurado en este entorno: en ese
+ * caso no hay nada que mostrar y cae a un recuadro vacio.
+ */
+function Vista({ url, alt }: { url: string | undefined; alt: string }) {
+  if (!url) return <div className="h-full w-full bg-muted" />;
+  return (
+    <Image
+      src={url}
+      alt={alt}
+      fill
+      sizes="(min-width: 768px) 12rem, 45vw"
+      className="object-cover"
+    />
+  );
 }
 
 export function PanelImagenes(props: {
@@ -268,11 +290,9 @@ export function PanelImagenes(props: {
                 key={imagen.id ?? imagen.storageKey}
                 className="group relative aspect-square overflow-hidden rounded border border-border bg-card"
               >
-                {/* TODO(Fase 7): pasar a next/image cuando next.config tenga los remotePatterns de R2 */}
-                <img
-                  src={vistaPrevia(imagen.storageKey)}
+                <Vista
+                  url={vistaPrevia(imagen.storageKey)}
                   alt={imagen.alt ?? ""}
-                  className="h-full w-full object-cover"
                 />
 
                 {imagen.isPrimary && (

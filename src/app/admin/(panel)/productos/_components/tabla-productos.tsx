@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Table,
@@ -16,8 +17,13 @@ function Miniatura({ imagen, alt }: { imagen: string | null; alt: string }) {
   if (imagen) {
     return (
       <div className="h-[58px] w-12 overflow-hidden rounded-sm border border-border bg-muted">
-        {/* TODO(Fase 7): pasar a next/image cuando next.config tenga los remotePatterns de R2 */}
-        <img src={imagen} alt={alt} className="h-full w-full object-cover" />
+        <Image
+          src={imagen}
+          alt={alt}
+          width={48}
+          height={58}
+          className="h-full w-full object-cover"
+        />
       </div>
     );
   }

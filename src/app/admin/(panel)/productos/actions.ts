@@ -31,6 +31,22 @@ function fallo(mensaje: string, errores?: Record<string, string[]>) {
   return { ok: false as const, mensaje, errores };
 }
 
+/**
+ * Invalida las paginas publicas que dependen del catalogo.
+ *
+ * Las rutas de la tienda no leen `searchParams` en todos sus segmentos, asi
+ * que Next las guarda en el cache de rutas: sin esto, publicar un producto
+ * desde el panel no se ve en la tienda hasta el proximo deploy. `/producto` y
+ * `/marca` se invalidan como "page" para no tirar abajo el layout entero.
+ */
+function revalidarTienda(slug?: string, marcaSlug?: string) {
+  revalidatePath("/");
+  revalidatePath("/catalogo");
+  revalidatePath("/sitemap.xml");
+  if (slug) revalidatePath(`/producto/${slug}`, "page");
+  if (marcaSlug) revalidatePath(`/marca/${marcaSlug}`, "page");
+}
+
 // ---------------------------------------------------------------------------
 // Buscador de referencias
 // ---------------------------------------------------------------------------
@@ -398,11 +414,11 @@ export async function guardarProducto(
       ? await tx.product.update({
           where: { id },
           data: { ...campos, slug },
-          select: { id: true, slug: true },
+          select: { id: true, slug: true, brand: { select: { slug: true } } },
         })
       : await tx.product.create({
           data: { ...campos, slug },
-          select: { id: true, slug: true },
+          select: { id: true, slug: true, brand: { select: { slug: true } } },
         });
 
     await sincronizarRelaciones(tx, producto.id, v);
@@ -414,6 +430,7 @@ export async function guardarProducto(
 
   revalidatePath("/admin/productos");
   revalidatePath(`/admin/productos/${resultado.id}`);
+  revalidarTienda(resultado.slug, resultado.brand.slug);
   return { ok: true, datos: resultado };
 }
 
@@ -448,11 +465,13 @@ export async function cambiarEstadoProducto(
     }
   }
 
-  await prisma.product.update({
+  const actualizado = await prisma.product.update({
     where: { id },
     data: { status: publicar ? ProductStatus.PUBLISHED : ProductStatus.DRAFT },
+    select: { slug: true, brand: { select: { slug: true } } },
   });
   revalidatePath("/admin/productos");
+  revalidarTienda(actualizado.slug, actualizado.brand.slug);
   return { ok: true };
 }
 
@@ -557,7 +576,11 @@ export async function eliminarProducto(id: string): Promise<Resultado> {
   await requireAdmin();
   // Las relaciones del producto cascadean; OrderItem tiene onDelete: SetNull,
   // asi que los pedidos historicos conservan su snapshot de nombre y precio.
-  await prisma.product.delete({ where: { id } });
+  const borrado = await prisma.product.delete({
+    where: { id },
+    select: { slug: true, brand: { select: { slug: true } } },
+  });
   revalidatePath("/admin/productos");
+  revalidarTienda(borrado.slug, borrado.brand.slug);
   return { ok: true };
 }

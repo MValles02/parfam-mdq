@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { urlAbsoluta } from "@/lib/seo";
-import { urlsDelSitio } from "@/lib/tienda/consultas";
+import { TAG_SITEMAP_URLS, urlsDelSitio } from "@/lib/tienda/consultas";
 
 /**
  * `sitemap.ts` es un Route Handler cacheado por defecto (ver
@@ -12,14 +12,21 @@ import { urlsDelSitio } from "@/lib/tienda/consultas";
  *
  * La revalidacion de una hora no se perdio, se bajo una capa: ahora la ruta se
  * resuelve por request (`force-dynamic`) pero la consulta vive en
- * `unstable_cache` con el mismo `revalidate: 3600`. Para el crawler el
- * resultado es el mismo (un producto nuevo tarda como mucho una hora en
- * aparecer) y lo unico que se paga de mas es armar el XML, que es memoria.
+ * `unstable_cache` con el mismo `revalidate: 3600` como tope. El tag
+ * `TAG_SITEMAP_URLS` acorta esa espera: las Server Actions que publican,
+ * borran o cambian el slug de un producto la invalidan con
+ * `revalidateTag(TAG_SITEMAP_URLS, "max")`, que sí funciona contra
+ * `unstable_cache` (a diferencia de `revalidatePath`, que sólo invalida caché
+ * de rutas — ver F-04 en `docs/findings.md`). Con perfil `"max"` la próxima
+ * visita sirve el sitemap viejo mientras se recalcula en el fondo, así que en
+ * la práctica un producto nuevo aparece en la siguiente visita a
+ * `/sitemap.xml`, no en la hora del `revalidate` de arriba.
  */
 export const dynamic = "force-dynamic";
 
 const urlsCacheadas = unstable_cache(urlsDelSitio, ["sitemap-urls"], {
   revalidate: 3600,
+  tags: [TAG_SITEMAP_URLS],
 });
 
 const PAGINAS_ESTATICAS: {

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
@@ -13,6 +13,11 @@ import {
   type ReferenciaAdoptable,
   type ResultadoReferencia,
 } from "@/lib/admin/referencias";
+import { type Resultado } from "@/lib/admin/resultado";
+import { nombrePropio } from "@/lib/catalogo";
+import { borrarObjeto, r2Configurado } from "@/lib/r2";
+import { TAG_SITEMAP_URLS } from "@/lib/tienda/consultas";
+import { erroresPorCampo } from "@/lib/validations/errores";
 import {
   productoSchema,
   type ProductoFormValues,
@@ -23,9 +28,7 @@ import {
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
 
-export type Resultado<T = undefined> =
-  | ({ ok: true } & (T extends undefined ? object : { datos: T }))
-  | { ok: false; mensaje: string; errores?: Record<string, string[]> };
+export type { Resultado };
 
 function fallo(mensaje: string, errores?: Record<string, string[]>) {
   return { ok: false as const, mensaje, errores };
@@ -38,13 +41,58 @@ function fallo(mensaje: string, errores?: Record<string, string[]>) {
  * que Next las guarda en el cache de rutas: sin esto, publicar un producto
  * desde el panel no se ve en la tienda hasta el proximo deploy. `/producto` y
  * `/marca` se invalidan como "page" para no tirar abajo el layout entero.
+ *
+ * El sitemap no es una ruta cacheada sino un `unstable_cache` (`force-dynamic`
+ * + tag), así que se invalida con `revalidateTag`, no con `revalidatePath`
+ * (F-04 en `docs/findings.md`). Perfil `"max"`: es justo el caso que
+ * `node_modules/next/dist/docs/.../revalidateTag.md` pone de ejemplo
+ * ("product catalogs"), donde una demora corta sirviendo el sitemap viejo
+ * mientras se recalcula en el fondo es aceptable.
  */
 function revalidarTienda(slug?: string, marcaSlug?: string) {
   revalidatePath("/");
   revalidatePath("/catalogo");
-  revalidatePath("/sitemap.xml");
+  revalidateTag(TAG_SITEMAP_URLS, "max");
   if (slug) revalidatePath(`/producto/${slug}`, "page");
   if (marcaSlug) revalidatePath(`/marca/${marcaSlug}`, "page");
+}
+
+/**
+ * Borra de R2 las claves que ya no tiene ninguna fila de `ProductImage`.
+ *
+ * `duplicarProducto` comparte `storageKey` con el original a propósito (ver
+ * su comentario más abajo: "borrar la copia no puede borrar el archivo del
+ * otro producto"), así que una clave sólo se borra del bucket cuando la
+ * última fila que la referencia desaparece de la base -- nunca por la sola
+ * desaparición de una fila puntual. Se llama siempre después de que la
+ * transacción que borró esas filas ya confirmó: contar referencias contra una
+ * fila que todavía no se borró (adentro de la misma transacción) las
+ * encontraría a todas "en uso".
+ *
+ * Best-effort a propósito: si `borrarObjeto` falla, el objeto queda huérfano
+ * en R2 (el problema original, ver F-06 en `docs/findings.md`) pero no hay
+ * nada que revertir en la base -- ya se guardó lo que el admin pidió guardar.
+ */
+async function borrarSiHuerfanas(storageKeys: string[]) {
+  const distintas = [...new Set(storageKeys)];
+  if (distintas.length === 0 || !r2Configurado()) return;
+
+  const enUso = await prisma.productImage.findMany({
+    where: { storageKey: { in: distintas } },
+    select: { storageKey: true },
+    distinct: ["storageKey"],
+  });
+  const enUsoSet = new Set(enUso.map((i) => i.storageKey));
+
+  await Promise.all(
+    distintas
+      .filter((clave) => !enUsoSet.has(clave))
+      .map((clave) =>
+        borrarObjeto(clave).catch((error: unknown) => {
+          console.error(`No se pudo borrar "${clave}" de R2:`, error);
+        }),
+      ),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -139,11 +187,17 @@ export async function buscarPerfumistasAction(
   const q = query.trim();
   const filas = await prisma.perfumer.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : undefined,
-    orderBy: { name: "asc" },
-    take: 20,
     select: { id: true, name: true },
   });
-  return { ok: true, datos: filas.map((p) => ({ id: p.id, nombre: p.name })) };
+  // Ordenar y cortar en JS, no en la consulta: `Perfumer.name` tiene
+  // mayúsculas inconsistentes del import (ver F-21 en docs/findings.md), así
+  // que un `orderBy: { name: "asc" }` de Postgres no da orden alfabético
+  // real. La tabla completa son ~1.400 filas -- ordenar en memoria no pesa.
+  const datos = filas
+    .map((p) => ({ id: p.id, nombre: nombrePropio(p.name) }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es-AR"))
+    .slice(0, 20);
+  return { ok: true, datos };
 }
 
 export async function crearPerfumistaAction(
@@ -185,15 +239,6 @@ export async function buscarMarcasAction(
 // ---------------------------------------------------------------------------
 
 /** Aplana los errores de zod a `{ "variants.0.priceArs": ["..."] }`. */
-function erroresPorCampo(error: z.ZodError) {
-  const salida: Record<string, string[]> = {};
-  for (const issue of error.issues) {
-    const clave = issue.path.join(".") || "_";
-    (salida[clave] ??= []).push(issue.message);
-  }
-  return salida;
-}
-
 async function resolverMarca(
   tx: Prisma.TransactionClient,
   v: ProductoFormValues,
@@ -313,24 +358,24 @@ async function sincronizarVariantes(
   }
 }
 
+/** Devuelve los `storageKey` de las filas que borró, para que el llamador
+ * decida -- ya fuera de la transacción -- si conviene borrarlos de R2. */
 async function sincronizarImagenes(
   tx: Prisma.TransactionClient,
   productId: string,
   v: ProductoFormValues,
-) {
+): Promise<string[]> {
   const previas = await tx.productImage.findMany({
     where: { productId },
-    select: { id: true },
+    select: { id: true, storageKey: true },
   });
   const conservadas = new Set(
     v.images.map((x) => x.id).filter((x): x is string => x !== null),
   );
-  const aBorrar = previas
-    .filter((p) => !conservadas.has(p.id))
-    .map((p) => p.id);
+  const aBorrar = previas.filter((p) => !conservadas.has(p.id));
   if (aBorrar.length) {
     await tx.productImage.deleteMany({
-      where: { id: { in: aBorrar }, productId },
+      where: { id: { in: aBorrar.map((p) => p.id) }, productId },
     });
   }
 
@@ -350,6 +395,8 @@ async function sincronizarImagenes(
       await tx.productImage.create({ data: { productId, ...datos } });
     }
   }
+
+  return aBorrar.map((p) => p.storageKey);
 }
 
 export async function guardarProducto(
@@ -423,15 +470,20 @@ export async function guardarProducto(
 
     await sincronizarRelaciones(tx, producto.id, v);
     await sincronizarVariantes(tx, producto.id, v);
-    await sincronizarImagenes(tx, producto.id, v);
+    const imagenesBorradas = await sincronizarImagenes(tx, producto.id, v);
 
-    return producto;
+    return { producto, imagenesBorradas };
   });
 
+  // Recién después de que la transacción confirmó: contar referencias contra
+  // una fila que la propia transacción todavía no borró las encontraría a
+  // todas "en uso" (ver el comentario de `borrarSiHuerfanas`).
+  await borrarSiHuerfanas(resultado.imagenesBorradas);
+
   revalidatePath("/admin/productos");
-  revalidatePath(`/admin/productos/${resultado.id}`);
-  revalidarTienda(resultado.slug, resultado.brand.slug);
-  return { ok: true, datos: resultado };
+  revalidatePath(`/admin/productos/${resultado.producto.id}`);
+  revalidarTienda(resultado.producto.slug, resultado.producto.brand.slug);
+  return { ok: true, datos: resultado.producto };
 }
 
 // ---------------------------------------------------------------------------
@@ -574,12 +626,28 @@ export async function duplicarProducto(
 
 export async function eliminarProducto(id: string): Promise<Resultado> {
   await requireAdmin();
+
+  // Mismo criterio que `cambiarEstadoProducto` y `duplicarProducto`: buscar
+  // antes de escribir, para que un doble click o una pestaña vieja vean el
+  // mensaje del producto y no el error generico de Server Action de Next
+  // (P2025 de Prisma) -- ver F-18 en docs/findings.md.
+  const producto = await prisma.product.findUnique({
+    where: { id },
+    select: { images: { select: { storageKey: true } } },
+  });
+  if (!producto) return fallo("Ese producto ya no existe.");
+
   // Las relaciones del producto cascadean; OrderItem tiene onDelete: SetNull,
   // asi que los pedidos historicos conservan su snapshot de nombre y precio.
   const borrado = await prisma.product.delete({
     where: { id },
     select: { slug: true, brand: { select: { slug: true } } },
   });
+
+  // Recién después del delete: contar referencias antes lo encontraría "en
+  // uso" contra sus propias filas, que todavía no se borraron.
+  await borrarSiHuerfanas(producto.images.map((i) => i.storageKey));
+
   revalidatePath("/admin/productos");
   revalidarTienda(borrado.slug, borrado.brand.slug);
   return { ok: true };

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ExternalLink, Loader2, Save, Send, X } from "lucide-react";
+import { ExternalLink, Loader2, Save, Send, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -789,6 +790,30 @@ export function ProductoForm({
                 </a>
               ) : null}
             </div>
+
+            <Controller
+              control={control}
+              name="isFeatured"
+              render={({ field }) => (
+                <label className="flex cursor-pointer items-center gap-2.5">
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <span
+                    className={cn(
+                      "flex items-center gap-1.5 text-sm font-medium",
+                      !field.value && "text-muted-foreground",
+                    )}
+                  >
+                    <Star
+                      className={cn("size-3.5", field.value && "fill-current")}
+                    />
+                    Destacado
+                  </span>
+                </label>
+              )}
+            />
 
             <div className="flex items-center gap-2.5">
               <Button

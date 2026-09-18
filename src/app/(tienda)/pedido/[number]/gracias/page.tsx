@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { obtenerConfiguracionSitio } from "@/lib/configuracion";
+import { esLinkWhatsappValido } from "@/lib/whatsapp";
 import { GraciasCliente } from "./_gracias-cliente";
 
 export const metadata: Metadata = { title: "Pedido enviado" };
@@ -18,7 +19,12 @@ export default async function Page(
     props.searchParams,
     obtenerConfiguracionSitio(),
   ]);
-  const link = typeof sp.link === "string" ? sp.link : null;
+  // `?link=` viene de afuera (query string): sólo se confía en él si es
+  // exactamente el tipo de URL que arma `linkWhatsappA` (ver F-05 en
+  // docs/findings.md). Cualquier otra cosa cae al fallback genérico de
+  // `GraciasCliente`, como si no hubiera llegado ningún `link`.
+  const linkCrudo = typeof sp.link === "string" ? sp.link : null;
+  const link = linkCrudo && esLinkWhatsappValido(linkCrudo) ? linkCrudo : null;
 
   return (
     <GraciasCliente

@@ -1,10 +1,8 @@
 /**
- * Chequeo rápido de los parsers contra casos reales del dataset.
- * No es parte de una suite de CI todavía (no hay test runner instalado para
- * unit tests, sólo Playwright para e2e) — se corre a mano con:
- *   pnpm exec tsx scripts/lib/fragrantica-parse.test.ts
+ * Chequeo de los parsers contra casos reales del dataset.
+ *   pnpm test -- scripts/lib/fragrantica-parse.test.ts
  */
-import assert from "node:assert/strict";
+import { describe, expect, it } from "vitest";
 import {
   parseFragranticaUrl,
   titleCaseFromSlug,
@@ -18,74 +16,109 @@ import {
   parseIntOrNull,
 } from "./fragrantica-parse";
 
-// --- parseFragranticaUrl ----------------------------------------------------
-assert.deepEqual(
-  parseFragranticaUrl(
-    "https://www.fragrantica.com/perfume/Jean-Paul-Gaultier/Scandal-A-Paris-54275.html",
-  ),
-  { pid: 54275, brandName: "Jean Paul Gaultier", name: "Scandal A Paris" },
-);
-assert.deepEqual(
-  parseFragranticaUrl(
-    "https://www.fragrantica.com/perfume/Afnan/9am-Dive-78611.html",
-  ),
-  { pid: 78611, brandName: "Afnan", name: "9am Dive" },
-);
-assert.equal(
-  parseFragranticaUrl("https://www.fragrantica.com/news/x-123.html"),
-  null,
-);
+describe("parseFragranticaUrl", () => {
+  it("separa marca y nombre de una URL de perfume", () => {
+    expect(
+      parseFragranticaUrl(
+        "https://www.fragrantica.com/perfume/Jean-Paul-Gaultier/Scandal-A-Paris-54275.html",
+      ),
+    ).toEqual({
+      pid: 54275,
+      brandName: "Jean Paul Gaultier",
+      name: "Scandal A Paris",
+    });
+    expect(
+      parseFragranticaUrl(
+        "https://www.fragrantica.com/perfume/Afnan/9am-Dive-78611.html",
+      ),
+    ).toEqual({ pid: 78611, brandName: "Afnan", name: "9am Dive" });
+  });
 
-// --- titleCaseFromSlug -------------------------------------------------------
-assert.equal(titleCaseFromSlug("jean-paul-gaultier"), "Jean Paul Gaultier");
-assert.equal(
-  titleCaseFromSlug("accento-overdose-pride-edition"),
-  "Accento Overdose Pride Edition",
-);
-
-// --- géneros -----------------------------------------------------------------
-assert.equal(normalizeGenderCleaned("women"), "WOMEN");
-assert.equal(normalizeGenderCleaned("unisex"), "UNISEX");
-assert.equal(normalizeGenderCleaned("bogus"), null);
-assert.equal(normalizeGenderPerfumes("for women and men"), "UNISEX");
-assert.equal(normalizeGenderPerfumes("N/A"), null);
-
-// --- splitProseList -----------------------------------------------------------
-assert.deepEqual(
-  splitProseList("Lemon, Mandarin Orange, Cardamom and Pink Pepper"),
-  ["Lemon", "Mandarin Orange", "Cardamom", "Pink Pepper"],
-);
-assert.deepEqual(splitProseList("Vanilla"), ["Vanilla"]);
-assert.deepEqual(splitProseList(""), []);
-
-// --- parsePyramidFromDescription ----------------------------------------------
-const desc1 =
-  "9am Dive byAfnanis a Aromatic Aquatic fragrance for women and men. This is a new fragrance.9am Divewas launched in 2022. Top notes are Lemon, Mint, Black Currant and Pink Pepper; middle notes are Apple, Incense and Cedar; base notes are Ginger, Sandalwood, Patchouli and Jasmine.";
-assert.deepEqual(parsePyramidFromDescription(desc1), {
-  top: ["Lemon", "Mint", "Black Currant", "Pink Pepper"],
-  middle: ["Apple", "Incense", "Cedar"],
-  base: ["Ginger", "Sandalwood", "Patchouli", "Jasmine"],
+  it("devuelve null para una URL que no es de perfume", () => {
+    expect(
+      parseFragranticaUrl("https://www.fragrantica.com/news/x-123.html"),
+    ).toBeNull();
+  });
 });
-assert.equal(parseYearFromDescription(desc1), 2022);
-assert.equal(parsePyramidFromDescription("No notes info here at all"), null);
 
-// --- parsePyStringList ---------------------------------------------------------
-assert.deepEqual(parsePyStringList("[]"), []);
-assert.deepEqual(parsePyStringList("['Clement Gavarry']"), ["Clement Gavarry"]);
-assert.deepEqual(
-  parsePyStringList("['Ali Asgar Fakhruddin', 'Mathieu Nardin']"),
-  ["Ali Asgar Fakhruddin", "Mathieu Nardin"],
-);
-assert.deepEqual(parsePyStringList(`["O'Connor", 'Jane Doe']`), [
-  "O'Connor",
-  "Jane Doe",
-]);
+describe("titleCaseFromSlug", () => {
+  it("convierte un slug a Title Case", () => {
+    expect(titleCaseFromSlug("jean-paul-gaultier")).toBe("Jean Paul Gaultier");
+    expect(titleCaseFromSlug("accento-overdose-pride-edition")).toBe(
+      "Accento Overdose Pride Edition",
+    );
+  });
+});
 
-// --- numeros ---------------------------------------------------------------
-assert.equal(parseDecimal("1,42"), 1.42);
-assert.equal(parseDecimal("3.73"), 3.73);
-assert.equal(parseDecimal(""), null);
-assert.equal(parseIntOrNull("2022"), 2022);
-assert.equal(parseIntOrNull(""), null);
+describe("géneros", () => {
+  it("normaliza el género limpio", () => {
+    expect(normalizeGenderCleaned("women")).toBe("WOMEN");
+    expect(normalizeGenderCleaned("unisex")).toBe("UNISEX");
+    expect(normalizeGenderCleaned("bogus")).toBeNull();
+  });
 
-console.log("fragrantica-parse: todos los checks pasaron ✔");
+  it("normaliza el género en prosa de Perfumes.csv", () => {
+    expect(normalizeGenderPerfumes("for women and men")).toBe("UNISEX");
+    expect(normalizeGenderPerfumes("N/A")).toBeNull();
+  });
+});
+
+describe("splitProseList", () => {
+  it("separa una lista en prosa con comas y 'and'", () => {
+    expect(
+      splitProseList("Lemon, Mandarin Orange, Cardamom and Pink Pepper"),
+    ).toEqual(["Lemon", "Mandarin Orange", "Cardamom", "Pink Pepper"]);
+    expect(splitProseList("Vanilla")).toEqual(["Vanilla"]);
+    expect(splitProseList("")).toEqual([]);
+  });
+});
+
+describe("parsePyramidFromDescription", () => {
+  const desc1 =
+    "9am Dive byAfnanis a Aromatic Aquatic fragrance for women and men. This is a new fragrance.9am Divewas launched in 2022. Top notes are Lemon, Mint, Black Currant and Pink Pepper; middle notes are Apple, Incense and Cedar; base notes are Ginger, Sandalwood, Patchouli and Jasmine.";
+
+  it("extrae la pirámide olfativa de una descripción real", () => {
+    expect(parsePyramidFromDescription(desc1)).toEqual({
+      top: ["Lemon", "Mint", "Black Currant", "Pink Pepper"],
+      middle: ["Apple", "Incense", "Cedar"],
+      base: ["Ginger", "Sandalwood", "Patchouli", "Jasmine"],
+    });
+  });
+
+  it("extrae el año de la misma descripción", () => {
+    expect(parseYearFromDescription(desc1)).toBe(2022);
+  });
+
+  it("devuelve null si la descripción no tiene pirámide", () => {
+    expect(parsePyramidFromDescription("No notes info here at all")).toBeNull();
+  });
+});
+
+describe("parsePyStringList", () => {
+  it("parsea listas con la sintaxis de repr() de Python", () => {
+    expect(parsePyStringList("[]")).toEqual([]);
+    expect(parsePyStringList("['Clement Gavarry']")).toEqual([
+      "Clement Gavarry",
+    ]);
+    expect(
+      parsePyStringList("['Ali Asgar Fakhruddin', 'Mathieu Nardin']"),
+    ).toEqual(["Ali Asgar Fakhruddin", "Mathieu Nardin"]);
+    expect(parsePyStringList(`["O'Connor", 'Jane Doe']`)).toEqual([
+      "O'Connor",
+      "Jane Doe",
+    ]);
+  });
+});
+
+describe("números", () => {
+  it("parsea decimales con coma o punto", () => {
+    expect(parseDecimal("1,42")).toBe(1.42);
+    expect(parseDecimal("3.73")).toBe(3.73);
+    expect(parseDecimal("")).toBeNull();
+  });
+
+  it("parsea enteros opcionales", () => {
+    expect(parseIntOrNull("2022")).toBe(2022);
+    expect(parseIntOrNull("")).toBeNull();
+  });
+});

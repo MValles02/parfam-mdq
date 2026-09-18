@@ -10,32 +10,32 @@ posiblemente deliberada).
 Estado del repositorio auditado: rama `main`, commit `2e8ef56`, con `docs/`
 sin versionar.
 
-| #             | Nivel    | Tema                                                                   |
-| ------------- | -------- | ---------------------------------------------------------------------- |
-| [F-01](#f-01) | RESUELTO | ~~`PLAN.md` citado por código que ya no puede consultarlo~~            |
-| [F-02](#f-02) | RESUELTO | ~~El `Dockerfile` copia `public/`, que ya no existe~~                  |
-| [F-03](#f-03) | INFO     | `token.role` se escribe y nunca se lee                                 |
-| [F-04](#f-04) | WARNING  | `revalidatePath("/sitemap.xml")` no invalida la caché real del sitemap |
-| [F-05](#f-05) | WARNING  | `?link=` llega sin validar al `href` de `/pedido/:n/gracias`           |
-| [F-06](#f-06) | WARNING  | Objetos huérfanos en R2 al quitar una foto o borrar un producto        |
-| [F-07](#f-07) | INFO     | El rate limit es por proceso: asume una sola réplica                   |
-| [F-08](#f-08) | WARNING  | El seed guarda el email tal cual; el login lo busca en minúsculas      |
-| [F-09](#f-09) | WARNING  | Hay un archivo de tests y ningún test runner                           |
-| [F-10](#f-10) | WARNING  | Traducir una nota no revalida la tienda                                |
-| [F-11](#f-11) | INFO     | `Resultado<T>` y `erroresPorCampo()` duplicados en cuatro archivos     |
-| [F-12](#f-12) | INFO     | Dos páginas del panel consultan Prisma directo                         |
-| [F-13](#f-13) | INFO     | El catálogo se ordena y pagina en memoria                              |
-| [F-14](#f-14) | INFO     | `validarCarritoAction` es pública y sin rate limit                     |
-| [F-15](#f-15) | INFO     | Los totales de pantalla se suman con `Number`                          |
-| [F-16](#f-16) | INFO     | La reconciliación puede dispararse dos veces                           |
-| [F-17](#f-17) | WARNING  | Umami: configurada de punta a punta, nunca implementada                |
-| [F-18](#f-18) | INFO     | `eliminarProducto` no verifica existencia                              |
-| [F-19](#f-19) | INFO     | `precioMostrado` se exige, se valida y no se usa                       |
-| [F-20](#f-20) | INFO     | El `TODO` de los rangos de precio sigue abierto                        |
-| [F-21](#f-21) | INFO     | `Perfumer.name` con mayúsculas inconsistentes, corregido al mostrar    |
-| [F-22](#f-22) | WARNING  | `isFeatured` se persiste y ordena, pero no hay control en la UI        |
-| [F-23](#f-23) | INFO     | `ProductVariant.sku` no tiene campo en el formulario                   |
-| [F-24](#f-24) | INFO     | Cuatro columnas del schema sin ningún lector ni escritor               |
+| #             | Nivel    | Tema                                                                       |
+| ------------- | -------- | -------------------------------------------------------------------------- |
+| [F-01](#f-01) | RESUELTO | ~~`PLAN.md` citado por código que ya no puede consultarlo~~                |
+| [F-02](#f-02) | RESUELTO | ~~El `Dockerfile` copia `public/`, que ya no existe~~                      |
+| [F-03](#f-03) | RESUELTO | ~~`token.role` se escribe y nunca se lee~~                                 |
+| [F-04](#f-04) | RESUELTO | ~~`revalidatePath("/sitemap.xml")` no invalida la caché real del sitemap~~ |
+| [F-05](#f-05) | RESUELTO | ~~`?link=` llega sin validar al `href` de `/pedido/:n/gracias`~~           |
+| [F-06](#f-06) | RESUELTO | ~~Objetos huérfanos en R2 al quitar una foto o borrar un producto~~        |
+| [F-07](#f-07) | INFO     | El rate limit es por proceso: asume una sola réplica                       |
+| [F-08](#f-08) | RESUELTO | ~~El seed guarda el email tal cual; el login lo busca en minúsculas~~      |
+| [F-09](#f-09) | RESUELTO | ~~Hay un archivo de tests y ningún test runner~~                           |
+| [F-10](#f-10) | RESUELTO | ~~Traducir una nota no revalida la tienda~~                                |
+| [F-11](#f-11) | RESUELTO | ~~`Resultado<T>` y `erroresPorCampo()` duplicados en cuatro archivos~~     |
+| [F-12](#f-12) | RESUELTO | ~~Dos páginas del panel consultan Prisma directo~~                         |
+| [F-13](#f-13) | INFO     | El catálogo se ordena y pagina en memoria                                  |
+| [F-14](#f-14) | RESUELTO | ~~`validarCarritoAction` es pública y sin rate limit~~                     |
+| [F-15](#f-15) | INFO     | Los totales de pantalla se suman con `Number`                              |
+| [F-16](#f-16) | RESUELTO | ~~La reconciliación puede dispararse dos veces~~                           |
+| [F-17](#f-17) | RESUELTO | ~~Umami: configurada de punta a punta, nunca implementada~~                |
+| [F-18](#f-18) | RESUELTO | ~~`eliminarProducto` no verifica existencia~~                              |
+| [F-19](#f-19) | RESUELTO | ~~`precioMostrado` se exige, se valida y no se usa~~                       |
+| [F-20](#f-20) | RESUELTO | ~~El `TODO` de los rangos de precio sigue abierto~~                        |
+| [F-21](#f-21) | RESUELTO | ~~`Perfumer.name` con mayúsculas inconsistentes, corregido al mostrar~~    |
+| [F-22](#f-22) | RESUELTO | ~~`isFeatured` se persiste y ordena, pero no hay control en la UI~~        |
+| [F-23](#f-23) | RESUELTO | ~~`ProductVariant.sku` no tiene campo en el formulario~~                   |
+| [F-24](#f-24) | RESUELTO | ~~Cuatro columnas del schema sin ningún lector ni escritor~~               |
 
 ---
 
@@ -97,29 +97,62 @@ fuentes viven en `src/assets/`.
 
 <a id="f-03"></a>
 
-## F-03 · INFO — `token.role` se escribe y nunca se lee
+## F-03 · RESUELTO — `token.role` se escribe y nunca se lee
 
-**Observado.** `src/lib/auth.config.ts:25-31` escribe `token.role = "ADMIN"` en
-el callback `jwt`. El callback `session` inmediatamente debajo copia **sólo**
-`token.id`. `grep -rn "\.role\|role:" src/ | grep -v generated` devuelve
-exactamente **una** línea: esa asignación.
+> **Corregido.** Se eliminó la asignación de `src/lib/auth.config.ts` y se
+> reescribió el JSDoc, que afirmaba que el rol viajaba "de ahi a la sesion"
+> — algo que el callback `session` nunca hizo.
+>
+> **Por qué borrar y no cablear**: `UserRole` tiene un único valor y hay un
+> solo usuario, así que wirear el rol hasta la sesión sería construir
+> autorización por roles sin nada que autorizar. Peor: el valor era un
+> **literal** `"ADMIN"`, no `user.role` — `authorize()` ni siquiera devuelve el
+> rol. Completar ese camino habría dado el rol más alto a cualquiera que se
+> loguee. El comentario nuevo deja asentado que, si algún día hace falta, el
+> valor tiene que salir de `User.role` y viajar desde `authorize()`.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, base de
+> desarrollo): ruta protegida sin sesión → 307 a `/admin/login?volverA=…`;
+> login → 302 con `authjs.session-token`; ruta protegida con sesión → 200.
+> Decodificando el JWT con `next-auth/jwt` y el `AUTH_SECRET` real, los claims
+> quedaron en `["email","exp","iat","id","jti","name","sub"]`: `role` ausente,
+> `id` presente y consistente con `sub`.
 
-**Efecto.** Ninguno hoy. Es andamiaje para una autorización por rol que no
-existe: `UserRole` tiene un único valor (`ADMIN`) y `requireAdmin()` sólo
-comprueba que haya `session.user`.
-
-**Riesgo latente.** Si alguien agrega un segundo rol asumiendo que
-`session.user.role` funciona, no va a existir.
+**Lo observado originalmente.** `src/lib/auth.config.ts` escribía
+`token.role = "ADMIN"` en el callback `jwt`, el callback `session` copiaba sólo
+`token.id`, y esa asignación era la única mención de `role` en todo el código
+de aplicación. Compilaba porque `JWT extends Record<string, unknown>`, no
+porque hubiera un tipo detrás.
 
 ---
 
 <a id="f-04"></a>
 
-## F-04 · WARNING — `revalidatePath("/sitemap.xml")` no invalida el sitemap
+## F-04 · RESUELTO — `revalidatePath("/sitemap.xml")` no invalida el sitemap
 
-**Observado.** `src/app/admin/(panel)/productos/actions.ts:45` llama a
-`revalidatePath("/sitemap.xml")` tras guardar, publicar o borrar un producto.
-Pero `src/app/sitemap.ts` es `force-dynamic` y su consulta vive en:
+> **Corregido.** `src/app/sitemap.ts` le agregó `tags: [TAG_SITEMAP_URLS]` al
+> `unstable_cache` (constante exportada desde `src/lib/tienda/consultas.ts`,
+> junto a `urlsDelSitio`), y `revalidarTienda()` en
+> `src/app/admin/(panel)/productos/actions.ts` cambió el `revalidatePath`
+> inútil por `revalidateTag(TAG_SITEMAP_URLS, "max")` — el mismo patrón que ya
+> usaba `src/lib/configuracion.ts` con `TAG_CONFIGURACION_SITIO` para el mismo
+> problema. Perfil `"max"` porque el sitemap es justo el caso que
+> `node_modules/next/dist/docs/.../revalidateTag.md` pone de ejemplo
+> ("product catalogs"): servir el sitemap viejo mientras se recalcula en el
+> fondo es aceptable, a diferencia de `TAG_CONFIGURACION_SITIO`, que usa
+> `{ expire: 0 }` porque ahí sí hace falta lectura inmediata.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, base de
+> desarrollo, con Playwright): se despublicó "Mugler Angel" desde el panel —
+> el primer `GET /sitemap.xml` siguiente todavía sirvió el contenido viejo
+> (semántica stale-while-revalidate), el segundo ya no incluía
+> `/producto/mugler-angel`. Se volvió a publicar y, con el mismo patrón de dos
+> requests, el sitemap lo recuperó. Antes de este cambio (`revalidatePath`
+> sin tag) el producto habría tardado hasta una hora en reflejarse.
+
+**Lo observado originalmente.** `src/app/admin/(panel)/productos/actions.ts:45`
+llamaba a `revalidatePath("/sitemap.xml")` tras guardar, publicar o borrar un
+producto. Pero `src/app/sitemap.ts` es `force-dynamic` y su consulta vivía en:
 
 ```ts
 const urlsCacheadas = unstable_cache(urlsDelSitio, ["sitemap-urls"], {
@@ -127,21 +160,37 @@ const urlsCacheadas = unstable_cache(urlsDelSitio, ["sitemap-urls"], {
 });
 ```
 
-**sin `tags`**. `revalidatePath` invalida la caché de rutas; no toca una entrada
-de `unstable_cache` que no declara tag.
+**sin `tags`**. `revalidatePath` invalida la caché de rutas; no tocaba una
+entrada de `unstable_cache` que no declaraba tag.
 
-**Efecto.** Un producto nuevo tarda **hasta una hora** en aparecer en
+**Efecto.** Un producto nuevo tardaba **hasta una hora** en aparecer en
 `/sitemap.xml`, pese a la llamada explícita. El comentario de `sitemap.ts:14-18`
-acepta esa latencia de una hora como diseño, así que el impacto real es bajo —
-pero la llamada a `revalidatePath` sugiere una inmediatez que no ocurre.
+aceptaba esa latencia de una hora como diseño, así que el impacto real era
+bajo — pero la llamada a `revalidatePath` sugería una inmediatez que no
+ocurría.
 
 ---
 
 <a id="f-05"></a>
 
-## F-05 · WARNING — `?link=` sin validar en `/pedido/[number]/gracias`
+## F-05 · RESUELTO — `?link=` sin validar en `/pedido/[number]/gracias`
 
-**Observado.**
+> **Corregido.** `src/lib/whatsapp.ts` suma `esLinkWhatsappValido()`: exige
+> `protocol === "https:"` y `hostname === "wa.me"` vía `new URL()`. `page.tsx`
+> lo aplica al `link` del query string antes de pasarlo a `GraciasCliente` —
+> cualquier valor que no pase la validación llega como `null`, exactamente
+> igual que si no hubiera `?link=` en la URL (mismo fallback que ya existía).
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright, porque `GraciasCliente` no renderiza nada hasta hidratarse):
+> un `?link=https://wa.me/...?text=...` legítimo se preserva tal cual
+> (incluido el texto); un `?link=https://sitio-atacante.example/phish` y un
+> `?link=javascript:alert(1)` caen los dos al mensaje genérico de WhatsApp.
+> Esto también resuelve el "[No determinado]" original sobre `javascript:`:
+> `new URL()` lo parsea con `protocol === "javascript:"`, que la validación
+> rechaza.
+
+**Lo observado originalmente.**
 
 ```tsx
 // page.tsx
@@ -174,9 +223,37 @@ nada (`_gracias-cliente.tsx:10-18`). El agujero está en el otro parámetro.
 
 <a id="f-06"></a>
 
-## F-06 · WARNING — Objetos huérfanos en R2
+## F-06 · RESUELTO — Objetos huérfanos en R2
 
-**Observado.** `borrarObjeto()` (`src/lib/r2.ts:116`) tiene exactamente dos
+> **Corregido.** `src/app/admin/(panel)/productos/actions.ts` suma
+> `borrarSiHuerfanas(storageKeys)`: cuenta cuántas filas de `ProductImage`
+> siguen apuntando a cada clave y sólo llama a `borrarObjeto` para las que
+> quedaron en cero. Se invoca desde dos lugares, siempre **después** de que
+> la escritura en la base ya confirmó (nunca adentro de la transacción, para
+> no contar una fila que la propia transacción todavía no borró):
+>
+> - `sincronizarImagenes()` ahora devuelve los `storageKey` de las filas que
+>   borró, y `guardarProducto()` los pasa a `borrarSiHuerfanas` después del
+>   `$transaction`.
+> - `eliminarProducto()` lee las imágenes del producto **antes** de borrarlo
+>   (aprovechando el mismo viaje para la verificación de existencia de
+>   F-18) y limpia después del `delete`.
+>
+> Respeta la complicación real que señalaba el hallazgo: `duplicarProducto()`
+> sigue compartiendo `storageKey` a propósito, y `borrarSiHuerfanas` es
+> justamente el conteo de referencias que hacía falta para que compartir no
+> implique borrar el archivo del otro producto. Es best-effort: si
+> `borrarObjeto` falla, no se revierte nada de la base — el objeto queda
+> huérfano (el problema original) en vez de perder datos escritos.
+>
+> **Verificado** contra R2 y el Postgres de desarrollo reales (no mockeados):
+> un script subió un objeto de prueba a R2, lo compartió entre dos productos
+> creados a mano, borró uno (el objeto sobrevivió, `HeadObjectCommand`
+> confirmó 200) y borró el otro (el objeto desapareció, 404). Data de prueba
+> y objeto de R2 limpiados al final por el propio script.
+
+**Lo observado originalmente.** `borrarObjeto()` (`src/lib/r2.ts:116`) tenía
+exactamente dos
 call-sites: `borrarImagenSubida` (`imagenes-actions.ts:104`) y
 `scripts/seed-dev.ts:561`.
 
@@ -223,9 +300,20 @@ solo bucket.
 
 <a id="f-08"></a>
 
-## F-08 · WARNING — Desajuste de mayúsculas entre el seed y el login
+## F-08 · RESUELTO — Desajuste de mayúsculas entre el seed y el login
 
-**Observado.**
+> **Corregido.** `prisma/seed.ts` normaliza `ADMIN_SEED_EMAIL?.toLowerCase()`
+> antes de buscar o crear la fila, igual que `authorize()`. No se agregó un
+> índice funcional de minúsculas en `User.email`: no hay otra vía para crear
+> un usuario (el hallazgo original ya lo señala), así que el único punto de
+> entrada que podía introducir el desajuste es este seed.
+>
+> **Verificado** contra la base de desarrollo real: corriendo el seed con
+> `ADMIN_SEED_EMAIL="Test.Case.F08@ParfamMDQ.com"` la fila quedó creada como
+> `test.case.f08@parfammdq.com` (log del propio script). Usuario de prueba
+> borrado al terminar.
+
+**Lo observado originalmente.**
 
 ```ts
 // prisma/seed.ts — guarda el email TAL CUAL viene del entorno
@@ -254,9 +342,26 @@ tampoco lo impide.
 
 <a id="f-09"></a>
 
-## F-09 · WARNING — Un archivo de tests, ningún runner
+## F-09 · RESUELTO — Un archivo de tests, ningún runner
 
-**Observado.** `scripts/lib/fragrantica-parse.test.ts` existe y usa
+> **Corregido (con alcance acotado, a pedido de Mateo).** Se instaló Vitest
+> (devDependency), se sumó el script `"test": "vitest run"` a
+> `package.json`, y `scripts/lib/fragrantica-parse.test.ts` se migró de
+> `node:assert/strict` a `describe`/`it`/`expect` de Vitest — mismos 10
+> parsers, mismos casos, ahora como 12 tests agrupados. El comentario que
+> afirmaba un e2e con Playwright inexistente se corrigió en el propio archivo,
+> en `AGENTS.md`, `docs/README.md` y `docs/modules/datos-referencia.md`.
+>
+> **Deliberadamente fuera de alcance**: Playwright/e2e no se instaló (es un
+> cambio de infraestructura más grande — browsers, CI) y `deploy.yml` sigue
+> sin correr `pnpm test` (tampoco corre `typecheck` ni `lint`; wirear CI es
+> una decisión aparte). Estas dos quedan pendientes si en algún momento se
+> quiere ir más allá.
+>
+> **Verificado**: `pnpm typecheck`, `pnpm lint` y `pnpm test` pasan limpios —
+> `vitest run` reporta **12 passed (12)** en 1 archivo.
+
+**Lo observado originalmente.** `scripts/lib/fragrantica-parse.test.ts` existía y usaba
 `node:assert/strict`. Su cabecera dice:
 
 > _"No es parte de una suite de CI todavía (no hay test runner instalado para
@@ -280,9 +385,25 @@ mano. Y el comentario afirma un e2e que no existe.
 
 <a id="f-10"></a>
 
-## F-10 · WARNING — Traducir una nota no revalida la tienda
+## F-10 · RESUELTO — Traducir una nota no revalida la tienda
 
-**Observado.** `traducirNota` y `borrarTraduccion`
+> **Corregido.** `src/app/admin/(panel)/notas/actions.ts` suma
+> `revalidarNota(noteId)`, mismo patrón que `revalidarMarca` en
+> `marcas/actions.ts`: busca los productos que referencian la nota vía
+> `ProductNote` y revalida `/`, `/catalogo` y la ficha de cada uno. Se llama
+> desde `traducirNota` y `borrarTraduccion`, después de guardar. No se tocó
+> `crearNotaAction` (vive en `productos/actions.ts`, no en este archivo): el
+> hallazgo original ya señala que ahí el efecto es nulo porque una nota
+> recién creada no está en ningún producto publicado todavía.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright): la nota "nutmeg" (usada en la pirámide de "Sauvage Elixir",
+> ya traducida como "nuez moscada") se retradujo a un valor de prueba desde
+> `/admin/notas` — la ficha del producto lo mostró en el **request
+> inmediato siguiente**, sin esperar ningún otro invalidador. Traducción
+> restaurada a "nuez moscada" al terminar.
+
+**Lo observado originalmente.** `traducirNota` y `borrarTraduccion`
 (`src/app/admin/(panel)/notas/actions.ts`) sólo llaman a
 `revalidatePath("/admin/notas")`.
 
@@ -305,9 +426,24 @@ producto publicado.
 
 <a id="f-11"></a>
 
-## F-11 · INFO — `Resultado<T>` y `erroresPorCampo()` duplicados
+## F-11 · RESUELTO — `Resultado<T>` y `erroresPorCampo()` duplicados
 
-**Observado.** El mismo tipo aparece, literalmente idéntico, en cuatro archivos:
+> **Corregido.** `src/lib/admin/resultado.ts` tiene el `Resultado<T>` único
+> (la versión con `errores?`, que es un superset compatible de la variante
+> sin genérico que usaban `marcas` y `configuracion`), y
+> `src/lib/validations/errores.ts` tiene el único `erroresPorCampo()`. Los
+> seis archivos (`productos`, `imagenes-actions`, `notas`, `pedidos`,
+> `marcas`, `configuracion`) ahora hacen `export type { Resultado }` desde el
+> import, así que su superficie pública no cambió — nada afuera de estos
+> archivos importaba el tipo directamente, pero si algo lo hiciera seguiría
+> andando igual. `checkout/actions.ts` importa sólo `erroresPorCampo`: su
+> `ResultadoCheckout` es legítimamente distinto (trae `invalidos`) y se dejó
+> como estaba, tal como anotaba el hallazgo original.
+>
+> **Verificado**: `pnpm typecheck`, `pnpm lint` y `pnpm test` pasan limpios
+> tras el cambio.
+
+**Lo observado originalmente.** El mismo tipo aparecía, literalmente idéntico, en cuatro archivos:
 
 - `src/app/admin/(panel)/productos/actions.ts:26-28`
 - `src/app/admin/(panel)/productos/imagenes-actions.ts:14-16` (con el comentario
@@ -328,21 +464,31 @@ esto.
 
 <a id="f-12"></a>
 
-## F-12 · INFO — Dos páginas del panel consultan Prisma directo
+## F-12 · RESUELTO — Dos páginas del panel consultan Prisma directo
 
-**Observado.** El resto del panel lee a través de `src/lib/admin/*`. Dos
-excepciones:
+> **Corregido.** `getStats()` se movió, igual, a
+> `obtenerEstadisticasPanel()` en `src/lib/admin/panel.ts` (nuevo). La
+> consulta de `notas/page.tsx` se movió a `listarNotas()` en
+> `src/lib/admin/notas.ts` (nuevo), que ahora también hace el cálculo de
+> `totalPaginas` que antes vivía en la página. El comentario del índice
+> parcial (`nameEs: null`, no una negación equivalente) viajó con la
+> consulta a su nuevo archivo.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright): `/admin` sigue mostrando los cuatro números (5 publicados,
+> 11 pedidos pendientes, 1.398 notas sin traducir, 69.946 de referencia) y
+> `/admin/notas` sigue renderizando sus 51 filas (50 + encabezado) —
+> `pnpm typecheck`, `pnpm lint` y `pnpm test` limpios.
+
+**Lo observado originalmente.** El resto del panel leía a través de
+`src/lib/admin/*`. Dos excepciones:
 
 - `src/app/admin/(panel)/page.tsx` → `getStats()`, cinco `count()` locales
 - `src/app/admin/(panel)/notas/page.tsx` → `findMany` + tres `count()`
 
 **Efecto.** Ninguno funcional. Registrado por consistencia: si `/admin/notas`
-crece (paginado más complejo, exportación), la consulta tendría que mudarse a
-`src/lib/admin/notas.ts`, que hoy no existe.
-
-**Nota.** En `notas/page.tsx:33-35` hay un comentario que vale conservar: el
-filtro **tiene que** escribirse `nameEs: null` (y no una negación equivalente)
-para que el índice parcial `Note_untranslated_idx` lo cubra.
+crecía (paginado más complejo, exportación), la consulta iba a tener que
+mudarse a un `src/lib/admin/notas.ts` que todavía no existía.
 
 ---
 
@@ -367,9 +513,18 @@ escrito. Queda acá para que el umbral no se olvide.
 
 <a id="f-14"></a>
 
-## F-14 · INFO — `validarCarritoAction` es pública y sin límite
+## F-14 · RESUELTO — `validarCarritoAction` es pública y sin límite
 
-**Observado.** La acción no llama a `requireAdmin()` ni a `rateLimit()` — a
+> **Corregido (parcial, a propósito).** `entradaSchema` en
+> `carrito/actions.ts` suma `.max(50)` al array: sigue sin `requireAdmin()`
+> ni `rateLimit()` porque el hallazgo original ya concluye que no hacen
+> falta (dato público, escritura protegida en otro lado) — lo único
+> genuinamente flojo era el array sin tope, y eso es lo que se corrigió.
+>
+> **Verificado**: `pnpm typecheck` y `pnpm lint` limpios, y un chequeo
+> directo del schema confirma 50 elementos aceptados y 51 rechazados.
+
+**Lo observado originalmente.** La acción no llamaba a `requireAdmin()` ni a `rateLimit()` — a
 propósito: la usa cualquier visitante desde el drawer, `/carrito` y `/checkout`,
 y no escribe nada (`carrito/actions.ts:9-14`).
 
@@ -416,9 +571,41 @@ que sea deliberada, no accidental.
 
 <a id="f-16"></a>
 
-## F-16 · INFO — La reconciliación puede dispararse dos veces
+## F-16 · RESUELTO (parcial, por diseño) — La reconciliación puede dispararse dos veces
 
-**Observado.** `useReconciliacionCarrito()` se llama desde dos componentes:
+> **Corregido para el caso que importa; el resto quedó documentado como
+> límite conocido.** `usar-reconciliacion-carrito.ts` suma una variable de
+> módulo (`pedidoEnCurso`) que comparten todas las instancias del hook: la
+> primera que llega para una firma de carrito dada (`variantId:qty` de cada
+> item, ordenados) crea el pedido; cualquier otra instancia que monte
+> **mientras ese pedido sigue en vuelo** reutiliza la misma promesa en vez de
+> disparar otra. Un flag `aplicado` separado decide quién ejecuta los efectos
+> (`quitar`, `toast`, `actualizarPrecio`) una sola vez: es la primera
+> instancia que **sigue montada** cuando el pedido resuelve, no
+> necesariamente la que lo creó — si esa se desmonta antes (cierran el
+> drawer), la que queda igual aplica los efectos.
+>
+> **Por qué no se cachea "ya reconciliado" a secas.** Cachear por firma de
+> carrito sin límite de tiempo evitaría _también_ el caso de abrir el drawer
+> mucho después, pero a costa de un riesgo real: si el precio cambia en el
+> servidor entre dos montajes con el mismo `variantId:qty`, un cache así
+> ocultaría ese cambio en el segundo montaje — justo lo que esta
+> reconciliación existe para detectar. Por eso el fix sólo dedupea pedidos
+> **superpuestos en el tiempo**, no repeticiones separadas por minutos.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright, carrito armado a mano en `localStorage` con un `variantId`
+> inexistente): navegar a `/carrito` y abrir el drawer **lo antes posible**
+> (`waitUntil: "commit"` + click inmediato) dio, en 3 corridas seguidas,
+> **1 sola** request a Server Actions y **1 solo** toast "Sacamos…", con el
+> drawer confirmado abierto las 3 veces. Abrir el drawer bastante después
+> de que `/carrito` ya terminó de reconciliar (sin solapamiento) sigue
+> disparando una segunda request — es el límite documentado arriba, no una
+> regresión: en ese caso no hay overlap que dedupear.
+>
+> `pnpm typecheck`, `pnpm lint` y `pnpm test` pasan limpios.
+
+**Lo observado originalmente.** `useReconciliacionCarrito()` se llamaba desde dos componentes:
 
 - `src/components/tienda/carrito/lista-items.tsx` (lo montan el drawer **y**
   `/carrito`)
@@ -435,9 +622,28 @@ cerrado, así que el caso requiere abrir el drawer estando en `/carrito`.
 
 <a id="f-17"></a>
 
-## F-17 · WARNING — Umami configurada de punta a punta, nunca implementada
+## F-17 · RESUELTO — Umami configurada de punta a punta, nunca implementada
 
-**Observado.** `NEXT_PUBLIC_UMAMI_URL` y `NEXT_PUBLIC_UMAMI_WEBSITE_ID`:
+> **Corregido, a pedido de Mateo (implementar en vez de sacar la
+> plomería).** `src/app/(tienda)/layout.tsx` suma `ScriptUmami()`: si las dos
+> env vars están seteadas, inyecta
+> `<script src="{NEXT_PUBLIC_UMAMI_URL}/script.js" data-website-id="{NEXT_PUBLIC_UMAMI_WEBSITE_ID}">`
+> con `next/script` (`strategy="afterInteractive"`); si falta alguna, no
+> renderiza nada — mismo patrón que el resto de `env.ts` con lo opcional.
+>
+> **Por qué en el layout de la tienda y no en el raíz**: para medir tráfico
+> real de clientes, no las propias sesiones del admin en `/admin/*`.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright, porque `next/script` con `afterInteractive` inyecta el tag
+> desde JS del cliente y no aparece en el HTML que ve `curl`): sin las env
+> vars seteadas, ninguna ruta tiene el script (comportamiento sin cambios).
+> Con `NEXT_PUBLIC_UMAMI_URL`/`NEXT_PUBLIC_UMAMI_WEBSITE_ID` de prueba
+> seteados, `/` y `/catalogo` sí lo tienen con la URL y el
+> `data-website-id` correctos, y `/admin/login` sigue sin él.
+> `pnpm typecheck`, `pnpm lint` y `pnpm test` limpios.
+
+**Lo observado originalmente.** `NEXT_PUBLIC_UMAMI_URL` y `NEXT_PUBLIC_UMAMI_WEBSITE_ID`:
 
 - están en `.env.example` bajo `# ---- Analitica (Umami self-hosted) ----`
 - se declaran y validan en `src/lib/env.ts` (server y client)
@@ -455,24 +661,45 @@ quedan inlineados en el bundle del cliente sin consumidor.
 
 <a id="f-18"></a>
 
-## F-18 · INFO — `eliminarProducto` no verifica existencia
+## F-18 · RESUELTO — `eliminarProducto` no verifica existencia
 
-**Observado.** `cambiarEstadoProducto`, `duplicarProducto`,
-`cambiarEstadoPedido` y `guardarNotasPedido` empiezan buscando la fila y
-devuelven `fallo("Ese … ya no existe.")` si no está. `eliminarProducto`
-(`productos/actions.ts:575-586`) va directo al `prisma.product.delete`.
+> **Corregido de paso con F-06**: la limpieza de R2 ya necesitaba leer las
+> imágenes del producto antes de borrarlo, así que `eliminarProducto` hace
+> ese `findUnique` primero y devuelve `fallo("Ese producto ya no existe.")` si
+> no está — mismo criterio que `cambiarEstadoProducto` y `duplicarProducto`.
+> Sin verificación adicional por separado: typecheck/lint limpios y la lógica
+> es la misma que ya usan las otras acciones del archivo.
 
-**Efecto.** Borrar dos veces (doble click, pestaña vieja) lanza `P2025` de
-Prisma en vez de devolver `{ ok: false, mensaje }`. El usuario ve el error
+**Lo observado originalmente.** `cambiarEstadoProducto`, `duplicarProducto`,
+`cambiarEstadoPedido` y `guardarNotasPedido` empezaban buscando la fila y
+devolvían `fallo("Ese … ya no existe.")` si no estaba. `eliminarProducto`
+(`productos/actions.ts:575-586`) iba directo al `prisma.product.delete`.
+
+**Efecto.** Borrar dos veces (doble click, pestaña vieja) lanzaba `P2025` de
+Prisma en vez de devolver `{ ok: false, mensaje }`. El usuario veía el error
 genérico de Server Action de Next, no el mensaje del producto.
 
 ---
 
 <a id="f-19"></a>
 
-## F-19 · INFO — `precioMostrado` se exige, se valida y no se usa
+## F-19 · RESUELTO — `precioMostrado` se exige, se valida y no se usa
 
-**Observado.** `itemCheckoutSchema` (`validations/checkout.ts:13-24`) declara
+> **Corregido: se borró, no se cableó.** El campo no tenía ningún lector
+> server-side y la detección de cambio de precio que su comentario describía
+> ya existe entera del lado del cliente (`useReconciliacionCarrito`); cablearlo
+> en el servidor habría sido reimplementar esa misma comparación en un
+> segundo lugar. Se sacó de `itemCheckoutSchema`
+> (`src/lib/validations/checkout.ts`) y de lo que manda
+> `FormularioCheckout` (`items.map` ya no incluye `precioMostrado`).
+>
+> **Verificado**: `pnpm typecheck` y `pnpm lint` limpios, y un checkout real
+> de punta a punta contra el servidor (`next dev` en :3010, con Playwright)
+> completó sin el campo — pedido `PM-0016` creado y redirigido a
+> `/pedido/PM-0016/gracias` con el link de WhatsApp armado. Pedido de prueba
+> borrado al terminar.
+
+**Lo observado originalmente.** `itemCheckoutSchema` (`validations/checkout.ts:13-24`) declaraba
 `precioMostrado: z.string().min(1)` como **obligatorio**, con el comentario:
 
 > _"El precio que el cliente tenía mostrado en pantalla al armar el pedido.
@@ -492,26 +719,64 @@ un error de validación por un dato que el servidor ignora.
 
 <a id="f-20"></a>
 
-## F-20 · INFO — `TODO` abierto en los rangos de precio
+## F-20 · RESUELTO — `TODO` abierto en los rangos de precio
 
-**Observado.** `src/lib/tienda/filtros.ts`:
+> **Corregido.** Mateo confirmó el rango real del catálogo (2026-09-18): de
+> $ 0 a $ 1.000.000. `src/lib/tienda/filtros.ts` recalibró
+> `RANGOS_PRECIO` / `LIMITES_PRECIO` / `ETIQUETA_PRECIO` a
+> `hasta-100000` / `100000-300000` / `300000-600000` / `desde-600000`, y el
+> comentario que citaba el seed de desarrollo se reemplazó por la fuente real.
+> No hay otro string hardcodeado con los valores viejos (`controles-filtro.tsx`
+> y `consultas.ts` sólo importan las constantes), así que no quedó ningún
+> lugar con los cortes anteriores.
+>
+> **Pendiente real:** esto es un punto de partida a ojo sobre el extremo del
+> rango, no una calibración por cuartiles de la distribución real — si el
+> catálogo resulta muy asimétrico (muchos decants baratos, pocos frascos
+> caros), estos cortes van a agrupar mal. Ajustar con la distribución real
+> cuando haya suficientes productos cargados.
+
+**Lo observado originalmente.** `src/lib/tienda/filtros.ts`:
 
 > `TODO: revisar los cortes contra los precios reales del catalogo; hoy estan
 calibrados contra los del seed de desarrollo (scripts/seed-dev.ts).`
 
 Los cortes (`hasta-50000`, `50000-100000`, `100000-200000`, `desde-200000`)
-están calibrados contra `scripts/seed-dev.ts`, no contra el catálogo real.
-
-**[No determinado]** si el catálogo real ya está cargado: requiere mirar la base
-de producción, fuera del alcance de esta auditoría.
+estaban calibrados contra `scripts/seed-dev.ts`, no contra el catálogo real.
 
 ---
 
 <a id="f-21"></a>
 
-## F-21 · INFO — `Perfumer.name` inconsistente, corregido al mostrar
+## F-21 · RESUELTO — `Perfumer.name` inconsistente, corregido al mostrar
 
-**Observado.** `src/lib/catalogo.ts:97-108` documenta que `Perfumer.name` quedó
+> **Corregido: los tres call-sites del panel ahora pasan por
+> `nombrePropio()`.**
+>
+> - `referenciaParaAdoptar()` (`src/lib/admin/referencias.ts`): el perfumista
+>   ya llega con Title Case al precargar una referencia adoptada.
+> - `productoParaEditar()` (`src/lib/admin/productos.ts`): idem al editar un
+>   producto ya guardado.
+> - `buscarPerfumistasAction()` (`productos/actions.ts`): además de mostrar
+>   el nombre normalizado, se sacó el `orderBy: { name: "asc" }` de Postgres
+>   (que ordenaba por bytes, mayúsculas primero) y se ordena en JS con
+>   `localeCompare("es-AR")` sobre el nombre ya normalizado — la tabla entera
+>   son ~1.400 filas, ordenar en memoria no pesa.
+>
+> No se tocó `nombrePropio()` ni la base: sigue siendo la misma decisión
+> documentada (normalizar al mostrar, no pisar correcciones a mano). Tampoco
+> se tocó el importador (deuda que el propio comentario ya señala aparte).
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright, admin logueado): en `/admin/productos/:id` de "Sauvage Elixir",
+> el chip de perfumista ya asignado muestra "François Demachy" (antes
+> crudo). Buscando "paul" en el combobox de perfumistas aparecen 17
+> resultados, todos en Title Case y alfabéticamente ordenados ("Jean-paul
+> Guerlain" … "Paulo de Moraes"). `referenciaParaAdoptar()` verificado aparte
+> con un script: perfumista devuelto como "Paul Vacher", no "paul vacher".
+> `pnpm typecheck`, `pnpm lint` y `pnpm test` limpios.
+
+**Lo observado originalmente.** `src/lib/catalogo.ts:97-108` documenta que `Perfumer.name` quedó
 con mayúsculas inconsistentes tras el import: _"718 de las 1.355 filas están
 enteras en minúscula, según de cuál de los dos CSV vino el dato"_.
 
@@ -534,9 +799,25 @@ mezcladas da un orden no alfabético en Postgres.
 
 <a id="f-22"></a>
 
-## F-22 · WARNING — `isFeatured` se persiste y ordena, pero no se puede activar
+## F-22 · RESUELTO — `isFeatured` se persiste y ordena, pero no se puede activar
 
-**Observado.** `Product.isFeatured` está completamente cableado:
+> **Corregido: se agregó el interruptor que faltaba.**
+> `src/app/admin/(panel)/productos/_components/producto-form.tsx` suma un
+> `<Switch>` con `Controller` sobre `isFeatured` en la barra pegada abajo del
+> formulario (junto a "Guardar borrador" / "Publicar producto"), con un
+> ícono de estrella que se rellena cuando está activo. No hizo falta tocar
+> `guardarProducto`, `productoSchema` ni `valoresIniciales()`: ya leían y
+> escribían `isFeatured` — sólo faltaba el control.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright): "Le Male Elixir" no tenía ninguna variante destacada; se
+> activó el switch (`aria-checked` de `false` a `true`), se guardó, y
+> `Product.isFeatured` quedó en `true` en la base. El orden de `/catalogo`
+> (que por defecto es "novedades": destacados primero) puso ese producto en
+> primer lugar donde antes estaba en el medio. Revertido a `false` al
+> terminar. `pnpm typecheck`, `pnpm lint` y `pnpm test` limpios.
+
+**Lo observado originalmente.** `Product.isFeatured` estaba completamente cableado:
 
 - en el schema (`@default(false)`),
 - en `productoSchema` (`z.boolean().default(false)`),
@@ -566,9 +847,26 @@ lo que hace más fácil no notar que falta el control.
 
 <a id="f-23"></a>
 
-## F-23 · INFO — `ProductVariant.sku` no tiene campo en el formulario
+## F-23 · RESUELTO — `ProductVariant.sku` no tiene campo en el formulario
 
-**Observado.** `sku` está en el schema, en `varianteSchema`
+> **Corregido: se agregó el input que faltaba.** `EditorVariantes`
+> (`editor-variantes.tsx`) suma una columna "SKU" con `Controller` sobre
+> `variants.${indice}.sku` (mismo patrón que `sizeMl`/`priceArs`: input
+> controlado, `""` se traduce a lo que espera el schema). La grilla pasó de
+> cinco a seis columnas (`COLUMNAS`). No hizo falta tocar
+> `sincronizarVariantes()`, `varianteSchema` ni `valoresIniciales()`: ya
+> leían y escribían `sku`, sólo faltaba el control — y eso significa que el
+> comentario de `duplicarProducto` ("el SKU no se copia: es identificador
+> único del original") ahora sí protege algo que un admin puede completar.
+>
+> **Verificado** contra el servidor real (`next dev` en :3010, con
+> Playwright): se escribió `SAUV-100-TEST` en el SKU de una variante de
+> "Sauvage Elixir", se guardó, y **tras un reload completo de la página**
+> el input siguió mostrando ese valor — confirmado también contra la base
+> (`ProductVariant.sku`). Revertido a `null` al terminar.
+> `pnpm typecheck`, `pnpm lint` y `pnpm test` limpios.
+
+**Lo observado originalmente.** `sku` estaba en el schema, en `varianteSchema`
 (`textoOpcional(64)`), se precarga en `valoresIniciales()`
 (`producto-form.tsx:114`) y se persiste en `sincronizarVariantes()`. `EditorVariantes`
 tiene `Controller` para `isActive`, `kind`, `sizeMl` y `priceArs` — **no para
@@ -582,9 +880,31 @@ original"_) protege un campo que hoy nadie puede completar.
 
 <a id="f-24"></a>
 
-## F-24 · INFO — Columnas del schema sin lector ni escritor
+## F-24 · RESUELTO — Columnas del schema sin lector ni escritor
 
-**Observado.** `grep -rn "logoUrl\|heroImageUrl\|announcementBar" src/ scripts/ prisma/seed.ts` no
+> **Corregido, a pedido de Mateo: se borraron, no se documentaron de más.**
+> Migración `20260918203922_quitar_columnas_sin_uso`: `DROP COLUMN` de
+> `Product.sortOrder` y `SiteSetting.logoUrl` / `heroImageUrl` /
+> `announcementBar`. `prisma migrate deploy` la aplicó a la base de
+> desarrollo y `prisma generate` regeneró el cliente — nada en `src/` las
+> referenciaba fuera del cliente autogenerado, así que no hizo falta tocar
+> ningún otro archivo de código. Se actualizaron las menciones en
+> `docs/persistence.md` y `docs/modules/configuracion-sitio.md`.
+>
+> **Es una migración irreversible sin restaurar de un backup** (dropea
+> columnas con datos, aunque los de hoy eran sólo `NULL`/`0` por defecto —
+> `Product.sortOrder` tenía 6 filas en `0`). Se aplicó sólo contra la base de
+> **desarrollo** en esta sesión; en producción la corre el entrypoint del
+> contenedor (`prisma migrate deploy`) en el próximo deploy, como cualquier
+> otra migración — ver [`deployment.md`](deployment.md).
+>
+> **Verificado**: `pnpm typecheck`, `pnpm lint` y `pnpm test` limpios tras
+> regenerar el cliente. Contra el servidor real (`next dev` en :3010, con
+> Playwright): `/`, `/catalogo` y una ficha de producto siguen en 200;
+> guardar `/admin/configuracion` y publicar un producto desde
+> `/admin/productos/:id` no tiraron ningún error.
+
+**Lo observado originalmente.** `grep -rn "logoUrl\|heroImageUrl\|announcementBar" src/ scripts/ prisma/seed.ts` no
 devuelve **nada**. Sumado a `Product.sortOrder`, que no aparece en ningún
 `orderBy` de `Product` ni en los `campos` de `guardarProducto`:
 

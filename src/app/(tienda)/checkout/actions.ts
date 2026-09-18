@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { obtenerConfiguracionSitio } from "@/lib/configuracion";
@@ -14,6 +13,7 @@ import {
   type LineaPedido,
 } from "@/lib/tienda/mensaje-pedido";
 import { checkoutSchema } from "@/lib/validations/checkout";
+import { erroresPorCampo } from "@/lib/validations/errores";
 import { linkWhatsappA } from "@/lib/whatsapp";
 
 /**
@@ -44,15 +44,6 @@ function fallo(
   >,
 ): ResultadoCheckout {
   return { ok: false, mensaje, ...extra };
-}
-
-function erroresPorCampo(error: z.ZodError) {
-  const salida: Record<string, string[]> = {};
-  for (const issue of error.issues) {
-    const clave = issue.path.join(".") || "_";
-    (salida[clave] ??= []).push(issue.message);
-  }
-  return salida;
 }
 
 /**

@@ -2,15 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import type { Prisma } from "@/generated/prisma/client";
-import { prisma } from "@/lib/db";
+import { listarNotas } from "@/lib/admin/notas";
 import { BuscadorNotas } from "./_components/buscador-notas";
 import { FilaNota } from "./_components/fila-nota";
 import { TabsNotas } from "./_components/tabs-notas";
 
 export const metadata: Metadata = { title: "Notas sin traducir" };
-
-const POR_PAGINA = 50;
 
 const formatoNumero = new Intl.NumberFormat("es-AR");
 
@@ -30,36 +27,10 @@ export default async function Page(props: PageProps<"/admin/notas">) {
       ? Math.floor(paginaSolicitada)
       : 1;
 
-  // El indice parcial `Note_untranslated_idx` cubre exactamente esta consulta
-  // (usageCount desc WHERE nameEs IS NULL), asi que el filtro tiene que
-  // quedar como `nameEs: null` en vez de, por ejemplo, negar `not: { not: null }`.
-  const where: Prisma.NoteWhereInput = {
-    nameEs: estado === "pendientes" ? null : { not: null },
-    ...(q
-      ? {
-          OR: [
-            { nameEn: { contains: q, mode: "insensitive" } },
-            { nameEs: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-  };
-
-  const [notas, total, pendientes, traducidas] = await Promise.all([
-    prisma.note.findMany({
-      where,
-      orderBy: { usageCount: "desc" },
-      skip: (pagina - 1) * POR_PAGINA,
-      take: POR_PAGINA,
-      select: { id: true, nameEn: true, nameEs: true, usageCount: true },
-    }),
-    prisma.note.count({ where }),
-    prisma.note.count({ where: { nameEs: null } }),
-    prisma.note.count({ where: { nameEs: { not: null } } }),
-  ]);
+  const { notas, total, pendientes, traducidas, totalPaginas } =
+    await listarNotas({ q, estado, pagina });
 
   const totalGeneral = pendientes + traducidas;
-  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
   function hrefPagina(destino: number) {
     const params = new URLSearchParams();

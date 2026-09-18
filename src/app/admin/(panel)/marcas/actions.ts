@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
+import { type Resultado } from "@/lib/admin/resultado";
 import { prisma } from "@/lib/db";
+import { erroresPorCampo } from "@/lib/validations/errores";
 import { marcaSchema } from "@/lib/validations/marca";
 
 /**
@@ -11,21 +12,10 @@ import { marcaSchema } from "@/lib/validations/marca";
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
 
-export type Resultado =
-  | { ok: true }
-  | { ok: false; mensaje: string; errores?: Record<string, string[]> };
+export type { Resultado };
 
 function fallo(mensaje: string, errores?: Record<string, string[]>): Resultado {
   return { ok: false, mensaje, errores };
-}
-
-function erroresPorCampo(error: z.ZodError) {
-  const salida: Record<string, string[]> = {};
-  for (const issue of error.issues) {
-    const clave = issue.path.join(".") || "_";
-    (salida[clave] ??= []).push(issue.message);
-  }
-  return salida;
 }
 
 /**

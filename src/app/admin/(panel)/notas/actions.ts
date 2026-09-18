@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
+import { type Resultado } from "@/lib/admin/resultado";
 import { prisma } from "@/lib/db";
 
 /**
@@ -10,15 +11,31 @@ import { prisma } from "@/lib/db";
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
 
-export type Resultado<T = undefined> =
-  | ({ ok: true } & (T extends undefined ? object : { datos: T }))
-  | { ok: false; mensaje: string; errores?: Record<string, string[]> };
+export type { Resultado };
 
 function fallo(mensaje: string, errores?: Record<string, string[]>) {
   return { ok: false as const, mensaje, errores };
 }
 
 const nameEsSchema = z.string().trim().min(2).max(80);
+
+/**
+ * `nameEs` se muestra en público (pirámide olfativa y filtro de notas del
+ * catálogo, con fallback a `nameEn`), así que traducir o destraducir una nota
+ * tiene que invalidar la tienda igual que `actualizarMarca` -- no sólo
+ * `/admin/notas` (ver F-10 en docs/findings.md). La lista de productos sale
+ * de `ProductNote`, no hay forma de saber de antemano cuáles la muestran.
+ */
+async function revalidarNota(noteId: string) {
+  const productos = await prisma.product.findMany({
+    where: { notes: { some: { noteId } } },
+    select: { slug: true },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/catalogo");
+  for (const p of productos) revalidatePath(`/producto/${p.slug}`, "page");
+}
 
 export async function traducirNota(
   id: string,
@@ -36,6 +53,7 @@ export async function traducirNota(
     data: { nameEs: parseado.data },
   });
   revalidatePath("/admin/notas");
+  await revalidarNota(id);
   return { ok: true };
 }
 
@@ -48,5 +66,6 @@ export async function borrarTraduccion(id: string): Promise<Resultado> {
     data: { nameEs: null },
   });
   revalidatePath("/admin/notas");
+  await revalidarNota(id);
   return { ok: true };
 }

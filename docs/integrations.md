@@ -6,15 +6,15 @@ ninguno expone webhooks entrantes hacia esta app.
 > **Secretos**: este documento nombra variables de entorno; **nunca** sus
 > valores. Los valores reales viven en `.env` (gitignoreado) y en Dokploy.
 
-| Proveedor                 | Para qué                      | Código                                    | Dirección                                          |
-| ------------------------- | ----------------------------- | ----------------------------------------- | -------------------------------------------------- |
-| **Cloudflare R2**         | Fotos de producto             | `src/lib/r2.ts`                           | Sale (presign + delete), y el browser sube directo |
-| **WhatsApp** (`wa.me`)    | Canal de venta                | `src/lib/whatsapp.ts`                     | Sale: sólo una URL                                 |
-| **Instagram**             | Link del footer y `/contacto` | `src/lib/whatsapp.ts`                     | Sale: sólo una URL                                 |
-| **Google Search Console** | Verificación de propiedad     | `src/app/layout.tsx`                      | Entra: Google lee el HTML                          |
-| **Google Fonts**          | Fuente Outfit                 | `src/app/layout.tsx` (`next/font/google`) | Build-time                                         |
-| **GHCR + Dokploy**        | Registro de imágenes y deploy | `.github/workflows/deploy.yml`            | Sale: push + webhook                               |
-| **Umami**                 | Analítica self-hosted         | **declarada, no implementada**            | —                                                  |
+| Proveedor                 | Para qué                      | Código                                    | Dirección                                           |
+| ------------------------- | ----------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| **Cloudflare R2**         | Fotos de producto             | `src/lib/r2.ts`                           | Sale (presign + delete), y el browser sube directo  |
+| **WhatsApp** (`wa.me`)    | Canal de venta                | `src/lib/whatsapp.ts`                     | Sale: sólo una URL                                  |
+| **Instagram**             | Link del footer y `/contacto` | `src/lib/whatsapp.ts`                     | Sale: sólo una URL                                  |
+| **Google Search Console** | Verificación de propiedad     | `src/app/layout.tsx`                      | Entra: Google lee el HTML                           |
+| **Google Fonts**          | Fuente Outfit                 | `src/app/layout.tsx` (`next/font/google`) | Build-time                                          |
+| **GHCR + Dokploy**        | Registro de imágenes y deploy | `.github/workflows/deploy.yml`            | Sale: push + webhook                                |
+| **Umami**                 | Analítica self-hosted         | `src/app/(tienda)/layout.tsx`             | Sale: `<script>` al host de `NEXT_PUBLIC_UMAMI_URL` |
 
 ---
 
@@ -156,17 +156,23 @@ ruta que el trace de `@vercel/nft` no resuelve sola, por eso
 
 ---
 
-## Umami — declarada, no implementada
+## Umami
 
-`NEXT_PUBLIC_UMAMI_URL` y `NEXT_PUBLIC_UMAMI_WEBSITE_ID` están:
+`NEXT_PUBLIC_UMAMI_URL` y `NEXT_PUBLIC_UMAMI_WEBSITE_ID`:
 
 - declaradas y validadas como opcionales en `src/lib/env.ts`,
 - documentadas en `.env.example`,
-- pasadas como build args en `.github/workflows/deploy.yml` y en el `Dockerfile`.
+- pasadas como build args en `.github/workflows/deploy.yml` y en el `Dockerfile`,
+- **leídas por `ScriptUmami()` en `src/app/(tienda)/layout.tsx`**: si las dos
+  están seteadas, inyecta `<script src="{URL}/script.js" data-website-id="{ID}">`
+  con `next/script` (`strategy="afterInteractive"`); si falta alguna, no
+  renderiza nada.
 
-**Y no las lee ningún componente.** No hay `<script>` de analítica en ningún
-layout. **[Observado]**:
-`grep -rn "UMAMI" src/` sólo devuelve las cuatro líneas de `env.ts`.
+Va en el layout de la tienda, no en el raíz: así sólo mide tráfico de
+clientes, nunca el uso del panel de `/admin`. Sin las variables seteadas
+(el caso de hoy en todos los entornos), la plomería queda igual de inerte
+que antes — lo que cambió es que ahora sí hace algo en cuanto alguien cargue
+una instancia real de Umami en Dokploy.
 
 Ver [`F-17`](findings.md#f-17).
 

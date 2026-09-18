@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { Gender } from "@/generated/prisma/enums";
+import { nombrePropio } from "@/lib/catalogo";
 import { prisma } from "@/lib/db";
 
 export type ResultadoReferencia = {
@@ -234,7 +235,10 @@ export async function referenciaParaAdoptar(id: string) {
     })),
     perfumers: ref.perfumers.map((p) => ({
       perfumerId: p.perfumer.id,
-      nombre: p.perfumer.name,
+      // `Perfumer.name` quedó con mayúsculas inconsistentes del import
+      // (ver F-21 en docs/findings.md); se normaliza al mostrar, igual que
+      // `productoPorSlug()` en la tienda.
+      nombre: nombrePropio(p.perfumer.name),
     })),
   };
 }

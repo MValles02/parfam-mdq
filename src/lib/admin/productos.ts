@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
+import { nombrePropio } from "@/lib/catalogo";
 import { prisma } from "@/lib/db";
 import { urlPublica } from "@/lib/r2";
 
@@ -174,6 +175,12 @@ export async function productoParaEditar(id: string) {
     variants: p.variants.map((v) => ({
       ...v,
       priceArs: v.priceArs.toString(),
+    })),
+    // `Perfumer.name` quedó con mayúsculas inconsistentes del import (ver
+    // F-21 en docs/findings.md); se normaliza al mostrar, igual que
+    // `productoPorSlug()` en la tienda y `referenciaParaAdoptar()` acá al lado.
+    perfumers: p.perfumers.map((x) => ({
+      perfumer: { ...x.perfumer, name: nombrePropio(x.perfumer.name) },
     })),
   };
 }

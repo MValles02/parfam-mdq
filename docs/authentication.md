@@ -62,7 +62,7 @@ sequenceDiagram
             NA->>NA: verify(user.passwordHash, password) === false
             NA-->>SA: null → AuthError
         else OK
-            NA->>NA: jwt(): token.id = user.id ; token.role = "ADMIN"
+            NA->>NA: jwt(): token.id = user.id
             NA-->>SA: cookie de sesión firmada (JWT)
             SA->>RL: resetRateLimit(key)
             SA->>A: redirect(volverA ?? "/admin")
@@ -105,17 +105,20 @@ Callbacks:
 
 ```ts
 jwt({ token, user }) {           // sólo la primera vez, cuando viene `user`
-  if (user) { token.id = user.id; token.role = "ADMIN"; }
+  if (user) { token.id = user.id; }        // sólo el id: no hay rol que guardar
   return token;
 }
 session({ session, token }) {
-  if (session.user) session.user.id = token.id as string;   // ← `role` NO se copia
+  if (session.user) session.user.id = token.id as string;
   return session;
 }
 ```
 
-> `token.role` se escribe pero **nunca se lee**: la sesión no lo expone y ningún
-> archivo lo consulta. Ver [`F-03`](findings.md#f-03).
+> El token guarda **sólo** el `id`. No lleva rol a propósito: la autorización de
+> este panel es binaria (hay sesión o no la hay) y `UserRole` tiene un único
+> valor. Si alguna vez hay más de un rol, tiene que salir de `User.role` y
+> viajar desde `authorize()`, nunca de un literal en la config —
+> ver [`F-03`](findings.md#f-03).
 
 Cookies: las estándar de Auth.js v5 (`authjs.session-token`, `HttpOnly`,
 `SameSite=Lax`, `Secure` en HTTPS). **[Inferido]** — el proyecto no las

@@ -19,13 +19,19 @@ export const authConfig = {
   },
   callbacks: {
     /**
-     * Copia el id y el rol al token la primera vez (cuando viene `user`),
-     * y de ahi a la sesion, para poder leerlos sin tocar la base.
+     * Copia el id al token la primera vez (cuando viene `user`), y de ahi a la
+     * sesion: asi `auth()` puede devolver quien es sin consultar la base.
+     *
+     * No se guarda el rol a proposito. La autorizacion de este panel es
+     * binaria -- hay sesion o no la hay, ver `src/lib/admin/guard.ts` -- y
+     * `UserRole` tiene un unico valor. Si alguna vez hay mas de un rol, el
+     * valor tiene que salir de `User.role` en la base y viajar desde
+     * `authorize()`, nunca de un literal escrito aca: un literal le daria el
+     * rol mas alto a cualquiera que se loguee.
      */
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = "ADMIN";
       }
       return token;
     },

@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { validarCarritoAction } from "@/app/(tienda)/carrito/actions";
 import { useCarrito, useHidratado } from "@/lib/carrito";
-import type { RazonInvalido } from "@/lib/tienda/carrito-servidor";
+import type {
+  ItemRevalidado,
+  RazonInvalido,
+} from "@/lib/tienda/carrito-servidor";
 
 /**
  * Reconciliación del carrito contra la base: lo usan tanto `/carrito` como
@@ -35,6 +38,31 @@ const MENSAJE_RAZON: Record<RazonInvalido, string> = {
   despublicado: "ya no está a la venta",
 };
 
+/**
+ * Con el drawer abierto en `/carrito` hay dos instancias de este hook
+ * montadas a la vez (F-16 en docs/findings.md): sin esto, cada una dispara su
+ * propio `validarCarritoAction` y, si hay un item invalido, su propio toast.
+ *
+ * Esta variable de módulo comparte el pedido en vuelo entre instancias con el
+ * mismo carrito ("misma firma"): la primera que llega lo crea, la otra lo
+ * espera. `aplicado` es aparte del dueño del pedido a propósito: si el que lo
+ * creó se desmonta antes de que resuelva (cierran el drawer), la instancia
+ * que sigue montada tiene que poder aplicar los efectos igual -- "quién
+ * arrancó el pedido" y "quién aplica sus efectos" son cosas distintas.
+ */
+let pedidoEnCurso: {
+  firma: string;
+  promesa: Promise<ItemRevalidado[]>;
+  aplicado: boolean;
+} | null = null;
+
+function firmaDe(items: { variantId: string; qty: number }[]): string {
+  return items
+    .map((i) => `${i.variantId}:${i.qty}`)
+    .sort()
+    .join(",");
+}
+
 export function useReconciliacionCarrito() {
   const hidratado = useHidratado();
   const items = useCarrito((estado) => estado.items);
@@ -51,11 +79,28 @@ export function useReconciliacionCarrito() {
     if (!hidratado || items.length === 0) return;
 
     let cancelado = false;
+    const firma = firmaDe(items);
 
-    validarCarritoAction(
-      items.map((i) => ({ variantId: i.variantId, qty: i.qty })),
-    ).then((resultado) => {
+    if (!pedidoEnCurso || pedidoEnCurso.firma !== firma) {
+      pedidoEnCurso = {
+        firma,
+        promesa: validarCarritoAction(
+          items.map((i) => ({ variantId: i.variantId, qty: i.qty })),
+        ),
+        aplicado: false,
+      };
+    }
+    const trabajo = pedidoEnCurso;
+
+    trabajo.promesa.then((resultado) => {
       if (cancelado) return;
+      if (pedidoEnCurso === trabajo) pedidoEnCurso = null;
+
+      // La primera instancia que sigue montada cuando el pedido resuelve es
+      // la que aplica los efectos de una sola vez; las demás sólo usan
+      // `resultado` para su propio `cambios`/`listo`.
+      const aplicar = !trabajo.aplicado;
+      trabajo.aplicado = true;
 
       const cambiosDetectados: CambioPrecio[] = [];
       for (const r of resultado) {
@@ -63,10 +108,12 @@ export function useReconciliacionCarrito() {
         if (!item) continue;
 
         if (!r.ok) {
-          quitar(r.variantId);
-          toast.error(`Sacamos "${item.productName}" del carrito`, {
-            description: `${item.variantLabel} ${MENSAJE_RAZON[r.razon]}.`,
-          });
+          if (aplicar) {
+            quitar(r.variantId);
+            toast.error(`Sacamos "${item.productName}" del carrito`, {
+              description: `${item.variantLabel} ${MENSAJE_RAZON[r.razon]}.`,
+            });
+          }
           continue;
         }
 
@@ -78,7 +125,7 @@ export function useReconciliacionCarrito() {
             antes: item.unitPriceArs,
             ahora: r.precioArs,
           });
-          actualizarPrecio(r.variantId, r.precioArs);
+          if (aplicar) actualizarPrecio(r.variantId, r.precioArs);
         }
       }
       if (cambiosDetectados.length > 0) setCambios(cambiosDetectados);

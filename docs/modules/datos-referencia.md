@@ -29,7 +29,7 @@ Flags del importador: `--limit N`, `--batch-size N` (default 1000),
 | `scripts/lib/read-fragrantica-csv.ts`   | `readAndMergeFragrantica()` — lee y fusiona los dos CSV por PID  |
 | `scripts/lib/fragrantica-parse.ts`      | Los parsers                                                      |
 | `scripts/lib/dictionaries.ts`           | `loadNoteAliases`, `loadAccordDict`, `loadNoteDict`              |
-| `scripts/lib/fragrantica-parse.test.ts` | Aserciones con `node:assert`                                     |
+| `scripts/lib/fragrantica-parse.test.ts` | Tests de Vitest                                                  |
 | `data/fragrantica/`                     | Los dos CSV (38 MB, versionados) + README                        |
 | `data/dictionaries/`                    | `accords.es.json`, `notes.es.json`, `note-aliases.json` + README |
 
@@ -193,10 +193,9 @@ accesible desde la tienda.
 
 ## Tests
 
-`scripts/lib/fragrantica-parse.test.ts` cubre los diez parsers con
-`node:assert/strict` y casos reales del dataset. **No hay test runner
-instalado** y el script `test` no existe en `package.json`; se corre a mano.
-Ver [`findings.md#f-09`](../findings.md#f-09).
+`scripts/lib/fragrantica-parse.test.ts` cubre los diez parsers con Vitest y
+casos reales del dataset: `pnpm test`. El CI no lo corre — ver
+[`findings.md#f-09`](../findings.md#f-09).
 
 ## Flujos relacionados
 

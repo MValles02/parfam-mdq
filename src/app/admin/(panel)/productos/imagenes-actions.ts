@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
+import { type Resultado } from "@/lib/admin/resultado";
 import {
   borrarObjeto,
   esClaveDeProducto,
@@ -10,10 +11,7 @@ import {
   urlDeSubida,
 } from "@/lib/r2";
 
-/** Mismo contrato que `Resultado<T>` de `./actions.ts`. */
-export type Resultado<T = undefined> =
-  | ({ ok: true } & (T extends undefined ? object : { datos: T }))
-  | { ok: false; mensaje: string; errores?: Record<string, string[]> };
+export type { Resultado };
 
 function fallo(mensaje: string): Resultado<never> {
   return { ok: false, mensaje };

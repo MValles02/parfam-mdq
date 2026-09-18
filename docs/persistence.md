@@ -1,7 +1,7 @@
 # Persistencia
 
 PostgreSQL con **Prisma 7** y driver adapter `@prisma/adapter-pg` (pool `pg`).
-Fuente: `prisma/schema.prisma` y las 4 migraciones de `prisma/migrations/`.
+Fuente: `prisma/schema.prisma` y las 5 migraciones de `prisma/migrations/`.
 
 ---
 
@@ -69,12 +69,12 @@ La siembra `scripts/import-fragrantica.ts`. **Nunca se muestra en la tienda.**
 
 ### Capa 2 — Tienda (lo que edita el admin)
 
-| Modelo                                              | Rol                                                                                                                                                                                                                                           |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Product`                                           | Lo que ve el cliente. `slug` único, `status` (`DRAFT`/`PUBLISHED`), `isFeatured`, `sortOrder`, `seasons[]`, `occasions[]`, barras `longevity`/`sillage`/`intensity` (1-5, fijadas por el admin, **no** votación), `seoTitle`/`seoDescription` |
-| `ProductVariant`                                    | `kind` (`FULL_BOTTLE`/`TESTER`/`DECANT`), `sizeMl`, **`priceArs Decimal(10,2)`**, `isActive`, `sku`. **Sin stock**: se activa/desactiva a mano                                                                                                |
-| `ProductImage`                                      | **`storageKey`**: la clave del objeto en R2 (`productos/2026/09/<uuid>.jpg`), nunca una URL absoluta ni una imagen de Fragrantica. `isPrimary` marca la foto de la grilla                                                                     |
-| `ProductNote` / `ProductAccord` / `ProductPerfumer` | Copias editables de la referencia adoptada                                                                                                                                                                                                    |
+| Modelo                                              | Rol                                                                                                                                                                                                                              |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Product`                                           | Lo que ve el cliente. `slug` único, `status` (`DRAFT`/`PUBLISHED`), `isFeatured`, `seasons[]`, `occasions[]`, barras `longevity`/`sillage`/`intensity` (1-5, fijadas por el admin, **no** votación), `seoTitle`/`seoDescription` |
+| `ProductVariant`                                    | `kind` (`FULL_BOTTLE`/`TESTER`/`DECANT`), `sizeMl`, **`priceArs Decimal(10,2)`**, `isActive`, `sku`. **Sin stock**: se activa/desactiva a mano                                                                                   |
+| `ProductImage`                                      | **`storageKey`**: la clave del objeto en R2 (`productos/2026/09/<uuid>.jpg`), nunca una URL absoluta ni una imagen de Fragrantica. `isPrimary` marca la foto de la grilla                                                        |
+| `ProductNote` / `ProductAccord` / `ProductPerfumer` | Copias editables de la referencia adoptada                                                                                                                                                                                       |
 
 `Product.fragranceRefId` es opcional con `ON DELETE SET NULL`: el producto
 sobrevive si la referencia desaparece. `Product.sourceUrl` guarda el link a
@@ -167,12 +167,13 @@ comentario de la migración).
 
 ## Migraciones
 
-| Timestamp        | Nombre                        | Qué hace                                                                                                                  |
-| ---------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `20260916034605` | `init`                        | Esquema completo: 17 tablas, 8 enums, índices, FK                                                                         |
-| `20260916124255` | `busqueda_difusa_referencias` | `pg_trgm` + `unaccent` + `parfam_normalize()` + `searchText` + índices GIN + `Note_untranslated_idx`                      |
-| `20260916145045` | `imagenes_guardan_clave`      | `ProductImage.url` → **`RENAME`** a `storageKey` (no `DROP`+`ADD`, para no perder datos). Borra `FragranceRef_rating_idx` |
-| `20260917122409` | `numero_pedido_secuencia`     | `CREATE SEQUENCE "Order_number_seq" START WITH 1`                                                                         |
+| Timestamp        | Nombre                        | Qué hace                                                                                                                                                        |
+| ---------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260916034605` | `init`                        | Esquema completo: 17 tablas, 8 enums, índices, FK                                                                                                               |
+| `20260916124255` | `busqueda_difusa_referencias` | `pg_trgm` + `unaccent` + `parfam_normalize()` + `searchText` + índices GIN + `Note_untranslated_idx`                                                            |
+| `20260916145045` | `imagenes_guardan_clave`      | `ProductImage.url` → **`RENAME`** a `storageKey` (no `DROP`+`ADD`, para no perder datos). Borra `FragranceRef_rating_idx`                                       |
+| `20260917122409` | `numero_pedido_secuencia`     | `CREATE SEQUENCE "Order_number_seq" START WITH 1`                                                                                                               |
+| `20260918203922` | `quitar_columnas_sin_uso`     | `DROP COLUMN` de `Product.sortOrder` y `SiteSetting.logoUrl`/`heroImageUrl`/`announcementBar` — ningún lector ni escritor los usaba (ver F-24 en `findings.md`) |
 
 **Cómo se aplican**: en desarrollo `pnpm db:migrate` (`prisma migrate dev`).
 En producción las corre el **entrypoint del contenedor**, no el build:

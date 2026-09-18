@@ -17,7 +17,7 @@ import { LIMITES_PRECIO, type FiltrosCatalogo } from "@/lib/tienda/filtros";
 
 /**
  * Consultas publicas del storefront. Todo lo que sale de acá ya viene filtrado
- * por las dos reglas que no se negocian (PLAN.md):
+ * por las dos reglas que no se negocian:
  *
  *   - sólo productos PUBLISHED,
  *   - sólo variantes isActive,
@@ -35,11 +35,10 @@ export const PRODUCTOS_POR_PAGINA = 12;
 /**
  * Un lanzamiento cuenta como "nuevo" si salió en los ultimos 3 aniversarios.
  *
- * La primera version miraba `createdAt` del producto, y eso se rompe solo: en
- * la Fase 8 se cargan los ~40 productos el mismo dia y el catalogo entero
- * queda con el cartel de NUEVO durante un mes. El aniversario de lanzamiento
- * es un dato del perfume, no de cuando lo cargamos, y es lo que el mockup
- * muestra en Le Male Elixir.
+ * La primera version miraba `createdAt` del producto, y eso se rompe solo: al
+ * cargar el catalogo entran decenas de productos el mismo dia y todos quedan
+ * con el cartel de NUEVO durante un mes. El aniversario de lanzamiento es un
+ * dato del perfume, no de cuando lo cargamos.
  */
 const ANIOS_NOVEDAD = 3;
 

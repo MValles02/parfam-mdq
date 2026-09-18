@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db";
 import { etiquetaVariante } from "@/lib/catalogo";
 
 /**
- * Revalidación del carrito contra la base — el corazón de la trampa #3 de la
- * Fase 5 (ver AGENTS.md): lo que hay en `localStorage` puede tener variantes
- * que el admin desactivó, productos despublicados, filas borradas o precios
- * viejos. Esto es lo único que puede decir qué hay realmente disponible hoy.
+ * Revalidación del carrito contra la base: lo que hay en `localStorage` puede
+ * tener variantes que el admin desactivó, productos despublicados, filas
+ * borradas o precios viejos. Esto es lo único que puede decir qué hay
+ * realmente disponible hoy.
  *
  * Se usa en dos lugares con el mismo contrato: la reconciliación silenciosa
  * al entrar a /carrito o /checkout (sacar lo inválido, actualizar precios) y,

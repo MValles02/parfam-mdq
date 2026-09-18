@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 /**
  * Barra de carácter 1-5 (duración, estela, intensidad). En la tienda esto NO
  * se vota: lo fija el admin, así que es un control de cinco pasos y no un
- * promedio de nadie (ver PLAN.md, "Ratings de comunidad").
+ * promedio de nadie: los ratings de la comunidad de Fragrantica son
+ * referencia interna y nunca se publican.
  */
 export function BarraCaracter({
   valor,

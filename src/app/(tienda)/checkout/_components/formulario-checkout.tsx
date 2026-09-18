@@ -24,7 +24,7 @@ import { crearPedido } from "../actions";
  * Prefijo fijo del telefono (design/Checkout.dc.html): el cliente sólo
  * tipea el numero local, nunca el codigo de pais ni el "9" de celular. Eso
  * hace que la validacion sea mucho menos ambigua que tratar de adivinar si
- * escribió "0223 15…" o "223…" (AGENTS.md, trampa del telefono).
+ * escribió "0223 15…" o "223…".
  */
 const PREFIJO = "+54 9";
 
@@ -80,9 +80,8 @@ export function FormularioCheckout({
 
   function alEnviarClick() {
     // El popup se abre acá, sincrónico con el click: si se abre después de
-    // un `await`, Safari y Chrome en modo estricto lo bloquean (AGENTS.md,
-    // trampa #1). Arranca en blanco y recién le ponemos destino cuando
-    // vuelve la Server Action.
+    // un `await`, Safari y Chrome en modo estricto lo bloquean. Arranca en
+    // blanco y recién le ponemos destino cuando vuelve la Server Action.
     const popup = window.open("", "_blank");
 
     void handleSubmit(

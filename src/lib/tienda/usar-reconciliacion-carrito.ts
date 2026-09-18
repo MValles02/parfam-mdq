@@ -7,9 +7,8 @@ import { useCarrito, useHidratado } from "@/lib/carrito";
 import type { RazonInvalido } from "@/lib/tienda/carrito-servidor";
 
 /**
- * Reconciliación del carrito contra la base (trampa #3 de la Fase 5, ver
- * AGENTS.md): lo usan tanto `/carrito` como `/checkout`, así que vive acá y
- * no en un componente de una sola página.
+ * Reconciliación del carrito contra la base: lo usan tanto `/carrito` como
+ * `/checkout`, así que vive acá y no en un componente de una sola página.
  *
  * Dos casos, dos tratamientos:
  *   - Variante inactiva/eliminada/despublicada: se saca sola del carrito, con

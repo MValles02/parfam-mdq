@@ -4,8 +4,8 @@ import { prisma } from "@/lib/db";
 import { siteDefaults } from "@/lib/site";
 
 /**
- * Fila única `SiteSetting`, sembrada en la Fase 1 (`prisma/seed.ts`) y
- * editable desde `/admin/configuracion` a partir de la Fase 6.
+ * Fila única `SiteSetting`, sembrada por `prisma/seed.ts` y editable desde
+ * `/admin/configuracion`.
  *
  * Vive fuera de `src/lib/site.ts` a propósito: ese archivo lo importan
  * Client Components (el header, por ejemplo) y no puede arrastrar Prisma.
@@ -83,7 +83,7 @@ const configuracionCacheada = unstable_cache(
 );
 
 /**
- * `connection()` corta el prerender acá (Fase 7). Sin esto, toda ruta que
+ * `connection()` corta el prerender acá. Sin esto, toda ruta que
  * lea la configuración -- y son todas, porque el `generateMetadata()` del
  * root layout la lee -- se prerenderiza en `next build` y queda con el valor
  * que tenía la base EN EL BUILD. Como el build corre en CI, ese valor sería
@@ -98,7 +98,6 @@ const configuracionCacheada = unstable_cache(
  * que se paga es el render, no un viaje a la base por visita.
  *
  * Ver node_modules/next/dist/docs/01-app/03-api-reference/04-functions/connection.md
- * y PLAN.md § Fase 7.
  */
 export async function obtenerConfiguracionSitio(): Promise<ConfiguracionSitio> {
   await connection();

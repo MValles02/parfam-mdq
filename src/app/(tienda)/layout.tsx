@@ -12,9 +12,9 @@ import { Toaster } from "@/components/ui/sonner";
  * (src/app/admin/(panel)/layout.tsx); los filtros del catalogo viven en la
  * URL (AGENTS.md), asi que hace falta montarlo tambien aca.
  *
- * El Toaster vivia solo en la ficha de producto (era el unico que mostraba
- * algo: "agregado al carrito"). Con el drawer del carrito usando toasts de
- * la reconciliacion contra la base en mas paginas (Fase 5), se sube aca.
+ * El Toaster va aca y no en una pagina suelta porque lo usan varias: el
+ * "agregado al carrito" de la ficha y los avisos de la reconciliacion del
+ * carrito contra la base (drawer, /carrito y /checkout).
  */
 export default function TiendaLayout({ children }: LayoutProps<"/">) {
   return (

@@ -1,9 +1,9 @@
 import { LRUCache } from "lru-cache";
 
 /**
- * Rate limit en memoria. Alcanza porque la app corre con una sola réplica
- * (ver PLAN.md, Fase 7); si algún día se escala horizontalmente hay que
- * moverlo a Redis, porque cada instancia tendría su propio contador.
+ * Rate limit en memoria. Alcanza porque la app corre con una sola réplica;
+ * si algún día se escala horizontalmente hay que moverlo a Redis, porque
+ * cada instancia tendría su propio contador.
  */
 const buckets = new LRUCache<string, number[]>({
   max: 5_000,

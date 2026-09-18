@@ -79,7 +79,7 @@
   /* Verde de los CTA de WhatsApp (design/Checkout.dc.html usa #1DA851 hardcodeado).
      Oscurecido a proposito: el hex del mockup da 2,68:1 de contraste contra el
      texto crema del boton, por debajo del 4,5:1 de WCAG AA -- mismo criterio que
-     colorDeChip() en la Fase 4. #107D3A da 4,53:1 y sigue leyendose como el verde
+     colorDeChip(). #107D3A da 4,53:1 y sigue leyendose como el verde
      de WhatsApp. Es un boton solido (como --primary), no una etiqueta tenue como
      --success, asi que no varia entre claro y oscuro: el contraste es interno al
      boton, no depende del fondo de la pagina. */

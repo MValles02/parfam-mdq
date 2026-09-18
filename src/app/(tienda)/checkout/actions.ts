@@ -17,7 +17,7 @@ import { checkoutSchema } from "@/lib/validations/checkout";
 import { linkWhatsappA } from "@/lib/whatsapp";
 
 /**
- * El corazón de la Fase 5. Tres cosas no se negocian acá (AGENTS.md):
+ * El corazón del checkout. Tres cosas no se negocian acá (AGENTS.md):
  *   - el precio nunca sale del cliente, siempre se recalcula contra la base;
  *   - sólo se vende una variante `isActive` de un producto `PUBLISHED`;
  *   - el pedido guarda un snapshot (`OrderItem`) que un cambio de precio

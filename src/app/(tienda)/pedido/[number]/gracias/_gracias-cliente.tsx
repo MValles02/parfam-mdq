@@ -9,7 +9,7 @@ import { linkWhatsappA } from "@/lib/whatsapp";
 
 /**
  * `/pedido/[number]/gracias` es una URL pública con un número adivinable
- * ("PM-0043" es trivialmente el siguiente de "PM-0042", AGENTS.md trampa #8).
+ * ("PM-0043" es trivialmente el siguiente de "PM-0042").
  * La decisión: esta página **nunca consulta la base** por `number` — todo lo
  * que sabe sale del `link` que le pasa `/checkout` por query string, recién
  * generado. Así no hay nada que un tercero adivinando números de pedido
@@ -40,10 +40,10 @@ export function GraciasCliente({
 
   if (!hidratado) return null;
 
-  // El popup ya se intentó abrir sincrónico con el click en /checkout
-  // (AGENTS.md trampa #1): acá no hay gesto del usuario todavía, así que
-  // reintentar un window.open automático se bloquearía seguro. Lo que
-  // corresponde es un botón bien visible para el reintento manual.
+  // El popup ya se intentó abrir sincrónico con el click en /checkout: acá no
+  // hay gesto del usuario todavía, así que reintentar un window.open
+  // automático se bloquearía seguro. Lo que corresponde es un botón bien
+  // visible para el reintento manual.
   const href =
     link ??
     linkWhatsappA(whatsappNumber, "¡Hola! Quería consultar por mi pedido.");

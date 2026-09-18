@@ -63,8 +63,7 @@ export async function guardarConfiguracion(
 
   // `{ expire: 0 }` en vez de un profile como "max": acá no vale
   // stale-while-revalidate -- el checkout del pedido siguiente (y el resto
-  // de la tienda) tienen que ver el dato nuevo ya, no eventualmente
-  // (PLAN.md, verificación de la Fase 6).
+  // de la tienda) tienen que ver el dato nuevo ya, no eventualmente.
   revalidateTag(TAG_CONFIGURACION_SITIO, { expire: 0 });
 
   return { ok: true };

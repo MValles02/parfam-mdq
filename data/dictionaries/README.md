@@ -24,4 +24,4 @@ antemano.
 Estos JSON son la semilla inicial. Una vez importados, lo que ve la tienda
 sale de las tablas `Note`/`Accord` en la base — corregir el JSON después de
 importar no cambia nada ya cargado. El lugar para arreglar una traducción
-puntual, tanto antes como después de importar, es `/admin/notas` (Fase 3).
+puntual, tanto antes como después de importar, es `/admin/notas`.

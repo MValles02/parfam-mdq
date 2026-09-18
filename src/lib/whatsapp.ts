@@ -4,13 +4,11 @@ import { parsePhoneNumberWithError } from "libphonenumber-js";
  * Link a un chat de WhatsApp con el mensaje ya escrito, para un numero
  * cualquiera (wa.me quiere el numero en digitos, sin `+` ni separadores).
  *
- * Es la unica version desde la Fase 6: antes existia tambien una que leia
- * `siteDefaults.whatsapp` (un numero fijo del codigo) para los links
- * "consultar por WhatsApp" de la tienda (footer, contacto), porque todavia
- * no habia forma de editarlo. Con `/admin/configuracion` ya hay un numero
- * real en la base, y esos dos eran los unicos call-sites fuera del checkout
- * -- se migraron a este mismo helper en vez de mantener una version estatica
- * sin usuarios.
+ * Es la unica version a proposito: no hay un helper que lea un numero fijo
+ * del codigo. Todos los call-sites de la tienda (footer, contacto, ficha,
+ * checkout) pasan `SiteSetting.whatsappNumber`, que el admin edita desde
+ * `/admin/configuracion`; el unico que usa otro numero es el panel de
+ * pedidos, que arma el link al chat del cliente.
  */
 export function linkWhatsappA(numero: string, mensaje?: string): string {
   const digitos = numero.replace(/\D/g, "");

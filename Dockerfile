@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# Imagen de produccion de Parfam MDQ (PLAN.md, Fase 7).
+# Imagen de produccion de Parfam MDQ.
 #
 # Se buildea en GitHub Actions y se despliega en Dokploy desde GHCR: la VPS es
 # compartida (4 vCPU) y compilar ahi competiria con la otra app que corre en el
@@ -79,6 +79,14 @@ RUN test -n "$R2_PUBLIC_URL" || { echo "ERROR: falta el build arg R2_PUBLIC_URL 
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# El repo hoy no tiene `public/`: el favicon lo genera src/app/icon.tsx, las
+# fuentes viven en src/assets/ y las fotos salen de R2. Pero el server
+# standalone sirve ese directorio automaticamente si existe, y el COPY del
+# runner falla si no existe, asi que se garantiza aca. Es un no-op cuando
+# alguien agrega estaticos de verdad -- y sin esto, ese estatico futuro no
+# llegaria a la imagen y el fallo seria silencioso.
+RUN mkdir -p public
 
 RUN DATABASE_URL="$DATABASE_URL_BUILD" AUTH_SECRET="$FIRMA_PLACEHOLDER_BUILD" pnpm build
 

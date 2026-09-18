@@ -7,8 +7,8 @@
  *
  * Idempotente: cada corrida borra (por pid) y vuelve a crear las
  * FragranceRef del lote que procesa, así se puede re-ejecutar sin duplicar.
- * Ver data/fragrantica/README.md para el formato de origen y
- * PLAN.md (Fase 1) para el diseño del modelo de datos.
+ * Ver data/fragrantica/README.md para el formato de origen y las trampas
+ * del parseo, y prisma/schema.prisma para el modelo que se escribe.
  */
 import { parseArgs } from "node:util";
 import path from "node:path";

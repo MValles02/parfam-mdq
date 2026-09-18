@@ -1,8 +1,31 @@
+import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Footer } from "@/components/tienda/footer";
 import { Header } from "@/components/tienda/header";
 import { ThemeProvider } from "@/components/tienda/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { env } from "@/lib/env";
+
+/**
+ * Umami (self-hosted): las dos variables son opcionales (ver `src/lib/env.ts`
+ * -- todavia no hay instancia en todos los entornos), así que sin ellas esto
+ * no renderiza nada. Va en el layout de la tienda y no en el raíz para no
+ * medir el uso del panel de admin, sólo tráfico real de clientes (ver F-17
+ * en `docs/findings.md`: antes la plomería entera estaba, pero ningún
+ * componente la usaba).
+ */
+function ScriptUmami() {
+  if (!env.NEXT_PUBLIC_UMAMI_URL || !env.NEXT_PUBLIC_UMAMI_WEBSITE_ID) {
+    return null;
+  }
+  return (
+    <Script
+      src={`${env.NEXT_PUBLIC_UMAMI_URL}/script.js`}
+      data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+      strategy="afterInteractive"
+    />
+  );
+}
 
 /**
  * Layout del storefront. `/catalogo`, `marca/`, `producto/` y `page.tsx` los
@@ -24,6 +47,7 @@ export default function TiendaLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1">{children}</main>
         <Footer />
         <Toaster position="top-right" richColors />
+        <ScriptUmami />
       </NuqsAdapter>
     </ThemeProvider>
   );

@@ -23,7 +23,7 @@ import { PRESENTACION } from "@/lib/catalogo";
 import type { ProductoFormInput } from "@/lib/validations/producto";
 import { cn } from "@/lib/utils";
 
-const COLUMNAS = "grid-cols-[1.4fr_0.8fr_1.2fr_1fr_60px]";
+const COLUMNAS = "grid-cols-[1.4fr_0.8fr_1.2fr_1fr_1fr_60px]";
 
 /** Tamaños típicos de cada presentación, sólo como sugerencia del datalist. */
 const SUGERENCIAS_ML: Record<VariantKind, number[]> = {
@@ -63,6 +63,7 @@ export function EditorVariantes({
         <span>Tipo</span>
         <span>Tamaño</span>
         <span>Precio (ARS)</span>
+        <span>SKU</span>
         <span>Disponible</span>
         <span />
       </div>
@@ -223,6 +224,28 @@ function FilaVariante({
                     onChange={(e) => precio.onChange(e.target.value)}
                   />
                 </div>
+                {fieldState.error ? (
+                  <p className="text-xs text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name={`variants.${indice}.sku`}
+            render={({ field: sku, fieldState }) => (
+              <div className="flex flex-col gap-1">
+                <Input
+                  placeholder="SKU (opcional)"
+                  aria-label="SKU de esta presentación"
+                  disabled={disabled}
+                  className="bg-background"
+                  value={sku.value ?? ""}
+                  onChange={(e) => sku.onChange(e.target.value)}
+                />
                 {fieldState.error ? (
                   <p className="text-xs text-destructive">
                     {fieldState.error.message}

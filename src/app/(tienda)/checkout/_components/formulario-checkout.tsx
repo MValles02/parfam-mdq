@@ -93,7 +93,6 @@ export function FormularioCheckout({
             items: items.map((i) => ({
               variantId: i.variantId,
               qty: i.qty,
-              precioMostrado: i.unitPriceArs,
             })),
             empresa: honeypotRef.current?.value ?? "",
           });

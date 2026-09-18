@@ -45,19 +45,17 @@ export const ETIQUETA_ORDEN: Record<Orden, string> = {
  * Rangos de precio como opciones cerradas y no como dos inputs: quedan cuatro
  * escalones legibles y el parametro de la URL acotado.
  *
- * Los cortes siguen la escala real del catalogo: los decants arrancan cerca de
- * los $ 25.000, los frascos y testers viven arriba de los $ 148.000. Un
- * producto entra al rango si *alguna* de sus variantes activas cae adentro,
- * asi que "hasta $ 50.000" es "tiene algo accesible", no "es barato".
- *
- * TODO: revisar los cortes contra los precios reales del catalogo; hoy estan
- * calibrados contra los del seed de desarrollo (`scripts/seed-dev.ts`).
+ * Los cortes siguen la escala real del catalogo (confirmada por el admin: de
+ * $ 0 a $ 1.000.000 en 2026-09-18 -- ver F-20 en `docs/findings.md`), no la
+ * del seed de desarrollo. Un producto entra al rango si *alguna* de sus
+ * variantes activas cae adentro, asi que "hasta $ 100.000" es "tiene algo
+ * accesible", no "es barato".
  */
 export const RANGOS_PRECIO = [
-  "hasta-50000",
-  "50000-100000",
-  "100000-200000",
-  "desde-200000",
+  "hasta-100000",
+  "100000-300000",
+  "300000-600000",
+  "desde-600000",
 ] as const;
 
 export type RangoPrecio = (typeof RANGOS_PRECIO)[number];
@@ -66,17 +64,17 @@ export const LIMITES_PRECIO: Record<
   RangoPrecio,
   { min?: number; max?: number }
 > = {
-  "hasta-50000": { max: 50000 },
-  "50000-100000": { min: 50000, max: 100000 },
-  "100000-200000": { min: 100000, max: 200000 },
-  "desde-200000": { min: 200000 },
+  "hasta-100000": { max: 100000 },
+  "100000-300000": { min: 100000, max: 300000 },
+  "300000-600000": { min: 300000, max: 600000 },
+  "desde-600000": { min: 600000 },
 };
 
 export const ETIQUETA_PRECIO: Record<RangoPrecio, string> = {
-  "hasta-50000": "Hasta $ 50.000",
-  "50000-100000": "$ 50.000 a $ 100.000",
-  "100000-200000": "$ 100.000 a $ 200.000",
-  "desde-200000": "Más de $ 200.000",
+  "hasta-100000": "Hasta $ 100.000",
+  "100000-300000": "$ 100.000 a $ 300.000",
+  "300000-600000": "$ 300.000 a $ 600.000",
+  "desde-600000": "Más de $ 600.000",
 };
 
 export const parsersCatalogo = {

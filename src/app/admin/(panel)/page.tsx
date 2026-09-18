@@ -1,33 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
-import { prisma } from "@/lib/db";
+import { obtenerEstadisticasPanel } from "@/lib/admin/panel";
 
 export const metadata: Metadata = { title: "Panel" };
-
-async function getStats() {
-  const [
-    publicados,
-    borradores,
-    pedidosPendientes,
-    notasSinTraducir,
-    referencias,
-  ] = await Promise.all([
-    prisma.product.count({ where: { status: "PUBLISHED" } }),
-    prisma.product.count({ where: { status: "DRAFT" } }),
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.note.count({ where: { nameEs: null } }),
-    prisma.fragranceRef.count(),
-  ]);
-
-  return {
-    publicados,
-    borradores,
-    pedidosPendientes,
-    notasSinTraducir,
-    referencias,
-  };
-}
 
 function Stat({
   label,
@@ -59,7 +35,7 @@ function Stat({
 }
 
 export default async function AdminHomePage() {
-  const stats = await getStats();
+  const stats = await obtenerEstadisticasPanel();
 
   return (
     <>

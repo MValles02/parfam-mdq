@@ -13,14 +13,6 @@ import { z } from "zod";
 export const itemCheckoutSchema = z.object({
   variantId: z.string().min(1),
   qty: z.number().int().min(1).max(99),
-  /**
-   * El precio que el cliente tenía mostrado en pantalla al armar el pedido.
-   * Sirve sólo para que el servidor detecte si cambió desde entonces (ver
-   * `useReconciliacionCarrito`); el precio que se guarda en el pedido sale
-   * siempre de la base, nunca de este valor (AGENTS.md: nunca confiar en el
-   * precio que manda el cliente).
-   */
-  precioMostrado: z.string().min(1),
 });
 
 /**

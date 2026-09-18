@@ -123,6 +123,8 @@ pnpm db:import-fragrantica   # catalogo de referencia (acepta --limit N)
 
 ## Antes de dar algo por terminado
 
-`pnpm typecheck` y `pnpm lint` tienen que pasar limpios. No hay test runner
-instalado: `scripts/lib/fragrantica-parse.test.ts` se corre a mano con
-`pnpm exec tsx`. El CI no corre ninguno de los tres — buildea y publica.
+`pnpm typecheck`, `pnpm lint` y `pnpm test` (Vitest) tienen que pasar limpios.
+El único archivo de tests hoy es `scripts/lib/fragrantica-parse.test.ts`, para
+los parsers del importador. No hay Playwright ni ningún e2e instalado, pese a
+lo que decía un comentario viejo (ver F-09 en `docs/findings.md`). El CI no
+corre ninguno de los tres — buildea y publica.

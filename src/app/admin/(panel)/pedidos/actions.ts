@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
+import { type Resultado } from "@/lib/admin/resultado";
 import { prisma } from "@/lib/db";
 
 /**
@@ -10,9 +11,7 @@ import { prisma } from "@/lib/db";
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
 
-export type Resultado<T = undefined> =
-  | ({ ok: true } & (T extends undefined ? object : { datos: T }))
-  | { ok: false; mensaje: string };
+export type { Resultado };
 
 function fallo(mensaje: string) {
   return { ok: false as const, mensaje };

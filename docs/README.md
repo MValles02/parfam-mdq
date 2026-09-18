@@ -204,8 +204,8 @@ Variables de entorno: copiar `.env.example` a `.env`. Las obligatorias son
 `DATABASE_URL`, `AUTH_SECRET` y `NEXT_PUBLIC_SITE_URL`; el resto se valida como
 opcional en `src/lib/env.ts`. Detalle en [`integrations.md`](integrations.md).
 
-Verificación: `pnpm typecheck` y `pnpm lint` pasan limpios en el commit `2e8ef56`
-(comprobado durante esta auditoría). **No hay test runner instalado** — ver
+Verificación: `pnpm typecheck`, `pnpm lint` y `pnpm test` (Vitest) tienen que
+pasar limpios. El CI no corre ninguno de los tres — ver
 [`findings.md`](findings.md#f-09).
 
 ---

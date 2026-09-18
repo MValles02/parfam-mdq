@@ -482,6 +482,13 @@ export async function marcaPorSlug(slug: string) {
   return marca;
 }
 
+/** Tag del `unstable_cache` de `src/app/sitemap.ts`: lo usan las Server
+ * Actions que agregan o quitan URLs del sitemap (ver F-04 en
+ * `docs/findings.md`) para invalidarlo con `revalidateTag` en vez de
+ * `revalidatePath("/sitemap.xml")`, que no tiene ningún efecto sobre esta
+ * caché porque no está indexada por ruta. */
+export const TAG_SITEMAP_URLS = "sitemap-urls";
+
 /** Todo lo que entra al sitemap, con su fecha para el `lastModified`. */
 export async function urlsDelSitio() {
   const [productos, marcas] = await Promise.all([

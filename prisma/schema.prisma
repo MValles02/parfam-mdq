@@ -245,7 +245,6 @@ model Product {
   intensity      Int?
   status         ProductStatus  @default(DRAFT)
   isFeatured     Boolean        @default(false)
-  sortOrder      Int            @default(0)
   seoTitle       String?
   seoDescription String?
   createdAt      DateTime       @default(now())
@@ -387,11 +386,8 @@ model SiteSetting {
   whatsappMessageTemplate String   @db.Text
   brandName               String
   brandTagline            String
-  logoUrl                 String?
-  heroImageUrl            String?
   instagramHandle         String?
   shippingInfo            String?
-  announcementBar         String?
   seoDefaultTitle         String?
   seoDefaultDescription   String?
   updatedAt               DateTime @updatedAt

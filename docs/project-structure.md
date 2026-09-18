@@ -211,7 +211,7 @@ scripts/
 └── lib/
     ├── read-fragrantica-csv.ts  Lee y fusiona los dos CSV por PID
     ├── fragrantica-parse.ts     Parsers (URL, pirámide, género, decimales)
-    ├── fragrantica-parse.test.ts  Aserciones con node:assert — se corre a mano
+    ├── fragrantica-parse.test.ts  Tests de Vitest — `pnpm test`
     └── dictionaries.ts          Carga los JSON de data/dictionaries/
 
 data/

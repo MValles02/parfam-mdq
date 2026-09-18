@@ -13,12 +13,20 @@ import {
  * limit ni honeypot, a diferencia de `crearPedido` en checkout/actions.ts.
  */
 
-const entradaSchema = z.array(
-  z.object({
-    variantId: z.string().min(1),
-    qty: z.number().int().min(1).max(99),
-  }),
-);
+/**
+ * `.max(50)`: un carrito real no tiene medio centenar de variantes distintas.
+ * Sin este tope, el array arma un `IN (...)` sin límite de tamaño (ver F-14
+ * en docs/findings.md) — no es una fuga de datos (todo lo que devuelve ya es
+ * público en la ficha del producto), pero no hace falta dejarlo sin acotar.
+ */
+const entradaSchema = z
+  .array(
+    z.object({
+      variantId: z.string().min(1),
+      qty: z.number().int().min(1).max(99),
+    }),
+  )
+  .max(50);
 
 export async function validarCarritoAction(
   items: unknown,

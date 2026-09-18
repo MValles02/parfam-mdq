@@ -77,9 +77,9 @@ sequenceDiagram
 | --------------------------------------- | ----------------------------------------- |
 | `email`, `password`, `volverA` (hidden) | Cookie de sesión (JWT firmado) + redirect |
 
-El JWT lleva `token.id` y `token.role = "ADMIN"`; la sesión expone **sólo**
-`user.id`, `user.name` y `user.email` — `role` no se copia
-([`findings.md#f-03`](../findings.md#f-03)).
+El JWT lleva `id`, `sub`, `name`, `email` y los claims estándar (`iat`, `exp`,
+`jti`); la sesión expone `user.id`, `user.name` y `user.email`. **No hay rol**
+en ninguno de los dos ([`findings.md#f-03`](../findings.md#f-03)).
 
 ## Persistencia
 

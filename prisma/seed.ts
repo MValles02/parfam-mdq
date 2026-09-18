@@ -22,7 +22,10 @@ Nombre: {{nombre}}
 Pedido: {{numero}}`;
 
 async function seedAdminUser() {
-  const email = process.env.ADMIN_SEED_EMAIL;
+  // En minúsculas porque `authorize()` (src/lib/auth.ts) busca así: si
+  // `ADMIN_SEED_EMAIL` trae alguna mayúscula, el usuario se crearía con un
+  // email que el login nunca encuentra (ver F-08 en docs/findings.md).
+  const email = process.env.ADMIN_SEED_EMAIL?.toLowerCase();
   const password = process.env.ADMIN_SEED_PASSWORD;
 
   if (!email || !password) {

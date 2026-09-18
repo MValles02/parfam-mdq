@@ -46,14 +46,13 @@ siteDefaults  // name, legalName, tagline, description, city, whatsapp, instagra
 ## Entidades
 
 `SiteSetting` — la única fila. Columnas obligatorias: `whatsappNumber`,
-`whatsappMessageTemplate`, `brandName`, `brandTagline`. Opcionales: `logoUrl`,
-`heroImageUrl`, `instagramHandle`, `shippingInfo`, `announcementBar`,
-`seoDefaultTitle`, `seoDefaultDescription`.
+`whatsappMessageTemplate`, `brandName`, `brandTagline`. Opcionales:
+`instagramHandle`, `shippingInfo`, `seoDefaultTitle`, `seoDefaultDescription`.
 
-> `logoUrl`, `heroImageUrl` y `announcementBar` **existen en el schema y no se
-> leen ni se escriben en ningún lado**: no están en `ConfiguracionSitio`, ni en
-> `ConfiguracionEditable`, ni en `configuracionSchema`, ni en el formulario.
-> Ver [`findings.md#f-24`](../findings.md#f-24).
+> `logoUrl`, `heroImageUrl` y `announcementBar` llegaron a existir en el
+> schema sin que nada las leyera ni las escribiera. Se borraron del todo
+> (migración `quitar_columnas_sin_uso`) en vez de dejarlas de adorno — ver
+> [`findings.md#f-24`](../findings.md#f-24).
 
 ## Consumidores
 
@@ -196,8 +195,9 @@ los contenga.
 
 Está en `src/lib/site.ts` (`siteDefaults`) o hardcodeado:
 
-- El **logotipo** es tipografía (Outfit ExtraBold), no un archivo: `logoUrl` no
-  se usa.
+- El **logotipo** es tipografía (Outfit ExtraBold), no un archivo — nunca hubo
+  una columna `logoUrl` que usar (se llegó a declarar sin uso y se borró, ver
+  [`findings.md#f-24`](../findings.md#f-24)).
 - `legalName`, `city` y `url` de `siteDefaults`.
 - El token de verificación de Google Search Console (`src/app/layout.tsx`).
 - Los textos de `/que-es-un-tester` y `/como-comprar`.

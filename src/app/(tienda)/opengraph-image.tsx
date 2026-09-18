@@ -4,16 +4,25 @@ import { ImageResponse } from "next/og";
 import { siteDefaults } from "@/lib/site";
 
 /**
- * OG por defecto del sitio: el logotipo reconstruido en tipografia (no hay
- * SVG del logo, ver PLAN.md § "Identidad visual"), centrado, con mucho aire
- * como en el hero de `design/Main.dc.html`.
+ * Imagen de vista previa para TODOS los links compartidos de la tienda.
  *
- * El cuerpo de 132 desbordaba el recorte cuadrado que hace WhatsApp sobre el
- * centro de la imagen: "ParfamMdq" se leia "ParfamMdo", sin la P ni la q.
- * Con 100 el logotipo entra en la banda central de ~630px y sigue viendose
- * igual de grande en los clientes que muestran la imagen 1200x630 completa.
+ * Es solo el logotipo a proposito. El canal de venta es WhatsApp, y WhatsApp
+ * no muestra la imagen 1200x630 en el chat: incrusta en el mensaje una
+ * miniatura de ~200px, recortada al cuadrado central y comprimida. Esa
+ * resolucion no se puede subir desde el servidor. Cualquier dato fino --marca,
+ * concentracion, precio-- llegaba ilegible, asi que en vez de pelearla se
+ * muestra una sola cosa, grande y nitida.
+ *
+ * Las dos medidas estan atadas a ese recorte:
+ *   - El logotipo entra en la banda central de 630px (a cuerpo 112 mide ~590).
+ *     Mas grande se le cortan la P y la q.
+ *   - Nada baja de 36px, que reducido ~3x queda en ~11px y todavia se lee.
+ *
+ * El resto de los segmentos la reexportan (`opengraph-image.tsx` de una linea):
+ * la convencion de archivo de Next NO se hereda a rutas anidadas, aplica solo
+ * al segmento donde vive el archivo.
  */
-export const alt = `${siteDefaults.name} — ${siteDefaults.tagline}`;
+export const alt = siteDefaults.name;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -42,7 +51,7 @@ export default async function Image() {
       <div
         style={{
           display: "flex",
-          fontSize: 100,
+          fontSize: 112,
           fontWeight: 800,
           letterSpacing: "-0.045em",
           lineHeight: 0.9,
@@ -53,35 +62,14 @@ export default async function Image() {
       <div
         style={{
           display: "flex",
-          fontSize: 20,
+          fontSize: 36,
           fontWeight: 800,
-          letterSpacing: "0.62em",
-          marginTop: 28,
-          paddingLeft: "0.62em",
-          color: "#000000",
+          letterSpacing: "0.45em",
+          marginTop: 30,
+          paddingLeft: "0.45em",
         }}
       >
         PERFUMERIA
-      </div>
-      <div
-        style={{
-          display: "flex",
-          width: 64,
-          height: 1,
-          background: "#000000",
-          margin: "48px 0",
-        }}
-      />
-      <div
-        style={{
-          display: "flex",
-          fontSize: 26,
-          fontStyle: "italic",
-          fontWeight: 400,
-          color: "#3A342C",
-        }}
-      >
-        &ldquo;{siteDefaults.tagline}&rdquo;
       </div>
     </div>,
     {

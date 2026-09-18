@@ -7,7 +7,7 @@ import type { NextConfig } from "next";
  * Si la variable falta, la lista queda vacia y `next/image` rechaza el host
  * en vez de servir cualquier cosa.
  *
- * OJO (Fase 7): como esto se resuelve en `next build` y queda serializado en
+ * OJO: como esto se resuelve en `next build` y queda serializado en
  * el output standalone, R2_PUBLIC_URL tiene que estar presente COMO BUILD ARG
  * en el build de CI. Cambiar el host de las imagenes obliga a rebuildear la
  * imagen; no alcanza con tocar la variable en Dokploy.
@@ -24,7 +24,7 @@ const hostDeImagenes = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  // Fase 7: el Dockerfile despliega `.next/standalone` (server.js + solo los
+  // El Dockerfile despliega `.next/standalone` (server.js + solo los
   // node_modules que el trace considera necesarios), no el repo entero.
   output: "standalone",
 

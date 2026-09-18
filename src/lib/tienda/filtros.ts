@@ -50,8 +50,8 @@ export const ETIQUETA_ORDEN: Record<Orden, string> = {
  * producto entra al rango si *alguna* de sus variantes activas cae adentro,
  * asi que "hasta $ 50.000" es "tiene algo accesible", no "es barato".
  *
- * TODO(Fase 8): revisar los cortes cuando esten cargados los precios reales de
- * los ~40 productos; hoy estan calibrados contra los del seed de desarrollo.
+ * TODO: revisar los cortes contra los precios reales del catalogo; hoy estan
+ * calibrados contra los del seed de desarrollo (`scripts/seed-dev.ts`).
  */
 export const RANGOS_PRECIO = [
   "hasta-50000",

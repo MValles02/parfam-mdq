@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 /**
  * Indicador de unidades en el carrito (icono de bolsa + cantidad). No es un
  * link: `header.tsx` lo envuelve en un `<button>` (trigger del `<Sheet>` del
- * drawer, Fase 5) sin tocar este componente, asi que sigue siendo puramente
+ * drawer) sin tocar este componente, asi que sigue siendo puramente
  * informativo puertas adentro.
  *
  * `variante="chip"` es el formato de la barra desktop (design/Main.dc.html);

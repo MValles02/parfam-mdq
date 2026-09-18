@@ -7,9 +7,8 @@ export const metadata: Metadata = { title: "Checkout" };
 /**
  * El carrito vive en `localStorage`: todo su contenido lo arma
  * `FormularioCheckout` en el cliente, hidratación incluida (ver
- * `useHidratado`, AGENTS.md trampa #4). Lo único que sí trae el servidor es
- * el texto de envío de `SiteSetting.shippingInfo` (editable desde
- * `/admin/configuracion`, Fase 6), que antes estaba escrito a mano acá.
+ * `useHidratado`). Lo único que sí trae el servidor es el texto de envío de
+ * `SiteSetting.shippingInfo`, editable desde `/admin/configuracion`.
  */
 export default async function Page() {
   const config = await obtenerConfiguracionSitio();

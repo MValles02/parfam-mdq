@@ -51,8 +51,8 @@ const SIN_EMBLA = "0:0:0"
  *
  * El componente que genera shadcn lo resuelve con `useState` + un `useEffect`
  * que llama a `setState` en el cuerpo, y la regla `react-hooks/set-state-in-effect`
- * de React 19 lo marca como error (le pasó lo mismo a `src/hooks/use-mobile.ts`
- * en la Fase 2). Embla ya es un store externo con `on`/`off`: suscribirse es la
+ * de React 19 lo marca como error (le pasó lo mismo a `src/hooks/use-mobile.ts`).
+ * Embla ya es un store externo con `on`/`off`: suscribirse es la
  * API correcta y ademas evita el render de mas.
  *
  * El snapshot es un string y no un objeto porque `useSyncExternalStore` compara

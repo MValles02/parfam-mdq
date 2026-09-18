@@ -1,9 +1,9 @@
 /**
  * Valores por defecto de la marca.
  *
- * A partir de la Fase 6 estos campos son editables desde `/admin/configuracion`
- * y viven en la tabla `SiteSetting`; esto es la semilla y el fallback cuando
- * todavia no hay fila en la base.
+ * Estos campos son editables desde `/admin/configuracion` y viven en la tabla
+ * `SiteSetting`: esto es la semilla y el fallback para cuando todavia no hay
+ * fila en la base.
  */
 export const siteDefaults = {
   name: "ParfamMdq",

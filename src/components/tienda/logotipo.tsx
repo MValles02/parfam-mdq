@@ -4,7 +4,7 @@ import { siteDefaults } from "@/lib/site";
 /**
  * El logotipo es tipografia, no un SVG: las piezas de Canva usan una
  * geometrica ExtraBold y el equivalente libre es Outfit, que ya es la familia
- * del sitio (ver PLAN.md, "Identidad visual"). Se arma con peso 800 y el
+ * del sitio. Se arma con peso 800 y el
  * subtitulo en versalitas espaciadas.
  */
 export function Logotipo({

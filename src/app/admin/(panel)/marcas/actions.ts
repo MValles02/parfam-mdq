@@ -33,8 +33,8 @@ function erroresPorCampo(error: z.ZodError) {
  * (catalogo y home), la ficha de cada producto suyo, y `/marca/[slug]`.
  * Mismo criterio que `revalidarTienda()` en productos/actions.ts, pero acá
  * hay que revalidar potencialmente varias fichas de producto en vez de una
- * sola -- son pocas (hoy 6, y la Fase 8 carga ~40 productos reales en total,
- * no por marca), así que iterar es más simple que inventar otro mecanismo.
+ * sola -- son pocas, porque el catálogo entero son decenas de productos y no
+ * decenas por marca, así que iterar es más simple que inventar otro mecanismo.
  */
 async function revalidarMarca(brandId: string, slug: string) {
   const productos = await prisma.product.findMany({

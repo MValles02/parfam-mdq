@@ -5,9 +5,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 /**
- * Carrito del cliente. La Fase 5 le suma el drawer, /carrito y el checkout por
- * WhatsApp; esto es lo minimo que necesita la ficha de producto: agregar un
- * item y contar cuantos hay para el badge del header.
+ * Carrito del cliente. Lo comparten la ficha de producto (agregar), el badge
+ * y el drawer del header, la pagina /carrito y el checkout.
  *
  * Lo que se guarda es un snapshot para mostrar, no la fuente de verdad: el
  * precio que vale es el que la Server Action del checkout recalcula contra la
@@ -36,7 +35,7 @@ type EstadoCarrito = {
   actualizarCantidad: (variantId: string, qty: number) => void;
   /**
    * Pisa el precio guardado de un item. Lo usa la reconciliacion contra la
-   * base (`src/lib/tienda/usar-reconciliacion-carrito.ts`, Fase 5): el
+   * base (`src/lib/tienda/usar-reconciliacion-carrito.ts`): el
    * carrito es un snapshot para mostrar, y si el admin cambio el precio
    * despues de que el cliente agrego el item, esto lo deja al dia.
    */

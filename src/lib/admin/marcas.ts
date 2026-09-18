@@ -11,7 +11,7 @@ export type FilaMarca = {
  * El dataset de Fragrantica trae 1.748 marcas (una por cada fragancia de
  * referencia), pero sólo un puñado tiene productos reales en la tienda hoy.
  * Sin `q`, la lista arranca acotada a esas -- son las que de verdad importan
- * para corregir un nombre mal traído del slug (PLAN.md, Fase 6) -- y con `q`
+ * para corregir un nombre mal traído del slug -- y con `q`
  * busca en las 1.748, para poder corregir una marca de referencia antes de
  * cargarle el primer producto.
  */

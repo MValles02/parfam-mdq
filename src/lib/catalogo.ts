@@ -10,8 +10,8 @@ import type {
 
 /**
  * Etiquetas en espaniol (es-AR) de los enums del catalogo. Viven fuera de los
- * componentes porque las usan tanto el panel como el storefront (Fase 4) y el
- * armado del mensaje de WhatsApp (Fase 5).
+ * componentes porque las usan tanto el panel como el storefront y el armado
+ * del mensaje de WhatsApp.
  *
  * El orden de cada objeto es el orden en que se muestran los selects.
  */
@@ -99,7 +99,7 @@ export function precioArs(valor: string | number) {
  * "PAUL PARQUET") para mostrarlo: "François Demachy", "Paul Parquet".
  *
  * Hace falta porque `Perfumer.name` quedo con mayusculas inconsistentes en el
- * import de la Fase 1 -- 718 de las 1.355 filas estan enteras en minuscula,
+ * import inicial -- 718 de las 1.355 filas estan enteras en minuscula,
  * segun de cual de los dos CSV vino el dato. Se arregla al mostrar y no en la
  * base para no pisar correcciones que el admin pueda hacer a mano; el
  * importador tendria que normalizarlo antes de la importacion de produccion.

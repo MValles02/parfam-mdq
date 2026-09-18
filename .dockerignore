@@ -13,14 +13,14 @@ test-results
 *.tsbuildinfo
 
 # Secretos: no entran a la imagen ni por accidente. Las variables reales las
-# pone Dokploy en runtime y CI en los build args (PLAN.md, Fase 7).
+# pone Dokploy en runtime y CI en los build args.
 .env
 .env.*
 !.env.example
 
 # 38 MB de CSV de referencia. La importacion de las 69.946 fragancias corre
 # UNA vez contra la base de produccion desde un clon del repo en la VPS, no
-# desde el contenedor (PLAN.md, Fase 7).
+# desde el contenedor.
 data
 
 # Material de trabajo que no participa del build.

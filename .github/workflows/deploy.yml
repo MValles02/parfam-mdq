@@ -1,4 +1,4 @@
-# Build de la imagen de produccion y redespliegue en Dokploy (PLAN.md, Fase 7).
+# Build de la imagen de produccion y redespliegue en Dokploy.
 #
 # La VPS es compartida y tiene 4 vCPU: por eso la imagen se compila aca y el
 # server solo baja el artefacto ya hecho.

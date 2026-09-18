@@ -71,9 +71,9 @@ function subirConProgreso(
 }
 
 /**
- * Miniatura de una imagen ya subida. Sale por `next/image` desde que
- * next.config.ts tiene los remotePatterns del dominio de R2 (Fase 4); antes
- * iba con un <img> comun porque el optimizador rechazaba el host.
+ * Miniatura de una imagen ya subida. Sale por `next/image`, que sólo acepta
+ * el host declarado en los `remotePatterns` de next.config.ts (derivados de
+ * R2_PUBLIC_URL): sin esa variable el optimizador rechaza la URL.
  *
  * `url` puede ser undefined si R2 no esta configurado en este entorno: en ese
  * caso no hay nada que mostrar y cae a un recuadro vacio.

@@ -5,7 +5,7 @@ import { urlsDelSitio } from "@/lib/tienda/consultas";
 
 /**
  * `sitemap.ts` es un Route Handler cacheado por defecto (ver
- * node_modules/next/dist/docs/.../sitemap.md), y hasta la Fase 7 se apoyaba en
+ * node_modules/next/dist/docs/.../sitemap.md), y antes se apoyaba en
  * `export const revalidate = 3600` para eso. El problema: con `revalidate`,
  * Next lo prerenderiza en `next build`, y era la primera ruta que hacia
  * explotar un build sin Postgres -- que es justo el caso del build en CI.

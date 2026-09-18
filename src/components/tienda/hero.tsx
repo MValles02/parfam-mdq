@@ -7,10 +7,9 @@ import { obtenerConfiguracionSitio } from "@/lib/configuracion";
  * design/HomeMobile.dc.html). Todo centrado, con el link ancla que baja al
  * catalogo.
  *
- * El logotipo (el nombre de marca) sigue siendo tipografia fija -- la
- * identidad visual es a proposito asi, ver "Identidad visual" en PLAN.md --
- * pero el tagline es editable desde `/admin/configuracion` a partir de la
- * Fase 6, asi que sale de `SiteSetting.brandTagline`.
+ * El logotipo (el nombre de marca) sigue siendo tipografia fija a proposito,
+ * pero el tagline es editable desde `/admin/configuracion`, asi que sale de
+ * `SiteSetting.brandTagline`.
  *
  * El logotipo es el <h1> de la home: es lo que la pagina dice que es. Por eso
  * la seccion de catalogo de abajo entra en h2 (ver `nivelTitulo`).

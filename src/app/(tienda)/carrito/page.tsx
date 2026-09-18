@@ -5,8 +5,8 @@ import { ContenidoCarrito } from "./_components/contenido-carrito";
 export const metadata: Metadata = { title: "Carrito" };
 
 /**
- * Igual que el drawer del carrito, pero como ruta para link directo
- * (AGENTS.md, Fase 5). El carrito vive en `localStorage`, asi que no hay
+ * Igual que el drawer del carrito, pero como ruta para link directo.
+ * El carrito vive en `localStorage`, asi que no hay
  * nada que traer del servidor aca -- todo lo arma `ContenidoCarrito` en el
  * cliente (mismo patron que `/checkout`, ver `checkout/page.tsx`).
  */

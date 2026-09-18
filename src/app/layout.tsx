@@ -11,7 +11,7 @@ const outfit = Outfit({
 
 /**
  * `brandName`/`seoDefaultTitle`/`seoDefaultDescription` salen de
- * `SiteSetting` (editable desde `/admin/configuracion`, Fase 6) en vez de
+ * `SiteSetting` (editable desde `/admin/configuracion`) en vez de
  * `siteDefaults`: son el título/descripción por defecto de TODO el sitio
  * (el template de acá envuelve cualquier página que no ponga el suyo
  * propio), así que es la única fuente que tiene sentido acá.

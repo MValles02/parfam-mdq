@@ -8,7 +8,7 @@ import { ImageResponse } from "next/og";
  *
  * Se genera con la misma Outfit ExtraBold de las OG images: el logotipo de
  * ParfamMdq es tipografia, no un dibujo, asi que la "P" sale de la fuente y
- * no de un path a mano (ver PLAN.md, "Identidad visual").
+ * no de un path a mano.
  */
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";

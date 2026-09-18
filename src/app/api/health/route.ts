@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 /**
- * Healthcheck del contenedor (Fase 7). Lo consultan el `HEALTHCHECK` del
+ * Healthcheck del contenedor. Lo consultan el `HEALTHCHECK` del
  * Dockerfile y el de Dokploy, que es lo que dispara el rollback cuando un
  * deploy sale mal.
  *

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * Foto propia servida desde R2, con la silueta de frasco como fallback
  * mientras el producto no tenga ninguna cargada. Nunca imagenes de
- * Fragrantica: son referencia interna del panel (PLAN.md).
+ * Fragrantica: son referencia interna del panel.
  *
  * `object-contain` y no `cover` a proposito -- son frascos recortados sobre
  * fondo crema y recortarlos les comeria la tapa.

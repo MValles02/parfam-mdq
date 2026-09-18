@@ -1,5 +1,5 @@
 #!/bin/sh
-# Entrypoint del contenedor de produccion (Fase 7).
+# Entrypoint del contenedor de produccion.
 #
 # Las migraciones corren aca y no en el build por dos razones: la imagen se
 # buildea en CI, donde no hay base, y el mismo artefacto tiene que poder

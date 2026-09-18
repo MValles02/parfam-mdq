@@ -1,6 +1,6 @@
 // Esquema de Parfam MDQ.
 //
-// Tres capas (ver PLAN.md):
+// Tres capas:
 //   1. Referencia  — sembrada por scripts/import-fragrantica.ts, read-only en la app.
 //   2. Tienda      — lo que edita el admin (Product y sus relaciones).
 //   3. Operación   — pedidos, configuración del sitio y usuarios.

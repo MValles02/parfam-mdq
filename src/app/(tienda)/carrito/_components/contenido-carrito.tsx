@@ -6,7 +6,7 @@ import { ResumenCarrito } from "@/components/tienda/carrito/resumen-carrito";
 
 /**
  * Misma informacion que el drawer del carrito (`carrito-drawer.tsx`) pero
- * como pagina completa, para link directo (AGENTS.md, Fase 5). No duplica
+ * como pagina completa, para link directo. No duplica
  * la logica de items/stepper/subtotal: usa los mismos componentes
  * compartidos `ListaItems`/`ResumenCarrito` (`src/components/tienda/carrito/`).
  */

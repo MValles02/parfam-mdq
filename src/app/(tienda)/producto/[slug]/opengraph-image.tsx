@@ -16,6 +16,12 @@ import { productoPorSlug } from "@/lib/tienda/consultas";
  * "Sauvage Elixir" solo quedaba "age Elixir", y el precio y la marca se
  * cortaban enteros. Como el checkout de la tienda entra por WhatsApp, esta
  * imagen tiene que leerse recortada, no solo en 1200x630.
+ *
+ * Los cuerpos son grandes por la misma razon. WhatsApp no muestra la imagen
+ * completa en el chat: incrusta una miniatura de ~200px en el mensaje. Esa
+ * resolucion no se puede subir desde el servidor, asi que el unico margen es
+ * que el texto siga siendo legible reducido ~3x y con compresion encima.
+ * Regla practica: nada por debajo de 36px, que a 200px queda en ~11px.
  */
 export const alt = "ParfamMdq";
 export const size = { width: 1200, height: 630 };
@@ -101,6 +107,13 @@ export default async function Image({
   const precios = producto.variantes.map((v) => Number(v.precio));
   const desde = precios.length > 0 ? precioArs(Math.min(...precios)) : null;
 
+  // El alto es fijo en 630 y tanto la marca como el nombre pueden envolver.
+  // "Jean Paul Gaultier" + "Le Male Elixir" ya ocupa dos lineas cada uno y
+  // llega justo; un nombre mas largo desbordaria. Bajar el cuerpo en ese caso
+  // mantiene la composicion adentro y sigue siendo legible en la miniatura
+  // (84px reducido ~3x quedan en ~27px).
+  const cuerpoNombre = producto.nombre.length > 20 ? 84 : 104;
+
   return new ImageResponse(
     <div
       style={{
@@ -113,7 +126,7 @@ export default async function Image({
         background: "#F2EEE9",
         color: "#000000",
         fontFamily: "Outfit",
-        padding: "72px 88px",
+        padding: "56px 88px",
       }}
     >
       <div
@@ -133,7 +146,7 @@ export default async function Image({
           <div
             style={{
               display: "flex",
-              fontSize: 22,
+              fontSize: 30,
               fontWeight: 800,
               letterSpacing: "-0.02em",
             }}
@@ -143,7 +156,7 @@ export default async function Image({
           <div
             style={{
               display: "flex",
-              fontSize: 8,
+              fontSize: 11,
               fontWeight: 800,
               letterSpacing: "0.42em",
               color: "#6B655C",
@@ -161,15 +174,15 @@ export default async function Image({
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
-          gap: 20,
+          gap: 18,
         }}
       >
         <div
           style={{
             display: "flex",
-            fontSize: 26,
+            fontSize: 40,
             fontWeight: 800,
-            letterSpacing: "0.3em",
+            letterSpacing: "0.22em",
             color: "#6B655C",
             textTransform: "uppercase",
             // Misma banda segura que el nombre: una marca larga envuelve en
@@ -182,7 +195,7 @@ export default async function Image({
         <div
           style={{
             display: "flex",
-            fontSize: 84,
+            fontSize: cuerpoNombre,
             fontWeight: 800,
             letterSpacing: "-0.03em",
             lineHeight: 1.02,
@@ -195,7 +208,7 @@ export default async function Image({
           <div
             style={{
               display: "flex",
-              fontSize: 28,
+              fontSize: 38,
               fontWeight: 400,
               color: "#3A342C",
             }}
@@ -207,9 +220,9 @@ export default async function Image({
           <div
             style={{
               display: "flex",
-              fontSize: 34,
+              fontSize: 56,
               fontWeight: 800,
-              marginTop: 12,
+              marginTop: 8,
             }}
           >
             Desde {desde}

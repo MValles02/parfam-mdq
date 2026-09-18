@@ -29,6 +29,12 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s — ${config.brandName}`,
     },
     description: config.seoDefaultDescription,
+    // Verificacion de propiedad para Google Search Console. No es un secreto:
+    // se publica en el HTML de todas las paginas, que es justo como Google la
+    // comprueba. Va en el layout raiz para que tambien cubra /admin.
+    verification: {
+      google: "Sie6f0R_-nTdSrgWAUCwjFG8j-dE3Eu1Ud4JQCwMoVQ",
+    },
   };
 }
 

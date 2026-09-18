@@ -9,6 +9,13 @@ import { productoPorSlug } from "@/lib/tienda/consultas";
  * OG de la ficha de producto. No metemos la foto del producto: son URLs
  * remotas de R2 y traerlas adentro de satori agrega una dependencia de red a
  * la generacion de la imagen (ver reporte de la tarea para la mejora futura).
+ *
+ * Todo va centrado y dentro de una banda central de ~560px a proposito.
+ * WhatsApp recorta un cuadrado del centro de la imagen para la vista previa,
+ * asi que con el texto alineado a la izquierda se perdia casi todo: de
+ * "Sauvage Elixir" solo quedaba "age Elixir", y el precio y la marca se
+ * cortaban enteros. Como el checkout de la tienda entra por WhatsApp, esta
+ * imagen tiene que leerse recortada, no solo en 1200x630.
  */
 export const alt = "ParfamMdq";
 export const size = { width: 1200, height: 630 };
@@ -59,7 +66,7 @@ export default async function Image({
         <div
           style={{
             display: "flex",
-            fontSize: 132,
+            fontSize: 100,
             fontWeight: 800,
             letterSpacing: "-0.045em",
             lineHeight: 0.9,
@@ -101,6 +108,7 @@ export default async function Image({
         height: "100%",
         display: "flex",
         flexDirection: "column",
+        alignItems: "center",
         justifyContent: "space-between",
         background: "#F2EEE9",
         color: "#000000",
@@ -112,14 +120,14 @@ export default async function Image({
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-end",
+          justifyContent: "center",
         }}
       >
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-end",
+            alignItems: "center",
           }}
         >
           <div
@@ -151,6 +159,8 @@ export default async function Image({
         style={{
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
           gap: 20,
         }}
       >
@@ -162,6 +172,9 @@ export default async function Image({
             letterSpacing: "0.3em",
             color: "#6B655C",
             textTransform: "uppercase",
+            // Misma banda segura que el nombre: una marca larga envuelve en
+            // vez de desbordar el recorte.
+            maxWidth: 560,
           }}
         >
           {producto.marca}
@@ -173,7 +186,7 @@ export default async function Image({
             fontWeight: 800,
             letterSpacing: "-0.03em",
             lineHeight: 1.02,
-            maxWidth: 980,
+            maxWidth: 560,
           }}
         >
           {producto.nombre}

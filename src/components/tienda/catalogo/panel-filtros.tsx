@@ -48,11 +48,11 @@ export function PanelFiltros({
       </Fila>
 
       <Fila etiqueta="GÉNERO">
-        <ChipsGenero />
+        <ChipsGenero compacto />
       </Fila>
 
       <Fila etiqueta="PRESENTACIÓN">
-        <ChipsPresentacion />
+        <ChipsPresentacion compacto />
       </Fila>
 
       <Separator />

@@ -9,7 +9,7 @@ import {
   useCarousel,
 } from "@/components/ui/carousel";
 import { FotoProducto } from "@/components/tienda/foto-producto";
-import { cn } from "@/lib/utils";
+import { cn, FOCO_VISIBLE } from "@/lib/utils";
 
 type Imagen = { id: string; url: string; alt: string };
 
@@ -86,7 +86,8 @@ function Miniaturas({ imagenes }: { imagenes: Imagen[] }) {
               "relative aspect-square overflow-hidden rounded border bg-card transition-colors",
               activa
                 ? "border-foreground ring-1 ring-foreground"
-                : "border-border",
+                : "border-input",
+              FOCO_VISIBLE,
             )}
           >
             <FotoProducto imagen={imagen} sizes="146px" />

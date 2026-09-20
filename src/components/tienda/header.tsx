@@ -15,8 +15,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { etiquetaCarrito, useCantidadCarrito } from "@/lib/carrito";
 import { siteDefaults } from "@/lib/site";
-import { cn } from "@/lib/utils";
+import { cn, FOCO_VISIBLE } from "@/lib/utils";
 
 const NAV = [
   { href: "/catalogo", label: "Catálogo" },
@@ -26,8 +27,10 @@ const NAV = [
 ] as const;
 
 /** Cuadrado de 46px con borde, igual a los botones de icono de mobile. */
-const CUADRADO =
-  "flex size-[46px] shrink-0 items-center justify-center rounded border border-border bg-card";
+const CUADRADO = cn(
+  "flex size-[46px] shrink-0 items-center justify-center rounded border border-input bg-card",
+  FOCO_VISIBLE,
+);
 
 /**
  * Header de la tienda, con un layout para desktop y otro para mobile. En
@@ -41,17 +44,23 @@ export function Header() {
   // CTA "Finalizar pedido por WhatsApp" del drawer necesita poder cerrarlo
   // el mismo al navegar (ver carrito-drawer.tsx).
   const [carritoAbierto, setCarritoAbierto] = useState(false);
+  const cantidad = useCantidadCarrito();
+  const etiqueta = etiquetaCarrito(cantidad);
 
   const claseLink = (href: string) =>
     cn(
+      "text-foreground",
       pathname === href
-        ? "text-muted-foreground"
-        : "text-foreground hover:text-muted-foreground",
+        ? "underline underline-offset-4"
+        : "hover:text-muted-foreground",
     );
 
   return (
     <Sheet open={carritoAbierto} onOpenChange={setCarritoAbierto}>
       <header>
+        <span role="status" className="sr-only">
+          {etiqueta}
+        </span>
         {/* Desktop */}
         <div className="mx-auto hidden max-w-[1440px] items-center justify-between px-16 py-6 lg:flex">
           <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
@@ -66,6 +75,7 @@ export function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={pathname === item.href ? "page" : undefined}
                   className={claseLink(item.href)}
                 >
                   {item.label}
@@ -75,7 +85,7 @@ export function Header() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                aria-label="Abrir el carrito"
+                aria-label={`Abrir el carrito, ${etiqueta}`}
                 className="contents"
               >
                 <BadgeCarrito variante="chip" />
@@ -101,7 +111,7 @@ export function Header() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                aria-label="Abrir el carrito"
+                aria-label={`Abrir el carrito, ${etiqueta}`}
                 className="contents"
               >
                 <BadgeCarrito variante="boton" />
@@ -134,10 +144,13 @@ export function Header() {
                     <SheetClose asChild key={item.href}>
                       <Link
                         href={item.href}
+                        aria-current={
+                          pathname === item.href ? "page" : undefined
+                        }
                         className={cn(
                           "flex min-h-11 items-center rounded px-3 text-base font-medium",
                           pathname === item.href
-                            ? "text-muted-foreground"
+                            ? "text-foreground underline underline-offset-4"
                             : "text-foreground hover:bg-muted",
                         )}
                       >

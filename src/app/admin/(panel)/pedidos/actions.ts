@@ -3,17 +3,13 @@
 import { revalidatePath } from "next/cache";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
-import { type Resultado } from "@/lib/admin/resultado";
+import { fallo, type Resultado } from "@/lib/admin/resultado";
 import { prisma } from "@/lib/db";
 
 /**
  * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
-
-function fallo(mensaje: string) {
-  return { ok: false as const, mensaje };
-}
 
 function revalidarPedido(id: string) {
   revalidatePath("/admin/pedidos");

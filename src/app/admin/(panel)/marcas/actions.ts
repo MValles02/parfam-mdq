@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/guard";
-import { type Resultado } from "@/lib/admin/resultado";
+import { fallo, type Resultado } from "@/lib/admin/resultado";
 import { prisma } from "@/lib/db";
 import { erroresPorCampo } from "@/lib/validations/errores";
 import { marcaSchema } from "@/lib/validations/marca";
@@ -11,10 +11,6 @@ import { marcaSchema } from "@/lib/validations/marca";
  * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
-
-function fallo(mensaje: string, errores?: Record<string, string[]>): Resultado {
-  return { ok: false, mensaje, errores };
-}
 
 /**
  * Invalida lo que muestra el nombre de esta marca en la tienda: la grilla

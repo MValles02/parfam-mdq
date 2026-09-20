@@ -9,8 +9,8 @@ import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Campo } from "@/components/admin/campo";
 import type { ConfiguracionEditable } from "@/lib/admin/configuracion";
 import {
   configuracionSchema,
@@ -26,38 +26,6 @@ const PLACEHOLDERS = [
   ["{{nombre}}", "Nombre del cliente"],
   ["{{numero}}", "Número de pedido, ej. PM-0001"],
 ] as const;
-
-/** Etiqueta + control + error, mismo criterio que `productos/_components/campo.tsx`. */
-function Campo({
-  label,
-  htmlFor,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label
-        htmlFor={htmlFor}
-        className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase"
-      >
-        {label}
-      </Label>
-      {children}
-      {error ? (
-        <p className="text-xs font-medium text-destructive">{error}</p>
-      ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      ) : null}
-    </div>
-  );
-}
 
 export function FormularioConfiguracion({
   configuracion,

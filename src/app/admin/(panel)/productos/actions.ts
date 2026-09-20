@@ -13,7 +13,7 @@ import {
   type ReferenciaAdoptable,
   type ResultadoReferencia,
 } from "@/lib/admin/referencias";
-import { type Resultado } from "@/lib/admin/resultado";
+import { fallo, type Resultado } from "@/lib/admin/resultado";
 import { nombrePropio } from "@/lib/catalogo";
 import { borrarObjeto, r2Configurado } from "@/lib/r2";
 import { TAG_SITEMAP_URLS } from "@/lib/tienda/consultas";
@@ -27,10 +27,6 @@ import {
  * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
-
-function fallo(mensaje: string, errores?: Record<string, string[]>) {
-  return { ok: false as const, mensaje, errores };
-}
 
 /**
  * Invalida las paginas publicas que dependen del catalogo.

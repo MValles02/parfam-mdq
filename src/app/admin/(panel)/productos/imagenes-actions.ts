@@ -11,8 +11,6 @@ import {
   urlDeSubida,
 } from "@/lib/r2";
 
-export type { Resultado };
-
 function fallo(mensaje: string): Resultado<never> {
   return { ok: false, mensaje };
 }

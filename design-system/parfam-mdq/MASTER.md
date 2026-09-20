@@ -123,9 +123,8 @@ herramienta interna sin salirse de la marca.
 
 ### Charts
 
-`--chart-1..5` existen sólo en `:root` (`globals.css:93-97`) y son una
-**rampa neutra cálida**, no cinco hues. **No hay un solo uso en `src/`**
-(verificado con grep): son herencia del preset.
+`--chart-1..5` se eliminaron de `globals.css`: no tenían un solo uso en
+`src/` (verificado con grep), eran herencia del preset.
 
 ### El color que no es un token
 
@@ -846,9 +845,8 @@ No entran en el top 10 pero conviene tenerlos anotados.
   (`controles-filtro.tsx:268`: `text-muted-foreground hover:bg-muted`) y en
   cualquier `hover:bg-muted` con texto tenue. Se resuelve solo si se toca
   `--muted-foreground` por B-01/B-02.
-- **`--chart-1..5` no se usan en ningún lado** (grep sin resultados en
-  `src/`). Son 10 declaraciones muertas en `globals.css`. Borrarlas es
-  gratis; dejarlas también, si se prevé un dashboard en el panel.
+- **`--chart-1..5` se borraron de `globals.css`**: no tenían un solo uso en
+  `src/` (grep sin resultados), eran 10 declaraciones muertas.
 - **La silueta de frasco está duplicada tres veces**:
   `src/components/frasco-placeholder.tsx`, el `Miniatura` interno de
   `src/components/tienda/carrito/item-fila.tsx:16-58`, y el equivalente en

@@ -98,7 +98,7 @@ export function urlPublica(clave: string): string | null {
 }
 
 /** Prefijo bajo el que vive todo lo que sube el panel. */
-export const PREFIJO_PRODUCTOS = "productos/";
+const PREFIJO_PRODUCTOS = "productos/";
 
 /**
  * Las claves viajan por el formulario, asi que llegan al servidor como dato

@@ -153,6 +153,4 @@ export async function pedidoPorId(id: string) {
   };
 }
 
-export type PedidoDetalle = NonNullable<
-  Awaited<ReturnType<typeof pedidoPorId>>
->;
+type PedidoDetalle = NonNullable<Awaited<ReturnType<typeof pedidoPorId>>>;

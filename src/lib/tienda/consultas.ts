@@ -30,7 +30,7 @@ import { LIMITES_PRECIO, type FiltrosCatalogo } from "@/lib/tienda/filtros";
  * comunidad) no se selecciona nunca: es referencia interna del panel.
  */
 
-export const PRODUCTOS_POR_PAGINA = 12;
+const PRODUCTOS_POR_PAGINA = 12;
 
 /**
  * Un lanzamiento cuenta como "nuevo" si salió en los ultimos 3 aniversarios.

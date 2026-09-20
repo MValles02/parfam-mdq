@@ -60,9 +60,9 @@ function Miniatura({ imagen, alt }: { imagen: string | null; alt: string }) {
 }
 
 /**
- * Una fila del carrito (design/Carrito.dc.html): imagen, marca, nombre,
- * variante, stepper de cantidad y precio de la linea. La usan tanto el
- * drawer como `/carrito` a traves de `ListaItems`.
+ * Una fila del carrito: imagen, marca, nombre, variante, stepper de cantidad y
+ * precio de la linea. La usan tanto el drawer como `/carrito` a traves de
+ * `ListaItems`.
  */
 export function ItemFila({
   item,

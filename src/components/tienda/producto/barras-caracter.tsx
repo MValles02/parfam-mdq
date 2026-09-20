@@ -50,10 +50,10 @@ function Barra({
 }
 
 /**
- * Carácter (design/Producto.dc.html): duracion, estela e intensidad, tres
- * datos que carga el admin a partir de haber probado el producto -- por eso
- * el pie deja explicito que no son votos de la comunidad (AGENTS.md: nada de
- * ratings de Fragrantica en publico).
+ * Carácter: duracion, estela e intensidad, tres datos que carga el admin a
+ * partir de haber probado el producto -- por eso el pie deja explicito que no
+ * son votos de la comunidad (AGENTS.md: nada de ratings de Fragrantica en
+ * publico).
  */
 export function BarrasCaracter({
   duracion,

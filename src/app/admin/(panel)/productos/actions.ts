@@ -238,7 +238,8 @@ export async function buscarMarcasAction(
 // Guardado
 // ---------------------------------------------------------------------------
 
-/** Aplana los errores de zod a `{ "variants.0.priceArs": ["..."] }`. */
+/** Resuelve el id de marca: usa `brandId` si sigue existiendo en la base, o
+ * busca/crea la marca por slug a partir de `brandName`. */
 async function resolverMarca(
   tx: Prisma.TransactionClient,
   v: ProductoFormValues,

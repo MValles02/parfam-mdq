@@ -8,11 +8,13 @@ import { etiquetaVariante } from "@/lib/catalogo";
  * borradas o precios viejos. Esto es lo único que puede decir qué hay
  * realmente disponible hoy.
  *
- * Se usa en dos lugares con el mismo contrato: la reconciliación silenciosa
- * al entrar a /carrito o /checkout (sacar lo inválido, actualizar precios) y,
- * de nuevo, adentro de la transacción de `crearPedido` — ahí no por UX sino
- * porque es el único precio que vale (AGENTS.md: nunca confiar en el que
- * manda el cliente).
+ * La usa la reconciliación silenciosa al entrar a /carrito o /checkout
+ * (`useReconciliacionCarrito`, vía la Server Action de `carrito/actions.ts`)
+ * para sacar lo inválido y actualizar precios. `crearPedido` no la llama:
+ * hace su propia consulta contra `ProductVariant` antes de abrir la
+ * transacción, y usa ese precio para el snapshot de `OrderItem`, porque ahí
+ * no es por UX sino el único precio que vale (AGENTS.md: nunca confiar en el
+ * que manda el cliente).
  */
 
 export type RazonInvalido = "inactiva" | "eliminada" | "despublicado";

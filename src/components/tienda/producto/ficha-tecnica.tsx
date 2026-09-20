@@ -21,9 +21,9 @@ type Props = {
 };
 
 /**
- * Ficha tecnica (design/Producto.dc.html). Las filas cuyo dato no esta
- * cargado se saltean en vez de mostrar un "—": no todos los productos tienen
- * perfumista, año o estaciones cargadas.
+ * Ficha tecnica. Las filas cuyo dato no esta cargado se saltean en vez de
+ * mostrar un "—": no todos los productos tienen perfumista, año o estaciones
+ * cargadas.
  */
 export function FichaTecnica(producto: Props) {
   const filas: { label: string; valor: ReactNode }[] = [

@@ -13,7 +13,7 @@ const LINKS_TIENDA = [
 const TITULO_COLUMNA =
   "text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase";
 
-/** Footer de la tienda (design/Main.dc.html y design/HomeMobile.dc.html). */
+/** Footer de la tienda, con versiones para desktop y mobile. */
 export async function Footer() {
   const anioActual = new Date().getFullYear();
   const config = await obtenerConfiguracionSitio();

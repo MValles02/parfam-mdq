@@ -53,8 +53,7 @@
 }
 
 :root {
-  /* Identidad Parfam MDQ: crema #F2EEE9 sobre tinta negra.
-     Valores tomados de las piezas de marca en brand/. */
+  /* Identidad Parfam MDQ: crema #F2EEE9 sobre tinta negra. */
   --background: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
   --foreground: oklch(0 0 0); /* #000000 */
   --card: oklch(0.9798 0.0045 78.3); /* #FAF8F5 */
@@ -70,13 +69,12 @@
   --accent: oklch(0.915 0.0138 78.26);
   --accent-foreground: oklch(0 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  /* Verde de "publicado" (design/AdminProductos.dc.html). Es el unico color
-     fuera de la paleta crema/negro, y esta desaturado a proposito para no
-     pelearse con los chips de acordes. */
+  /* Verde de "publicado". Es el unico color fuera de la paleta crema/negro,
+     y esta desaturado a proposito para no pelearse con los chips de acordes. */
   --success: oklch(0.9294 0.0219 145.6); /* #E4EDE4 */
   --success-foreground: oklch(0.4258 0.0734 148.6); /* #2C5E34 */
   --success-border: oklch(0.8383 0.0433 146.7); /* #B9D2BC */
-  /* Verde de los CTA de WhatsApp (design/Checkout.dc.html usa #1DA851 hardcodeado).
+  /* Verde de los CTA de WhatsApp (el diseño original usaba #1DA851 hardcodeado).
      Oscurecido a proposito: el hex del mockup da 2,68:1 de contraste contra el
      texto crema del boton, por debajo del 4,5:1 de WCAG AA -- mismo criterio que
      colorDeChip(). #107D3A da 4,53:1 y sigue leyendose como el verde
@@ -94,8 +92,8 @@
   --chart-4: oklch(0.3287 0.0161 75.06);
   --chart-5: oklch(0.1834 0.0068 78.14);
   --radius: 0.25rem;
-  /* El panel usa sidebar negro sobre la tienda crema (ver design/AdminProductos.dc.html):
-     se lee como herramienta interna sin salirse de la paleta de marca. */
+  /* El panel usa sidebar negro sobre la tienda crema: se lee como
+     herramienta interna sin salirse de la paleta de marca. */
   --sidebar: oklch(0.1834 0.0068 78.14); /* #14120F */
   --sidebar-foreground: oklch(0.8573 0.0157 77.06); /* #D6CFC5 */
   --sidebar-primary: oklch(0.9508 0.008 73.74); /* #F2EEE9 */

@@ -1,9 +1,8 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Silueta de frasco para cuando todavía no hay foto propia. Es la misma del
- * diseño (design/AdminProductos.dc.html), pintada con tokens en vez de
- * hexadecimales para que siga el tema claro/oscuro.
+ * Silueta de frasco para cuando todavía no hay foto propia, pintada con
+ * tokens en vez de hexadecimales para que siga el tema claro/oscuro.
  */
 export function FrascoPlaceholder({ className }: { className?: string }) {
   return (

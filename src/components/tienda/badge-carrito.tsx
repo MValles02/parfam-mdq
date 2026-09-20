@@ -10,9 +10,8 @@ import { cn } from "@/lib/utils";
  * drawer) sin tocar este componente, asi que sigue siendo puramente
  * informativo puertas adentro.
  *
- * `variante="chip"` es el formato de la barra desktop (design/Main.dc.html);
- * `variante="boton"` es el cuadrado con el numero en un circulo, como en
- * design/HomeMobile.dc.html.
+ * `variante="chip"` es el formato de la barra desktop; `variante="boton"` es
+ * el cuadrado con el numero en un circulo, para mobile.
  */
 export function BadgeCarrito({
   variante = "chip",

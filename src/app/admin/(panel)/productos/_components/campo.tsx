@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Etiqueta + control + error, con el estilo de label del diseño aprobado
- * (versalitas chiquitas y espaciadas, ver design/AdminProductoNuevo.dc.html).
+ * (versalitas chiquitas y espaciadas).
  */
 export function Campo({
   label,

@@ -20,7 +20,7 @@ import { FichaTecnica } from "@/components/tienda/producto/ficha-tecnica";
 import { BarrasCaracter } from "@/components/tienda/producto/barras-caracter";
 
 /**
- * Ficha de producto (design/Producto.dc.html). `productoPorSlug` ya devuelve
+ * Ficha de producto. `productoPorSlug` ya devuelve
  * null para un borrador -- por eso `notFound()` alcanza para que un slug de
  * borrador de 404 sin importar que nadie lo linkee desde el catalogo.
  */

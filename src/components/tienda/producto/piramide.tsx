@@ -17,10 +17,9 @@ const CUANDO: Record<NotePosition, string> = {
 };
 
 /**
- * Piramide olfativa (design/Producto.dc.html). Las notas van sin punto de
- * color: el diccionario (data/dictionaries/accords.es.json) solo le puso color
- * a los acordes, asi que inventarle uno a cada nota mostraria un dato que no
- * existe.
+ * Piramide olfativa. Las notas van sin punto de color: el diccionario
+ * (data/dictionaries/accords.es.json) solo le puso color a los acordes, asi que
+ * inventarle uno a cada nota mostraria un dato que no existe.
  *
  * El 33% del dataset no trae piramide (`productoPorSlug` ya filtra los
  * niveles sin notas): si queda vacia, no se renderiza la seccion.

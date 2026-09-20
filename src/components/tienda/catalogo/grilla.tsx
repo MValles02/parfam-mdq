@@ -15,9 +15,8 @@ import {
 export const listarCatalogoCacheado = cache(listarCatalogo);
 
 /**
- * La grilla en si (design/Main.dc.html y HomeMobile.dc.html, bloque
- * "Grilla"). Es quien llama a `listarCatalogo`, adentro del `Suspense` que
- * arma `seccion-catalogo.tsx`, para que el streaming muestre el skeleton
+ * La grilla en si. Es quien llama a `listarCatalogo`, adentro del `Suspense`
+ * que arma `seccion-catalogo.tsx`, para que el streaming muestre el skeleton
  * mientras la consulta esta en vuelo.
  */
 export async function Grilla({

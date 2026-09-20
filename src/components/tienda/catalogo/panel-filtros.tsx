@@ -30,7 +30,7 @@ function Fila({
 }
 
 /**
- * Caja de filtros de escritorio (design/Main.dc.html, bloque "Filtros").
+ * Caja de filtros de escritorio.
  * En `/marca/[slug]` la marca ya viene fija por la ruta, asi que no se
  * muestra el select de Marca.
  */

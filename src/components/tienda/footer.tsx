@@ -3,6 +3,7 @@ import { Logotipo } from "@/components/tienda/logotipo";
 import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 import { linkInstagramA, linkWhatsappA, telefonoVisible } from "@/lib/whatsapp";
 import { siteDefaults } from "@/lib/site";
+import { cn, FOCO_VISIBLE } from "@/lib/utils";
 
 const LINKS_TIENDA = [
   { href: "/catalogo", label: "Catálogo" },
@@ -39,7 +40,10 @@ export async function Footer() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="hover:text-muted-foreground"
+                  className={cn(
+                    "rounded-sm hover:text-muted-foreground",
+                    FOCO_VISIBLE,
+                  )}
                 >
                   {item.label}
                 </Link>
@@ -51,7 +55,10 @@ export async function Footer() {
                 href={linkWhatsappA(config.whatsappNumber)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-muted-foreground"
+                className={cn(
+                  "rounded-sm hover:text-muted-foreground",
+                  FOCO_VISIBLE,
+                )}
               >
                 {telefonoVisible(config.whatsappNumber)}
               </a>
@@ -59,7 +66,10 @@ export async function Footer() {
                 href={linkInstagramA(config.instagramHandle)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-muted-foreground"
+                className={cn(
+                  "rounded-sm hover:text-muted-foreground",
+                  FOCO_VISIBLE,
+                )}
               >
                 @{config.instagramHandle}
               </a>
@@ -81,7 +91,7 @@ export async function Footer() {
               href={linkWhatsappA(config.whatsappNumber)}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground"
+              className={cn("rounded-sm hover:text-foreground", FOCO_VISIBLE)}
             >
               {telefonoVisible(config.whatsappNumber)}
             </a>{" "}
@@ -90,7 +100,7 @@ export async function Footer() {
               href={linkInstagramA(config.instagramHandle)}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground"
+              className={cn("rounded-sm hover:text-foreground", FOCO_VISIBLE)}
             >
               @{config.instagramHandle}
             </a>

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { precioArs } from "@/lib/catalogo";
 import { useCarrito } from "@/lib/carrito";
 import { linkWhatsappA } from "@/lib/whatsapp";
-import { cn } from "@/lib/utils";
+import { cn, FOCO_VISIBLE } from "@/lib/utils";
 
 type Variante = {
   id: string;
@@ -140,7 +140,7 @@ export function Comprar({
                   // El grosor es siempre el mismo y solo cambia el color: con
                   // 1px vs 1.5px la fila se corre medio pixel al elegirla.
                   "flex cursor-pointer items-center justify-between rounded border-[1.5px] p-4",
-                  activa ? "border-foreground" : "border-border",
+                  activa ? "border-foreground" : "border-input",
                 )}
               >
                 <div className="flex items-center gap-3.5">
@@ -190,7 +190,10 @@ export function Comprar({
             aria-label="Quitar una unidad"
             onClick={decrementar}
             disabled={cantidad <= 1}
-            className="p-3 text-muted-foreground disabled:opacity-40"
+            className={cn(
+              "flex size-11 items-center justify-center text-muted-foreground disabled:opacity-40",
+              FOCO_VISIBLE,
+            )}
           >
             <Minus className="size-4" />
           </button>
@@ -202,7 +205,10 @@ export function Comprar({
             aria-label="Agregar una unidad"
             onClick={incrementar}
             disabled={cantidad >= CANTIDAD_MAXIMA}
-            className="p-3 disabled:opacity-40"
+            className={cn(
+              "flex size-11 items-center justify-center disabled:opacity-40",
+              FOCO_VISIBLE,
+            )}
           >
             <Plus className="size-4" />
           </button>

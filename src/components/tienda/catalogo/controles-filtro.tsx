@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, FOCO_VISIBLE } from "@/lib/utils";
 import { GENERO, PRESENTACION } from "@/lib/catalogo";
 import {
   ETIQUETA_PRECIO,
@@ -39,12 +39,12 @@ function useFiltros() {
 
 function Chip({
   activo,
-  tactil,
+  compacto,
   onClick,
   children,
 }: {
   activo: boolean;
-  tactil?: boolean;
+  compacto?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -55,10 +55,11 @@ function Chip({
       onClick={onClick}
       className={cn(
         "rounded border px-[18px] text-[13px] font-medium transition-colors",
-        tactil ? "h-[46px]" : "h-9",
+        compacto ? "h-9" : "h-[46px]",
         activo
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-background text-foreground hover:bg-muted",
+          : "border-input bg-background text-foreground hover:bg-muted",
+        FOCO_VISIBLE,
       )}
     >
       {children}
@@ -66,14 +67,14 @@ function Chip({
   );
 }
 
-export function ChipsGenero({ tactil = false }: { tactil?: boolean }) {
+export function ChipsGenero({ compacto = false }: { compacto?: boolean }) {
   const [{ genero }, setFiltros] = useFiltros();
 
   return (
     <div className="flex flex-wrap gap-2">
       <Chip
         activo={!genero}
-        tactil={tactil}
+        compacto={compacto}
         onClick={() => setFiltros({ genero: null, pagina: 1 })}
       >
         Todos
@@ -82,7 +83,7 @@ export function ChipsGenero({ tactil = false }: { tactil?: boolean }) {
         <Chip
           key={g}
           activo={genero === g}
-          tactil={tactil}
+          compacto={compacto}
           onClick={() => setFiltros({ genero: g, pagina: 1 })}
         >
           {GENERO[g]}
@@ -92,14 +93,18 @@ export function ChipsGenero({ tactil = false }: { tactil?: boolean }) {
   );
 }
 
-export function ChipsPresentacion({ tactil = false }: { tactil?: boolean }) {
+export function ChipsPresentacion({
+  compacto = false,
+}: {
+  compacto?: boolean;
+}) {
   const [{ presentacion }, setFiltros] = useFiltros();
 
   return (
     <div className="flex flex-wrap gap-2">
       <Chip
         activo={!presentacion}
-        tactil={tactil}
+        compacto={compacto}
         onClick={() => setFiltros({ presentacion: null, pagina: 1 })}
       >
         Todas
@@ -108,7 +113,7 @@ export function ChipsPresentacion({ tactil = false }: { tactil?: boolean }) {
         <Chip
           key={p}
           activo={presentacion === p}
-          tactil={tactil}
+          compacto={compacto}
           onClick={() => setFiltros({ presentacion: p, pagina: 1 })}
         >
           {PRESENTACION[p]}
@@ -280,8 +285,9 @@ export function LimpiarFiltros({
       onClick={() => setFiltros(null)}
       className={cn(
         variante === "enlace"
-          ? "text-[13px] font-medium text-muted-foreground underline underline-offset-[3px] hover:text-foreground"
-          : "flex h-[54px] items-center justify-center rounded border border-border px-[22px] text-sm font-semibold text-muted-foreground hover:bg-muted",
+          ? "inline-flex min-h-11 items-center text-[13px] font-medium text-muted-foreground underline underline-offset-[3px] hover:text-foreground"
+          : "flex h-[54px] items-center justify-center rounded border border-input px-[22px] text-sm font-semibold text-muted-foreground hover:bg-muted",
+        FOCO_VISIBLE,
         className,
       )}
     >

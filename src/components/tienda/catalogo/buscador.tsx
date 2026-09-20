@@ -69,7 +69,7 @@ export function Buscador({
         value={valor}
         onChange={(e) => setValor(e.target.value)}
         placeholder="Buscar fragancia o marca"
-        className={cn("rounded border-border pl-9 text-sm", alto)}
+        className={cn("rounded pl-9 text-sm", alto)}
       />
     </div>
   );

@@ -93,14 +93,14 @@ export function DrawerFiltros({
             <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
               Género
             </span>
-            <ChipsGenero tactil />
+            <ChipsGenero />
           </div>
 
           <div className="flex flex-col gap-[11px]">
             <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
               Presentación
             </span>
-            <ChipsPresentacion tactil />
+            <ChipsPresentacion />
           </div>
 
           <div className="flex flex-col gap-2.5">

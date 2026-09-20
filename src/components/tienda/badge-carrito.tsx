@@ -1,14 +1,15 @@
 "use client";
 
 import { ShoppingBag } from "lucide-react";
-import { useCantidadCarrito } from "@/lib/carrito";
+import { etiquetaCarrito, useCantidadCarrito } from "@/lib/carrito";
 import { cn } from "@/lib/utils";
 
 /**
  * Indicador de unidades en el carrito (icono de bolsa + cantidad). No es un
  * link: `header.tsx` lo envuelve en un `<button>` (trigger del `<Sheet>` del
  * drawer) sin tocar este componente, asi que sigue siendo puramente
- * informativo puertas adentro.
+ * informativo puertas adentro. El nombre accesible del carrito lo aporta ese
+ * boton, no este `<span>`.
  *
  * `variante="chip"` es el formato de la barra desktop; `variante="boton"` es
  * el cuadrado con el numero en un circulo, para mobile.
@@ -21,17 +22,15 @@ export function BadgeCarrito({
   className?: string;
 }) {
   const cantidad = useCantidadCarrito();
-  const etiqueta =
-    cantidad === 1 ? "Carrito: 1 unidad" : `Carrito: ${cantidad} unidades`;
+  const etiqueta = etiquetaCarrito(cantidad);
 
   if (variante === "boton") {
     return (
       <span
-        role="status"
-        aria-label={etiqueta}
+        aria-hidden="true"
         title={etiqueta}
         className={cn(
-          "relative flex size-[46px] shrink-0 items-center justify-center rounded border border-border bg-card",
+          "relative flex size-[46px] shrink-0 items-center justify-center rounded border border-input bg-card",
           className,
         )}
       >
@@ -50,11 +49,10 @@ export function BadgeCarrito({
 
   return (
     <span
-      role="status"
-      aria-label={etiqueta}
+      aria-hidden="true"
       title={etiqueta}
       className={cn(
-        "flex items-center gap-2 rounded border border-border bg-card px-3.5 py-2",
+        "flex items-center gap-2 rounded border border-input bg-card px-3.5 py-2",
         className,
       )}
     >

@@ -67,7 +67,7 @@
   --muted-foreground: oklch(0.5095 0.0158 78.18); /* #6B655C */
   --accent: oklch(0.915 0.0138 78.26);
   --accent-foreground: oklch(0 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.52 0.245 27.325);
   /* Verde de "publicado". Es el unico color fuera de la paleta crema/negro,
      y esta desaturado a proposito para no pelearse con los chips de acordes. */
   --success: oklch(0.9294 0.0219 145.6); /* #E4EDE4 */
@@ -83,7 +83,7 @@
   --whatsapp: oklch(0.5175 0.137 149.95); /* #107D3A */
   --whatsapp-foreground: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
   --border: oklch(0.8756 0.0168 79.34); /* #DCD5CA */
-  --input: oklch(0.8756 0.0168 79.34);
+  --input: oklch(0.62 0.0168 79.34); /* #8C857B */
   --ring: oklch(0.5095 0.0158 78.18);
   --radius: 0.25rem;
   /* El panel usa sidebar negro sobre la tienda crema: se lee como

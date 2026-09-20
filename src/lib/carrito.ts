@@ -117,3 +117,13 @@ export function useCantidadCarrito(): number {
   if (!hidratado) return 0;
   return items.reduce((total, i) => total + i.qty, 0);
 }
+
+/**
+ * Texto accesible de la cantidad del carrito ("Carrito: N unidad(es)"). Un
+ * solo lugar para la regla de plural: lo usan `BadgeCarrito` (para el
+ * anuncio automatico) y `Header` (para el nombre accesible del boton que lo
+ * abre).
+ */
+export function etiquetaCarrito(cantidad: number): string {
+  return cantidad === 1 ? "Carrito: 1 unidad" : `Carrito: ${cantidad} unidades`;
+}

@@ -3,17 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
-import { type Resultado } from "@/lib/admin/resultado";
+import { fallo, type Resultado } from "@/lib/admin/resultado";
 import { prisma } from "@/lib/db";
 
 /**
  * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
-
-function fallo(mensaje: string, errores?: Record<string, string[]>) {
-  return { ok: false as const, mensaje, errores };
-}
 
 const nameEsSchema = z.string().trim().min(2).max(80);
 

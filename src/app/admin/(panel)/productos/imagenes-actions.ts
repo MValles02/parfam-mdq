@@ -3,17 +3,13 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
-import { type Resultado } from "@/lib/admin/resultado";
+import { fallo, type Resultado } from "@/lib/admin/resultado";
 import {
   borrarObjeto,
   esClaveDeProducto,
   r2Configurado,
   urlDeSubida,
 } from "@/lib/r2";
-
-function fallo(mensaje: string): Resultado<never> {
-  return { ok: false, mensaje };
-}
 
 /**
  * Lista blanca de tipos de imagen aceptados. Es una validacion de seguridad,

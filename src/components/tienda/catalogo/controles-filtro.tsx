@@ -118,6 +118,34 @@ export function ChipsPresentacion({ tactil = false }: { tactil?: boolean }) {
   );
 }
 
+function SelectFiltro({
+  label,
+  value,
+  textoTodas,
+  onValueChange,
+  className,
+  children,
+}: {
+  label: string;
+  value: string;
+  textoTodas: string;
+  onValueChange: (valor: string) => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger aria-label={label} className={className}>
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={TODAS}>{textoTodas}</SelectItem>
+        {children}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function SelectMarca({
   opciones,
   className,
@@ -128,24 +156,21 @@ export function SelectMarca({
   const [{ marca }, setFiltros] = useFiltros();
 
   return (
-    <Select
+    <SelectFiltro
+      label="Marca"
+      textoTodas="Todas las marcas"
       value={marca ?? TODAS}
       onValueChange={(valor) =>
         setFiltros({ marca: valor === TODAS ? null : valor, pagina: 1 })
       }
+      className={className}
     >
-      <SelectTrigger aria-label="Marca" className={className}>
-        <SelectValue placeholder="Marca" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={TODAS}>Todas las marcas</SelectItem>
-        {opciones.map((m) => (
-          <SelectItem key={m.slug} value={m.slug}>
-            {m.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      {opciones.map((m) => (
+        <SelectItem key={m.slug} value={m.slug}>
+          {m.name}
+        </SelectItem>
+      ))}
+    </SelectFiltro>
   );
 }
 
@@ -159,31 +184,28 @@ export function SelectFamiliaOlfativa({
   const [{ acorde }, setFiltros] = useFiltros();
 
   return (
-    <Select
+    <SelectFiltro
+      label="Familia olfativa"
+      textoTodas="Todas las familias"
       value={acorde ?? TODAS}
       onValueChange={(valor) =>
         setFiltros({ acorde: valor === TODAS ? null : valor, pagina: 1 })
       }
+      className={className}
     >
-      <SelectTrigger aria-label="Familia olfativa" className={className}>
-        <SelectValue placeholder="Familia olfativa" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={TODAS}>Todas las familias</SelectItem>
-        {opciones.map((a) => (
-          <SelectItem key={a.slug} value={a.slug}>
-            <span className="flex items-center gap-2">
-              {/* Color del acorde: es un dato de la base, no un hex de diseño. */}
-              <span
-                className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: a.color }}
-              />
-              {a.nombre}
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      {opciones.map((a) => (
+        <SelectItem key={a.slug} value={a.slug}>
+          <span className="flex items-center gap-2">
+            {/* Color del acorde: es un dato de la base, no un hex de diseño. */}
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: a.color }}
+            />
+            {a.nombre}
+          </span>
+        </SelectItem>
+      ))}
+    </SelectFiltro>
   );
 }
 
@@ -197,24 +219,21 @@ export function SelectNota({
   const [{ nota }, setFiltros] = useFiltros();
 
   return (
-    <Select
+    <SelectFiltro
+      label="Nota"
+      textoTodas="Todas las notas"
       value={nota ?? TODAS}
       onValueChange={(valor) =>
         setFiltros({ nota: valor === TODAS ? null : valor, pagina: 1 })
       }
+      className={className}
     >
-      <SelectTrigger aria-label="Nota" className={className}>
-        <SelectValue placeholder="Nota" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={TODAS}>Todas las notas</SelectItem>
-        {opciones.map((n) => (
-          <SelectItem key={n.slug} value={n.slug}>
-            {n.nombre}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      {opciones.map((n) => (
+        <SelectItem key={n.slug} value={n.slug}>
+          {n.nombre}
+        </SelectItem>
+      ))}
+    </SelectFiltro>
   );
 }
 
@@ -222,7 +241,9 @@ export function SelectPrecio({ className }: { className?: string }) {
   const [{ precio }, setFiltros] = useFiltros();
 
   return (
-    <Select
+    <SelectFiltro
+      label="Precio"
+      textoTodas="Todos los precios"
       value={precio ?? TODAS}
       onValueChange={(valor) =>
         setFiltros({
@@ -231,19 +252,14 @@ export function SelectPrecio({ className }: { className?: string }) {
           pagina: 1,
         })
       }
+      className={className}
     >
-      <SelectTrigger aria-label="Precio" className={className}>
-        <SelectValue placeholder="Precio" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={TODAS}>Todos los precios</SelectItem>
-        {RANGOS_PRECIO.map((r) => (
-          <SelectItem key={r} value={r}>
-            {ETIQUETA_PRECIO[r]}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      {RANGOS_PRECIO.map((r) => (
+        <SelectItem key={r} value={r}>
+          {ETIQUETA_PRECIO[r]}
+        </SelectItem>
+      ))}
+    </SelectFiltro>
   );
 }
 

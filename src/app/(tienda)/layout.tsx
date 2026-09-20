@@ -2,7 +2,6 @@ import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Footer } from "@/components/tienda/footer";
 import { Header } from "@/components/tienda/header";
-import { ThemeProvider } from "@/components/tienda/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { env } from "@/lib/env";
 
@@ -41,14 +40,12 @@ function ScriptUmami() {
  */
 export default function TiendaLayout({ children }: LayoutProps<"/">) {
   return (
-    <ThemeProvider>
-      <NuqsAdapter>
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <Toaster position="top-right" richColors />
-        <ScriptUmami />
-      </NuqsAdapter>
-    </ThemeProvider>
+    <NuqsAdapter>
+      <Header />
+      <main className="flex-1">{children}</main>
+      <Footer />
+      <Toaster position="top-right" richColors />
+      <ScriptUmami />
+    </NuqsAdapter>
   );
 }

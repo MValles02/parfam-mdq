@@ -5,8 +5,8 @@
  * diccionario en data/dictionaries/accords.es.json). Es el unico color del
  * sitio que no sale de un token de globals.css -- justamente porque es un
  * dato, no una decision de tema -- y por eso el texto que va encima tampoco
- * puede salir de un token: tiene que contrastar contra ese hex en modo claro
- * y en modo oscuro por igual.
+ * puede salir de un token: tiene que contrastar contra ese hex, que puede
+ * caer en cualquier punto de la rampa.
  *
  * Elegir el mejor de los dos extremos de la paleta no alcanza: 40 de los 93
  * colores son tonos medios que no llegan a 4,5:1 contra ninguno de los dos

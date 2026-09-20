@@ -40,14 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // suppressHydrationWarning: next-themes escribe la clase del tema en <html>
-    // antes de que React hidrate, asi que el atributo difiere del HTML del
-    // servidor a proposito. Va solo en este nodo, no en el arbol entero.
-    <html
-      lang="es-AR"
-      suppressHydrationWarning
-      className={`${outfit.variable} h-full antialiased`}
-    >
+    <html lang="es-AR" className={`${outfit.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

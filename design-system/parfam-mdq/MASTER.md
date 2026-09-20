@@ -506,7 +506,7 @@ dependencias ni cambia el stack.
 | B-07 | 20 comentarios apuntan a `design/*.dc.html` y `brand/`, que no existen | Higiene      | S        | Nulo   |
 | B-08 | Escala tipográfica y de espaciado ad hoc (15 tamaños, 17 trackings)    | Consistencia | L        | Medio  |
 | B-09 | Cuatro radios casi idénticos y dos formas de escribir el mismo         | Consistencia | S        | Bajo   |
-| B-10 | El logotipo ignora `SiteSetting.brandName` y le falta una tilde        | Marca        | S        | Bajo   |
+| B-10 | Al logotipo le falta una tilde (`Perfumeria`, `legalName`)             | Marca        | S        | Bajo   |
 
 Esfuerzo: **S** ≤ 1 archivo o cambio mecánico · **M** varios archivos,
 criterio acotado · **L** requiere decisión de diseño previa.
@@ -799,40 +799,31 @@ introduce es de 1 px de radio en elementos de 20 px de alto.
 
 ---
 
-## B-10 · El logotipo ignora `SiteSetting.brandName`, y le falta una tilde
+## B-10 · Al logotipo le falta una tilde
 
-**Problema.** Dos defectos chicos en la pieza más visible de la marca.
-(a) `Logotipo` renderiza `siteDefaults.name` —la constante hardcodeada de
-`src/lib/site.ts`— mientras que `SiteSetting.brandName` es editable desde
-`/admin/configuracion` y sí se usa en el `<title>` de todas las páginas
-(`src/app/layout.tsx:30`) y en el mensaje de WhatsApp. Si el admin cambia el
-nombre de la marca, el `<title>` y el chat dicen una cosa y el logotipo del
-header, el hero y el footer dicen otra. El mismo componente convive con un
-`Hero` que **sí** lee `config.brandTagline` de la base, lo que hace la
-inconsistencia más llamativa. (b) El subtítulo del logotipo dice
-`"Perfumeria"` sin tilde y la imagen OG dice `"PERFUMERIA"`; `AGENTS.md`
-pide tildes en todo texto de cara al usuario, y `siteDefaults.legalName` ya
-escribe `"ParfamMdq Perfumeria"` también sin tilde.
+**Problema.** La inconsistencia entre `Logotipo` (tipografía fija) y
+`SiteSetting.brandName`/`brandTagline` (antes editables desde
+`/admin/configuracion`) que mencionaba este hallazgo ya no existe: esa
+decisión de producto se tomó, `brandName`/`brandTagline` dejaron de ser
+editables y son constantes fijas en `siteDefaults` (`src/lib/site.ts`), las
+mismas que siempre usó el logotipo. Queda un defecto chico y sin relación:
+el subtítulo del logotipo dice `"Perfumeria"` sin tilde y la imagen OG dice
+`"PERFUMERIA"`; `AGENTS.md` pide tildes en todo texto de cara al usuario, y
+`siteDefaults.legalName` ya escribe `"ParfamMdq Perfumeria"` también sin
+tilde.
 
 **Dónde se ve.**
 
-- `src/components/tienda/logotipo.tsx:34` y `:45`
+- `src/components/tienda/logotipo.tsx:46`
 - `src/components/tienda/footer.tsx:78-80` (versión mobile, `siteDefaults.name` inline sin usar `Logotipo`)
-- `src/app/(tienda)/opengraph-image.tsx:70`
-- `src/lib/site.ts:11` (`legalName`)
+- `src/app/(tienda)/opengraph-image.tsx:72`
+- `src/lib/site.ts:14` (`legalName`)
 
-**Corrección propuesta.** (a) Decidir explícitamente y documentarlo: o el
-logotipo es tipografía fija de marca —y entonces `brandName` no debería ser
-editable, o debería estar documentado que solo afecta metadatos— o el
-logotipo recibe el nombre por prop desde los Server Components que ya llaman
-a `obtenerConfiguracionSitio()` (header es Client, así que tendría que
-bajar como prop desde el layout). **Es una decisión de producto, no
-técnica.** (b) Poner la tilde en `"Perfumería"` / `"PERFUMERÍA"` y en
-`legalName`; de paso, el footer mobile puede usar `<Logotipo tamanio="barra">`
-en vez de repetir el markup.
+**Corrección propuesta.** Poner la tilde en `"Perfumería"` / `"PERFUMERÍA"`
+y en `legalName`; de paso, el footer mobile puede usar
+`<Logotipo tamanio="barra">` en vez de repetir el markup.
 
-**Esfuerzo/Riesgo.** S / Bajo para la tilde y el footer. La parte (a)
-necesita que alguien decida antes de tocar nada.
+**Esfuerzo/Riesgo.** S / Bajo.
 
 ---
 

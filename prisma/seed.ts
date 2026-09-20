@@ -55,8 +55,6 @@ async function seedSiteSettings() {
       id: "singleton",
       whatsappNumber: siteDefaults.whatsapp,
       whatsappMessageTemplate: DEFAULT_WHATSAPP_TEMPLATE,
-      brandName: siteDefaults.name,
-      brandTagline: siteDefaults.tagline,
       instagramHandle: siteDefaults.instagram,
       shippingInfo: "Coordinamos envío en Mar del Plata o retiro a convenir.",
       seoDefaultTitle: `${siteDefaults.name} — ${siteDefaults.tagline}`,

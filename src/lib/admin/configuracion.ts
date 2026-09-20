@@ -3,8 +3,6 @@ import { prisma } from "@/lib/db";
 export type ConfiguracionEditable = {
   whatsappNumber: string;
   whatsappMessageTemplate: string;
-  brandName: string;
-  brandTagline: string;
   instagramHandle: string;
   shippingInfo: string;
   seoDefaultTitle: string;
@@ -30,8 +28,6 @@ export async function obtenerConfiguracionEditable(): Promise<ConfiguracionEdita
   return {
     whatsappNumber: fila.whatsappNumber,
     whatsappMessageTemplate: fila.whatsappMessageTemplate,
-    brandName: fila.brandName,
-    brandTagline: fila.brandTagline,
     instagramHandle: fila.instagramHandle ?? "",
     shippingInfo: fila.shippingInfo ?? "",
     seoDefaultTitle: fila.seoDefaultTitle ?? "",

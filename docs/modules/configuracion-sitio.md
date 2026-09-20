@@ -4,8 +4,9 @@
 
 Una única fila (`SiteSetting`, `id: "singleton"`) con todo lo que el dueño puede
 cambiar **sin tocar código**: número de WhatsApp, plantilla del mensaje de
-pedido, nombre y tagline de la marca, Instagram, texto de envío y los
-title/description por defecto de SEO.
+pedido, Instagram, texto de envío y los title/description por defecto de SEO.
+El nombre y el tagline de la marca son fijos (`siteDefaults.name`/`.tagline`
+en `src/lib/site.ts`), no viven acá.
 
 Es el módulo con más consumidores del proyecto: el root layout la lee en
 `generateMetadata()`, así que **toda ruta** depende de él.
@@ -46,7 +47,7 @@ siteDefaults  // name, legalName, tagline, description, city, whatsapp, instagra
 ## Entidades
 
 `SiteSetting` — la única fila. Columnas obligatorias: `whatsappNumber`,
-`whatsappMessageTemplate`, `brandName`, `brandTagline`. Opcionales:
+`whatsappMessageTemplate`. Opcionales:
 `instagramHandle`, `shippingInfo`, `seoDefaultTitle`, `seoDefaultDescription`.
 
 > `logoUrl`, `heroImageUrl` y `announcementBar` llegaron a existir en el
@@ -58,13 +59,13 @@ siteDefaults  // name, legalName, tagline, description, city, whatsapp, instagra
 
 | Campo                                       | Quién lo usa                                                                           |
 | ------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `brandName`                                 | Root layout (`title.template`), `armarMensajePedido` (`{{marca}}`)                     |
 | `seoDefaultTitle` / `seoDefaultDescription` | Root layout (`generateMetadata`)                                                       |
-| `brandTagline`                              | `Hero` de la home                                                                      |
 | `whatsappNumber`                            | Footer, `/contacto`, `/como-comprar`, `Comprar` de la ficha, `crearPedido`, `/gracias` |
 | `whatsappMessageTemplate`                   | `crearPedido` → `armarMensajePedido`                                                   |
 | `instagramHandle`                           | Footer, `/contacto`                                                                    |
 | `shippingInfo`                              | `/checkout`                                                                            |
+
+> `brandName`/`brandTagline` no son columnas de `SiteSetting`: son fijos (`siteDefaults.name`/`.tagline`, `src/lib/site.ts`), los usa el Root layout (`title.template`) y `armarMensajePedido` (`{{marca}}`) / `Hero` de la home.
 
 ---
 
@@ -84,15 +85,14 @@ guardaría ese fallback **como si fuera texto elegido por él**
 
 ### Fallbacks de la versión pública
 
-| Campo                        | Si la fila falta                 | Si el campo es `null`            |
-| ---------------------------- | -------------------------------- | -------------------------------- |
-| `whatsappNumber`             | `siteDefaults.whatsapp`          | — (obligatorio)                  |
-| `whatsappMessageTemplate`    | `PLANTILLA_WHATSAPP_DEFECTO`     | — (obligatorio)                  |
-| `brandName` / `brandTagline` | `siteDefaults.name` / `.tagline` | — (obligatorios)                 |
-| `instagramHandle`            | `siteDefaults.instagram`         | `siteDefaults.instagram`         |
-| `shippingInfo`               | `ENVIO_DEFECTO`                  | `ENVIO_DEFECTO`                  |
-| `seoDefaultTitle`            | `"{name} — {tagline}"`           | `"{brandName} — {brandTagline}"` |
-| `seoDefaultDescription`      | `siteDefaults.description`       | `siteDefaults.description`       |
+| Campo                     | Si la fila falta                                 | Si el campo es `null`                            |
+| ------------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| `whatsappNumber`          | `siteDefaults.whatsapp`                          | — (obligatorio)                                  |
+| `whatsappMessageTemplate` | `PLANTILLA_WHATSAPP_DEFECTO`                     | — (obligatorio)                                  |
+| `instagramHandle`         | `siteDefaults.instagram`                         | `siteDefaults.instagram`                         |
+| `shippingInfo`            | `ENVIO_DEFECTO`                                  | `ENVIO_DEFECTO`                                  |
+| `seoDefaultTitle`         | `"{siteDefaults.name} — {siteDefaults.tagline}"` | `"{siteDefaults.name} — {siteDefaults.tagline}"` |
+| `seoDefaultDescription`   | `siteDefaults.description`                       | `siteDefaults.description`                       |
 
 ---
 
@@ -148,8 +148,6 @@ nuevo **ya**, no eventualmente.
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `whatsappNumber`          | **El mismo `telefono` de `validations/checkout.ts`**: `libphonenumber-js` región AR → E.164. Es el mismo dato que `Order.customerPhone` |
 | `whatsappMessageTemplate` | 1-2000 chars. **No se valida que contenga los placeholders**                                                                            |
-| `brandName`               | 1-120, obligatorio                                                                                                                      |
-| `brandTagline`            | 1-200, obligatorio                                                                                                                      |
 | `instagramHandle`         | ≤ 60. Quita el `@` inicial: se guarda sin arroba porque el `@` lo agrega el componente que lo muestra                                   |
 | `shippingInfo`            | `textoOpcional(300)` — de `validations/producto.ts`                                                                                     |
 | `seoDefaultTitle`         | `textoOpcional(70)`                                                                                                                     |
@@ -166,7 +164,7 @@ Cinco placeholders, expandidos por `src/lib/tienda/mensaje-pedido.ts`:
 
 | Placeholder  | Valor                                                                        |
 | ------------ | ---------------------------------------------------------------------------- |
-| `{{marca}}`  | `brandName`                                                                  |
+| `{{marca}}`  | `siteDefaults.name` (fijo, no `SiteSetting`)                                 |
 | `{{items}}`  | El único multilínea: `• <marca> <producto> — <variante> x<qty> — <subtotal>` |
 | `{{total}}`  | Total formateado en ARS                                                      |
 | `{{nombre}}` | Nombre del cliente                                                           |
@@ -198,6 +196,8 @@ Está en `src/lib/site.ts` (`siteDefaults`) o hardcodeado:
 - El **logotipo** es tipografía (Outfit ExtraBold), no un archivo — nunca hubo
   una columna `logoUrl` que usar (se llegó a declarar sin uso y se borró, ver
   [`findings.md#f-24`](../findings.md#f-24)).
+- El **nombre y el tagline de la marca** (`siteDefaults.name`/`.tagline`):
+  decisión del dueño de la marca, dejaron de tener columna editable.
 - `legalName`, `city` y `url` de `siteDefaults`.
 - El token de verificación de Google Search Console (`src/app/layout.tsx`).
 - Los textos de `/que-es-un-tester` y `/como-comprar`.

@@ -40,8 +40,6 @@ export async function guardarConfiguracion(
     data: {
       whatsappNumber: v.whatsappNumber,
       whatsappMessageTemplate: v.whatsappMessageTemplate,
-      brandName: v.brandName,
-      brandTagline: v.brandTagline,
       instagramHandle: v.instagramHandle,
       shippingInfo: v.shippingInfo,
       seoDefaultTitle: v.seoDefaultTitle,

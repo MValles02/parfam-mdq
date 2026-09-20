@@ -28,16 +28,6 @@ export const configuracionSchema = z.object({
     .trim()
     .min(1, "Escribí la plantilla del mensaje.")
     .max(2000, "La plantilla es muy larga."),
-  brandName: z
-    .string()
-    .trim()
-    .min(1, "El nombre de la marca es obligatorio.")
-    .max(120, "Nombre muy largo."),
-  brandTagline: z
-    .string()
-    .trim()
-    .min(1, "El tagline es obligatorio.")
-    .max(200, "Tagline muy largo."),
   instagramHandle,
   shippingInfo: textoOpcional(300),
   seoDefaultTitle: textoOpcional(70),

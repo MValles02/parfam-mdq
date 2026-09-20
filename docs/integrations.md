@@ -123,7 +123,7 @@ telefonoVisible(e164)            // "+54 9 223 616 3910"
 
 | Placeholder  | Valor                                                                                         |
 | ------------ | --------------------------------------------------------------------------------------------- |
-| `{{marca}}`  | `SiteSetting.brandName`                                                                       |
+| `{{marca}}`  | `siteDefaults.name` (fijo, no `SiteSetting`)                                                  |
 | `{{items}}`  | El único que expande a varias líneas: `• <marca> <producto> — <variante> x<qty> — <subtotal>` |
 | `{{total}}`  | `Order.totalArs`, formateado en ARS                                                           |
 | `{{nombre}}` | `Order.customerName`                                                                          |

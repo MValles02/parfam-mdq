@@ -58,8 +58,9 @@ flowchart TB
     US --> CAN["canonical de cada página"]
     US --> SM["URLs del sitemap"]
 
-    SS["SiteSetting"] --> T["title.default + title.template"]
+    SS["SiteSetting"] --> T["title.default"]
     SS --> D["description por defecto"]
+    SD["siteDefaults.name"] --> TT["title.template"]
 
     P["Product.seoTitle / seoDescription"] --> FT["metadata de la ficha"]
     P -.fallback.-> FB["'{nombre} — {marca}' y description"]
@@ -75,13 +76,14 @@ y `canonical` se resuelven solas.
 ### El título
 
 ```ts
-title: { default: config.seoDefaultTitle, template: `%s — ${config.brandName}` }
+title: { default: config.seoDefaultTitle, template: `%s — ${siteDefaults.name}` }
 ```
 
 Una página que declara `title: "Carrito"` termina como
-`"Carrito — ParfamMdq"`. Los tres campos salen de `SiteSetting`, no de
-`siteDefaults`: son el título/descripción de **todo** el sitio, así que la única
-fuente que tiene sentido es la editable.
+`"Carrito — ParfamMdq"`. `seoDefaultTitle`/`seoDefaultDescription` salen de
+`SiteSetting`, no de `siteDefaults`: son el título/descripción de **todo** el
+sitio, así que la única fuente que tiene sentido es la editable.
+`siteDefaults.name` en cambio es fijo -- no tiene columna en `SiteSetting`.
 
 ---
 

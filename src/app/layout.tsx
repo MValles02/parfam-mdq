@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 import { URL_SITIO } from "@/lib/seo";
+import { siteDefaults } from "@/lib/site";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -10,11 +11,13 @@ const outfit = Outfit({
 });
 
 /**
- * `brandName`/`seoDefaultTitle`/`seoDefaultDescription` salen de
- * `SiteSetting` (editable desde `/admin/configuracion`) en vez de
- * `siteDefaults`: son el título/descripción por defecto de TODO el sitio
- * (el template de acá envuelve cualquier página que no ponga el suyo
- * propio), así que es la única fuente que tiene sentido acá.
+ * El nombre de marca es fijo (`siteDefaults.name`), pero
+ * `seoDefaultTitle`/`seoDefaultDescription` siguen saliendo de
+ * `SiteSetting` (editable desde `/admin/configuracion`): son el
+ * título/descripción por defecto de TODO el sitio (el template de acá
+ * envuelve cualquier página que no ponga el suyo propio), así que
+ * `obtenerConfiguracionSitio()` sigue siendo la única fuente que tiene
+ * sentido para esos dos campos.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const config = await obtenerConfiguracionSitio();
@@ -26,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(URL_SITIO),
     title: {
       default: config.seoDefaultTitle,
-      template: `%s — ${config.brandName}`,
+      template: `%s — ${siteDefaults.name}`,
     },
     description: config.seoDefaultDescription,
     // Verificacion de propiedad para Google Search Console. No es un secreto:

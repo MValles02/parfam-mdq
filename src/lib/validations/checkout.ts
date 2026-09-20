@@ -10,7 +10,7 @@ import { z } from "zod";
  * feedback; el servidor porque es el único borde real (AGENTS.md).
  */
 
-export const itemCheckoutSchema = z.object({
+const itemCheckoutSchema = z.object({
   variantId: z.string().min(1),
   qty: z.number().int().min(1).max(99),
 });
@@ -44,8 +44,8 @@ export const checkoutSchema = z.object({
   items: z.array(itemCheckoutSchema).min(1, "Tu carrito está vacío.").max(50),
 });
 
-export type CheckoutFormInput = z.input<typeof checkoutSchema>;
-export type CheckoutFormValues = z.output<typeof checkoutSchema>;
+type CheckoutFormInput = z.input<typeof checkoutSchema>;
+type CheckoutFormValues = z.output<typeof checkoutSchema>;
 
 /**
  * Lo que valida react-hook-form en el cliente: sólo nombre y teléfono, y el

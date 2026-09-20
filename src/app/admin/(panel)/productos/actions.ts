@@ -28,8 +28,6 @@ import {
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
 
-export type { Resultado };
-
 function fallo(mensaje: string, errores?: Record<string, string[]>) {
   return { ok: false as const, mensaje, errores };
 }

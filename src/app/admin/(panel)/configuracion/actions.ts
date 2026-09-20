@@ -13,8 +13,6 @@ import { configuracionSchema } from "@/lib/validations/configuracion";
  * es un endpoint POST publico: el layout de /admin no la protege.
  */
 
-export type { Resultado };
-
 function fallo(mensaje: string, errores?: Record<string, string[]>): Resultado {
   return { ok: false, mensaje, errores };
 }

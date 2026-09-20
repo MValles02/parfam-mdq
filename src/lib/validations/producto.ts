@@ -54,7 +54,7 @@ const barra = z
   .default(null)
   .describe("Barra de carácter 1-5 fijada por el admin.");
 
-export const varianteSchema = z.object({
+const varianteSchema = z.object({
   /** Presente sólo al editar: identifica la fila que ya existe en la base. */
   id: z.string().nullable().default(null),
   kind: z.enum(VariantKind),
@@ -70,12 +70,12 @@ export const varianteSchema = z.object({
   sku: textoOpcional(64),
 });
 
-export const notaSchema = z.object({
+const notaSchema = z.object({
   noteId: z.string().min(1),
   position: z.enum(NotePosition),
 });
 
-export const imagenSchema = z.object({
+const imagenSchema = z.object({
   id: z.string().nullable().default(null),
   /**
    * Clave del objeto en R2, no la URL: el host público es configuración y no
@@ -212,5 +212,5 @@ export const productoSchema = z
 export type ProductoFormInput = z.input<typeof productoSchema>;
 /** Lo que recibe la Server Action ya normalizado. */
 export type ProductoFormValues = z.output<typeof productoSchema>;
-export type VarianteFormInput = z.input<typeof varianteSchema>;
-export type ImagenFormInput = z.input<typeof imagenSchema>;
+type VarianteFormInput = z.input<typeof varianteSchema>;
+type ImagenFormInput = z.input<typeof imagenSchema>;

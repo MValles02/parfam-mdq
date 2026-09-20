@@ -24,7 +24,7 @@ import { linkWhatsappA } from "@/lib/whatsapp";
  *     futuro no puede tocar.
  */
 
-export type ItemInvalido = { variantId: string; razon: RazonInvalido };
+type ItemInvalido = { variantId: string; razon: RazonInvalido };
 
 export type ResultadoCheckout =
   | { ok: true; numero: string; link: string }

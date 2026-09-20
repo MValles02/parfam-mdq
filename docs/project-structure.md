@@ -43,7 +43,7 @@ src/app/
 ├── sitemap.ts            force-dynamic + unstable_cache(3600)
 │
 ├── (tienda)/             ── SUPERFICIE PÚBLICA ──
-│   ├── layout.tsx        ThemeProvider + NuqsAdapter + Header/Footer + Toaster
+│   ├── layout.tsx        NuqsAdapter + Header/Footer + Toaster
 │   ├── page.tsx                      /
 │   ├── opengraph-image.tsx           la OG real; el resto la reexporta
 │   ├── catalogo/                     /catalogo
@@ -101,7 +101,6 @@ components/
 │   ├── badge-carrito.tsx Contador (0 hasta hidratar)
 │   ├── carrito-drawer.tsx  Contenido del Sheet
 │   ├── tarjeta-producto.tsx / foto-producto.tsx / chip-acorde.tsx
-│   ├── theme-provider.tsx  next-themes; sin toggle, sólo preferencia del SO
 │   ├── catalogo/         buscador, controles-filtro, drawer-filtros,
 │   │                     panel-filtros, grilla, grilla-skeleton, paginado,
 │   │                     select-orden, seccion-catalogo

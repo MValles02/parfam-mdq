@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Silueta de frasco para cuando todavía no hay foto propia, pintada con
- * tokens en vez de hexadecimales para que siga el tema claro/oscuro.
+ * tokens en vez de hexadecimales para que siga la paleta de `globals.css`.
  */
 export function FrascoPlaceholder({ className }: { className?: string }) {
   return (

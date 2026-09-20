@@ -15,7 +15,7 @@ Inventario completo. Extraído de `src/app/**/{page,route,layout}.tsx` y de
 | Layout     | Archivo                            | Envuelve        | Qué aporta                                                                                                                                                                                |
 | ---------- | ---------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Root**   | `src/app/layout.tsx`               | todo            | `<html lang="es-AR">`, fuente Outfit, `generateMetadata()` que lee `SiteSetting` (título/descripción por defecto + `template: "%s — {brandName}"`), verificación de Google Search Console |
-| **Tienda** | `src/app/(tienda)/layout.tsx`      | las 10 públicas | `ThemeProvider` (next-themes, sin toggle) → `NuqsAdapter` → `Header` + `<main>` + `Footer` + `Toaster`                                                                                    |
+| **Tienda** | `src/app/(tienda)/layout.tsx`      | las 10 públicas | `NuqsAdapter` → `Header` + `<main>` + `Footer` + `Toaster`                                                                                                                                |
 | **Panel**  | `src/app/admin/(panel)/layout.tsx` | las 9 del panel | **`auth()` + `redirect("/admin/login")`** ← control de acceso real · `TooltipProvider` · `NuqsAdapter` · `SidebarProvider` + `AdminSidebar` + `UserMenu` · `Toaster`                      |
 
 `/admin/login` queda **fuera** de `(panel)`: usa sólo el root layout, así que no

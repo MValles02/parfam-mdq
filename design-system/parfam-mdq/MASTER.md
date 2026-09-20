@@ -23,7 +23,7 @@ Fecha de extracción: 2026-09-20 · rama `refactor/cleanup` · commit `53f5c93`.
   - [A.6 Iconografía e imágenes](#a6-iconografía-e-imágenes)
   - [A.7 Patrones de componente existentes](#a7-patrones-de-componente-existentes)
   - [A.8 Estados: carga, vacío, error](#a8-estados-carga-vacío-error)
-  - [A.9 Responsive y modo oscuro](#a9-responsive-y-modo-oscuro)
+  - [A.9 Responsive](#a9-responsive)
   - [A.10 Tono de voz](#a10-tono-de-voz)
   - [A.11 Patrón de interacción del checkout por WhatsApp](#a11-patrón-de-interacción-del-checkout-por-whatsapp)
   - [A.12 Accesibilidad que ya está resuelta](#a12-accesibilidad-que-ya-está-resuelta)
@@ -39,15 +39,14 @@ Fecha de extracción: 2026-09-20 · rama `refactor/cleanup` · commit `53f5c93`.
 
 ## A.1 Stack visual y configuración
 
-| Pieza             | Valor real                                                                  | Path                                       |
-| ----------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
-| Preset shadcn     | `radix-nova`, `baseColor: neutral`, `cssVariables: true`, sin prefijo       | `components.json`                          |
-| Iconos            | Lucide (`iconLibrary: "lucide"`)                                            | `components.json`                          |
-| CSS raíz          | `@import "tailwindcss"` + `tw-animate-css` + `shadcn/tailwind.css`          | `src/app/globals.css:1-3`                  |
-| Variante dark     | `@custom-variant dark (&:is(.dark *))`                                      | `src/app/globals.css:5`                    |
-| Tema              | `next-themes`, `attribute="class"`, `defaultTheme="system"`, **sin toggle** | `src/components/tienda/theme-provider.tsx` |
-| Toasts            | `sonner` con `position="top-right" richColors`                              | `src/app/(tienda)/layout.tsx`              |
-| Estado de filtros | `nuqs` (`NuqsAdapter` en el layout de tienda)                               | `src/app/(tienda)/layout.tsx`              |
+| Pieza             | Valor real                                                                                                                                                                          | Path                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Preset shadcn     | `radix-nova`, `baseColor: neutral`, `cssVariables: true`, sin prefijo                                                                                                               | `components.json`             |
+| Iconos            | Lucide (`iconLibrary: "lucide"`)                                                                                                                                                    | `components.json`             |
+| CSS raíz          | `@import "tailwindcss"` + `tw-animate-css` + `shadcn/tailwind.css`                                                                                                                  | `src/app/globals.css:1-3`     |
+| Variante dark     | `@custom-variant dark (&:is(.dark *))`, se conserva como neutralizador: sin ella Tailwind compilaría las utilidades `dark:` de shadcn/ui como `@media (prefers-color-scheme: dark)` | `src/app/globals.css:9`       |
+| Toasts            | `sonner` con `position="top-right" richColors`                                                                                                                                      | `src/app/(tienda)/layout.tsx` |
+| Estado de filtros | `nuqs` (`NuqsAdapter` en el layout de tienda)                                                                                                                                       | `src/app/(tienda)/layout.tsx` |
 
 La capa `@theme inline` de `globals.css:7-51` re-expone cada variable de
 `:root` como token de Tailwind (`--color-primary: var(--primary)`, etc.). Es
@@ -86,11 +85,11 @@ Dos familias que **no** vienen de shadcn y están declaradas a mano:
 único verde desaturado de la paleta y existe para no pelearse con los chips
 de acordes.
 
-| Token                  | Claro     | Oscuro                       |
-| ---------------------- | --------- | ---------------------------- |
-| `--success`            | `#DFECDF` | `oklch(0.2846 0.0342 148.3)` |
-| `--success-foreground` | `#305A38` | `oklch(0.7684 0.1132 147.2)` |
-| `--success-border`     | `#B9D2BC` | `oklch(0.3705 0.0508 147.5)` |
+| Token                  | Valor     |
+| ---------------------- | --------- |
+| `--success`            | `#DFECDF` |
+| `--success-foreground` | `#305A38` |
+| `--success-border`     | `#B9D2BC` |
 
 Uso real: **solo en el panel**, nunca en la tienda —
 `src/app/admin/(panel)/pedidos/_components/chip-estado-pedido.tsx:15-23`,
@@ -99,15 +98,16 @@ Uso real: **solo en el panel**, nunca en la tienda —
 
 **`--whatsapp` / `--whatsapp-foreground`** `globals.css:78-88`.
 
-| Token                   | Claro y oscuro (idéntico)                |
+| Token                   | Valor                                    |
 | ----------------------- | ---------------------------------------- |
 | `--whatsapp`            | `oklch(0.5175 0.137 149.95)` = `#107D3A` |
 | `--whatsapp-foreground` | `oklch(0.9508 0.008 73.74)` = `#F2EEE9`  |
 
 El comentario del código documenta por qué no es el `#1DA851` del mockup:
 ese hex da 2,68:1 contra el texto crema y no llega al 4,5:1 de WCAG AA.
-`#107D3A` da **4,53:1** (verificado, ver mediciones al final). No varía entre
-claro y oscuro **a propósito**: el contraste es interno al botón.
+`#107D3A` da **4,53:1** (verificado, ver mediciones al final). Es un botón
+sólido, así que el contraste es interno al botón: no depende del fondo de la
+página.
 
 Uso real (4 call-sites, siempre botón sólido):
 `src/components/tienda/carrito/resumen-carrito.tsx:41`,
@@ -121,17 +121,11 @@ Uso real (4 call-sites, siempre botón sólido):
 (`#14120F`) con texto `#D6CFC5` sobre la tienda crema. Se lee como
 herramienta interna sin salirse de la marca.
 
-### Modo oscuro (`.dark`, `globals.css:109-145`)
-
-Inversión crema/tinta manteniendo el matiz cálido: `--background #14120F`,
-`--foreground #F2EEE9`, `--card #1F1C18`, `--muted-foreground #A39B8E`,
-`--border #3A342C`.
-
 ### Charts
 
-`--chart-1..5` existen en los dos modos (`globals.css:91-95` y `137-141`) y
-son una **rampa neutra cálida** de claro a oscuro, no cinco hues. **No hay un
-solo uso en `src/`** (verificado con grep): son herencia del preset.
+`--chart-1..5` existen sólo en `:root` (`globals.css:93-97`) y son una
+**rampa neutra cálida**, no cinco hues. **No hay un solo uso en `src/`**
+(verificado con grep): son herencia del preset.
 
 ### El color que no es un token
 
@@ -380,17 +374,18 @@ text-muted-foreground`. Dos textos según si hay filtros activos
 - **Confirmación**: `toast.success` de sonner con descripción
   `producto · variante · N unidades`.
 
-## A.9 Responsive y modo oscuro
+## A.9 Responsive
 
 No hay breakpoints custom: `sm` 640 / `lg` 1024 de Tailwind. El corte
 principal es **`lg`**: header, footer y filtros tienen dos bloques separados
 (`hidden lg:flex` / `lg:hidden`) en vez de un solo árbol adaptativo. `sm` se
 usa dentro de la tarjeta para densificar.
 
-Modo oscuro: existe completo en `globals.css` y **solo sigue la preferencia
-del sistema**; no hay toggle ni se planea (`theme-provider.tsx`). El
-`suppressHydrationWarning` va únicamente en `<html>`
-(`src/app/layout.tsx:44`).
+La paleta es crema fija: no hay modo oscuro conmutable ni sigue la
+preferencia del sistema. Se conserva `@custom-variant dark` en
+`globals.css:9` como neutralizador, para que las utilidades `dark:` de los
+primitivos de `src/components/ui/` no vuelvan a activarse por
+`prefers-color-scheme`.
 
 ## A.10 Tono de voz
 
@@ -525,7 +520,7 @@ criterio acotado · **L** requiere decisión de diseño previa.
 **4,12:1** contra `--background` y **4,49:1** contra `--card`. WCAG AA pide
 4,5:1 para texto normal. El uso más expuesto es el mensaje de error del
 formulario de checkout, que además es `text-xs` (12 px, no califica como
-texto grande). El modo oscuro está bien (6,46:1 sobre `--background`).
+texto grande).
 
 **Dónde se ve.**
 
@@ -533,10 +528,10 @@ texto grande). El modo oscuro está bien (6,46:1 sobre `--background`).
 - `src/app/(tienda)/checkout/_components/formulario-checkout.tsx:194-198` (`text-xs text-destructive`)
 - Mismo patrón en los formularios de `src/app/admin/(panel)/`
 
-**Corrección propuesta.** Oscurecer únicamente el valor de `:root` hasta
-≥4,5:1 contra `--card` (la superficie más clara donde aparece), dejando
-`.dark` como está. Un `oklch(~0.52 0.21 27.3)` entra cómodo sin cambiar el
-hue. Verificar con el mismo criterio que ya usa `src/lib/color.ts`.
+**Corrección propuesta.** Oscurecer el valor de `--destructive` hasta ≥4,5:1
+contra `--card` (la superficie más clara donde aparece). Un
+`oklch(~0.52 0.21 27.3)` entra cómodo sin cambiar el hue. Verificar con el
+mismo criterio que ya usa `src/lib/color.ts`.
 
 **Esfuerzo/Riesgo.** S / Bajo — una línea de CSS; el riesgo es solo estético
 (rojo un punto más oscuro en botones destructivos del panel).
@@ -552,11 +547,11 @@ Contrast, AA) pide **3:1** cuando el borde es el único indicador de que algo
 es un control. En este diseño casi todo lo es: inputs, select triggers, chips
 de filtro inactivos, el stepper de cantidad, las opciones de variante no
 seleccionadas y las miniaturas de la galería se distinguen **solo** por el
-borde. En oscuro es peor todavía: 1,52:1 / 1,38:1.
+borde.
 
 **Dónde se ve.**
 
-- Tokens: `src/app/globals.css:89-90` y `132-133`
+- Tokens: `src/app/globals.css:90-91`
 - `src/components/ui/input.tsx` (`border-input`), `src/components/ui/select.tsx` (`border-input`)
 - `src/components/tienda/catalogo/controles-filtro.tsx:62` (chip inactivo)
 - `src/components/tienda/producto/comprar.tsx:159-162` (variante no elegida)
@@ -564,8 +559,8 @@ borde. En oscuro es peor todavía: 1,52:1 / 1,38:1.
 
 **Corrección propuesta.** Separar el token decorativo del funcional:
 mantener `--border` para separadores y bordes de tarjeta, y llevar `--input`
-(usado por controles) a un valor con ≥3:1 contra `--background` y `--card`
-en ambos modos. Los componentes de tienda que hoy escriben `border-border`
+(usado por controles) a un valor con ≥3:1 contra `--background` y `--card`.
+Los componentes de tienda que hoy escriben `border-border`
 sobre controles (`buscador.tsx:76`, `badge-carrito.tsx`, `select-orden`
 vía `className`) pasarían a `border-input`.
 
@@ -863,11 +858,6 @@ No entran en el top 10 pero conviene tenerlos anotados.
 - **`--font-heading` apunta a `--font-sans`** (`globals.css:11`): es un alias
   sin efecto. O se le da una familia propia o se saca, para que nadie lo lea
   como un punto de extensión real.
-- **No hay toggle de tema**, y está documentado como decisión
-  (`theme-provider.tsx`). Si alguna vez se agrega, el `Logotipo` y el
-  `FrascoPlaceholder` ya son token-only y no necesitan cambios; lo que sí
-  habría que revisar es `src/lib/color.ts`, que compara contra `#14120F` y
-  `#F2EEE9` fijos.
 - **`Alert` informativo usa `AlertTitle` con `text-muted-foreground`**
   (`formulario-checkout.tsx:158-161`): un título con estilo de texto
   secundario. Funciona, pero es el único `AlertTitle` del sitio que no se ve
@@ -878,8 +868,6 @@ No entran en el top 10 pero conviene tenerlos anotados.
 Calculadas convirtiendo los OKLCH de `globals.css` a sRGB y aplicando la
 fórmula de luminancia relativa de WCAG — la misma que implementa
 `src/lib/color.ts`.
-
-### Modo claro
 
 | Par                                | Ratio   | AA texto normal           |
 | ---------------------------------- | ------- | ------------------------- |
@@ -895,18 +883,4 @@ fórmula de luminancia relativa de WCAG — la misma que implementa
 | `ring` / `background`              | 4,99:1  | ✅ (foco necesita 3:1)    |
 | `border` / `background`            | 1,26:1  | ❌ B-02 (1.4.11 pide 3:1) |
 | `border` / `card`                  | 1,37:1  | ❌ B-02                   |
-
-### Modo oscuro
-
-| Par                               | Ratio   | AA texto normal |
-| --------------------------------- | ------- | --------------- |
-| `foreground` / `background`       | 16,19:1 | ✅              |
-| `muted-foreground` / `background` | 6,80:1  | ✅              |
-| `muted-foreground` / `card`       | 6,17:1  | ✅              |
-| `muted-foreground` / `muted`      | 5,47:1  | ✅              |
-| `destructive` / `background`      | 6,46:1  | ✅              |
-| `destructive` / `card`            | 5,87:1  | ✅              |
-| `success-foreground` / `success`  | 7,11:1  | ✅              |
-| `border` / `background`           | 1,52:1  | ❌ B-02         |
-| `border` / `card`                 | 1,38:1  | ❌ B-02         |
-| `sidebar-foreground` / `sidebar`  | 12,10:1 | ✅              |
+| `sidebar-foreground` / `sidebar`   | 12,10:1 | ✅                        |

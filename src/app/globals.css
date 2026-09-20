@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* La paleta es crema fija y nadie pone la clase `.dark`. Sin esta linea,
+   Tailwind compilaria las utilidades `dark:` de los primitivos de
+   src/components/ui/ como `@media (prefers-color-scheme: dark)` y el modo
+   oscuro volveria por preferencia del SO; con ella, quedan inertes. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -79,8 +83,8 @@
      texto crema del boton, por debajo del 4,5:1 de WCAG AA -- mismo criterio que
      colorDeChip(). #107D3A da 4,53:1 y sigue leyendose como el verde
      de WhatsApp. Es un boton solido (como --primary), no una etiqueta tenue como
-     --success, asi que no varia entre claro y oscuro: el contraste es interno al
-     boton, no depende del fondo de la pagina. */
+     --success: el contraste es interno al boton, no depende del fondo de la
+     pagina. */
   --whatsapp: oklch(0.5175 0.137 149.95); /* #107D3A */
   --whatsapp-foreground: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
   --border: oklch(0.8756 0.0168 79.34); /* #DCD5CA */
@@ -102,47 +106,6 @@
   --sidebar-accent-foreground: oklch(0.9508 0.008 73.74);
   --sidebar-border: oklch(0.3287 0.0161 75.06); /* #3A342C */
   --sidebar-ring: oklch(0.6926 0.0208 80.08); /* #A39B8E */
-}
-
-.dark {
-  /* Modo oscuro: se invierte crema/negro manteniendo el matiz calido. */
-  --background: oklch(0.1834 0.0068 78.14); /* #14120F */
-  --foreground: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
-  --card: oklch(0.2284 0.0089 75.17); /* #1F1C18 */
-  --card-foreground: oklch(0.9508 0.008 73.74);
-  --popover: oklch(0.2284 0.0089 75.17);
-  --popover-foreground: oklch(0.9508 0.008 73.74);
-  --primary: oklch(0.9508 0.008 73.74);
-  --primary-foreground: oklch(0.1834 0.0068 78.14);
-  --secondary: oklch(0.2709 0.0123 78.08); /* #2A2620 */
-  --secondary-foreground: oklch(0.9508 0.008 73.74);
-  --muted: oklch(0.2709 0.0123 78.08);
-  --muted-foreground: oklch(0.6926 0.0208 80.08); /* #A39B8E */
-  --accent: oklch(0.2709 0.0123 78.08);
-  --accent-foreground: oklch(0.9508 0.008 73.74);
-  --destructive: oklch(0.704 0.191 22.216);
-  --success: oklch(0.2846 0.0342 148.3);
-  --success-foreground: oklch(0.7684 0.1132 147.2);
-  --success-border: oklch(0.3705 0.0508 147.5);
-  /* Mismo verde que en claro: ver el comentario en :root. */
-  --whatsapp: oklch(0.5175 0.137 149.95); /* #107D3A */
-  --whatsapp-foreground: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
-  --border: oklch(0.3287 0.0161 75.06); /* #3A342C */
-  --input: oklch(0.3287 0.0161 75.06);
-  --ring: oklch(0.6926 0.0208 80.08);
-  --chart-1: oklch(0.3287 0.0161 75.06);
-  --chart-2: oklch(0.5095 0.0158 78.18);
-  --chart-3: oklch(0.6926 0.0208 80.08);
-  --chart-4: oklch(0.8756 0.0168 79.34);
-  --chart-5: oklch(0.9508 0.008 73.74);
-  --sidebar: oklch(0.1834 0.0068 78.14);
-  --sidebar-foreground: oklch(0.8573 0.0157 77.06);
-  --sidebar-primary: oklch(0.9508 0.008 73.74);
-  --sidebar-primary-foreground: oklch(0.1834 0.0068 78.14);
-  --sidebar-accent: oklch(0.2709 0.0123 78.08);
-  --sidebar-accent-foreground: oklch(0.9508 0.008 73.74);
-  --sidebar-border: oklch(0.3287 0.0161 75.06);
-  --sidebar-ring: oklch(0.6926 0.0208 80.08);
 }
 
 @layer base {

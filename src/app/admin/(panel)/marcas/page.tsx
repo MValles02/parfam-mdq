@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
 import { listarMarcas } from "@/lib/admin/marcas";
-import { BuscadorMarcas } from "./_components/buscador-marcas";
+import { BuscadorAdmin } from "@/components/admin/buscador-admin";
 import { TablaMarcas } from "./_components/tabla-marcas";
 
 export const metadata: Metadata = { title: "Marcas" };
@@ -17,7 +17,7 @@ export default async function Page(props: PageProps<"/admin/marcas">) {
       <PageHeader
         title="Marcas"
         description="El dataset trae la marca en formato slug (lancome, jean-paul-gaultier): corregí acá el nombre que se muestra en la tienda."
-        action={<BuscadorMarcas />}
+        action={<BuscadorAdmin placeholder="Buscar marca o slug" />}
       />
 
       <div className="p-8 pt-6">

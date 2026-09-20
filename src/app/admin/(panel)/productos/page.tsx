@@ -4,8 +4,8 @@ import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { listarProductos, type FiltroEstado } from "@/lib/admin/productos";
-import { BuscadorProductos } from "./_components/buscador-productos";
-import { TabsEstado } from "./_components/tabs-estado";
+import { BuscadorAdmin } from "@/components/admin/buscador-admin";
+import { TabsFiltro } from "@/components/admin/tabs-filtro";
 import { TablaProductos } from "./_components/tabla-productos";
 
 export const metadata: Metadata = { title: "Productos" };
@@ -36,7 +36,7 @@ export default async function Page(props: PageProps<"/admin/productos">) {
         description={`${publicados} publicados · ${borradores} en borrador`}
         action={
           <div className="flex items-center gap-2.5">
-            <BuscadorProductos />
+            <BuscadorAdmin placeholder="Buscar producto o marca" />
             <Button asChild>
               <Link href="/admin/productos/nuevo">
                 <Plus />
@@ -49,7 +49,14 @@ export default async function Page(props: PageProps<"/admin/productos">) {
 
       <div className="p-8 pt-6">
         <div className="mb-4 flex items-center gap-2">
-          <TabsEstado />
+          <TabsFiltro
+            opciones={[
+              { id: "todos", label: "Todos" },
+              { id: "publicados", label: "Publicados" },
+              { id: "borradores", label: "Borradores" },
+            ]}
+            valorDefecto="todos"
+          />
           <span className="ml-auto text-sm text-muted-foreground">
             {filas.length} de {total}
           </span>

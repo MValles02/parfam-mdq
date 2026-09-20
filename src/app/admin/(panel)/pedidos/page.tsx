@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import { BuscadorAdmin } from "@/components/admin/buscador-admin";
 import { PageHeader } from "@/components/admin/page-header";
+import { TabsFiltro } from "@/components/admin/tabs-filtro";
 import { listarPedidos, type FiltroEstadoPedido } from "@/lib/admin/pedidos";
-import { BuscadorPedidos } from "./_components/buscador-pedidos";
-import { TabsEstadoPedido } from "./_components/tabs-estado-pedido";
 import { TablaPedidos } from "./_components/tabla-pedidos";
 
 export const metadata: Metadata = { title: "Pedidos" };
@@ -37,12 +37,23 @@ export default async function Page(props: PageProps<"/admin/pedidos">) {
       <PageHeader
         title="Pedidos"
         description={`${pendientes} pendientes · ${confirmados} confirmados · ${entregados} entregados`}
-        action={<BuscadorPedidos />}
+        action={
+          <BuscadorAdmin placeholder="Buscar número o nombre del cliente" />
+        }
       />
 
       <div className="p-8 pt-6">
         <div className="mb-4 flex items-center gap-2">
-          <TabsEstadoPedido />
+          <TabsFiltro
+            opciones={[
+              { id: "todos", label: "Todos" },
+              { id: "pendientes", label: "Pendientes" },
+              { id: "confirmados", label: "Confirmados" },
+              { id: "entregados", label: "Entregados" },
+              { id: "cancelados", label: "Cancelados" },
+            ]}
+            valorDefecto="todos"
+          />
           <span className="ml-auto text-sm text-muted-foreground">
             {filas.length} de {total}
           </span>

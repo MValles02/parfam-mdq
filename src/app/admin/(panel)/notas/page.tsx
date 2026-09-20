@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BuscadorAdmin } from "@/components/admin/buscador-admin";
 import { PageHeader } from "@/components/admin/page-header";
+import { TabsFiltro } from "@/components/admin/tabs-filtro";
 import { Button } from "@/components/ui/button";
 import { listarNotas } from "@/lib/admin/notas";
-import { BuscadorNotas } from "./_components/buscador-notas";
 import { FilaNota } from "./_components/fila-nota";
-import { TabsNotas } from "./_components/tabs-notas";
 
 export const metadata: Metadata = { title: "Notas sin traducir" };
 
@@ -50,8 +50,19 @@ export default async function Page(props: PageProps<"/admin/notas">) {
 
       <div className="flex flex-col gap-4 p-8">
         <div className="flex items-center justify-between gap-4">
-          <TabsNotas pendientes={pendientes} traducidas={traducidas} />
-          <BuscadorNotas />
+          <TabsFiltro<"pendientes" | "traducidas">
+            opciones={[
+              { id: "pendientes", label: "Pendientes" },
+              { id: "traducidas", label: "Traducidas" },
+            ]}
+            valorDefecto="pendientes"
+            contadores={{ pendientes, traducidas }}
+            resetPagina
+          />
+          <BuscadorAdmin
+            placeholder="Buscar nota en inglés o español"
+            resetPagina
+          />
         </div>
 
         <div className="overflow-hidden rounded border border-border bg-card">

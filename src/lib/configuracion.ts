@@ -32,8 +32,6 @@ const ENVIO_DEFECTO = "Coordinamos envío en Mar del Plata o retiro a convenir."
 export type ConfiguracionSitio = {
   whatsappNumber: string;
   whatsappMessageTemplate: string;
-  brandName: string;
-  brandTagline: string;
   instagramHandle: string;
   shippingInfo: string;
   seoDefaultTitle: string;
@@ -51,8 +49,6 @@ async function leerConfiguracionSitio(): Promise<ConfiguracionSitio> {
     return {
       whatsappNumber: siteDefaults.whatsapp,
       whatsappMessageTemplate: PLANTILLA_WHATSAPP_DEFECTO,
-      brandName: siteDefaults.name,
-      brandTagline: siteDefaults.tagline,
       instagramHandle: siteDefaults.instagram,
       shippingInfo: ENVIO_DEFECTO,
       seoDefaultTitle: `${siteDefaults.name} — ${siteDefaults.tagline}`,
@@ -63,14 +59,12 @@ async function leerConfiguracionSitio(): Promise<ConfiguracionSitio> {
   return {
     whatsappNumber: fila.whatsappNumber,
     whatsappMessageTemplate: fila.whatsappMessageTemplate,
-    brandName: fila.brandName,
-    brandTagline: fila.brandTagline,
     // Columnas opcionales: si el admin las dejó vacías, la tienda muestra un
     // fallback en vez de un hueco en blanco.
     instagramHandle: fila.instagramHandle ?? siteDefaults.instagram,
     shippingInfo: fila.shippingInfo ?? ENVIO_DEFECTO,
     seoDefaultTitle:
-      fila.seoDefaultTitle ?? `${fila.brandName} — ${fila.brandTagline}`,
+      fila.seoDefaultTitle ?? `${siteDefaults.name} — ${siteDefaults.tagline}`,
     seoDefaultDescription:
       fila.seoDefaultDescription ?? siteDefaults.description,
   };

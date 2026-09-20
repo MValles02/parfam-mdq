@@ -167,31 +167,6 @@ export function FormularioConfiguracion({
         <h2 className="text-sm font-bold tracking-[-0.01em]">Marca</h2>
 
         <Campo
-          label="Nombre"
-          htmlFor="brandName"
-          error={errores.brandName?.message}
-        >
-          <Input
-            id="brandName"
-            aria-invalid={!!errores.brandName}
-            {...register("brandName")}
-          />
-        </Campo>
-
-        <Campo
-          label="Tagline"
-          htmlFor="brandTagline"
-          error={errores.brandTagline?.message}
-          hint="Se muestra debajo del logotipo en la home y arma el título por defecto de las páginas."
-        >
-          <Input
-            id="brandTagline"
-            aria-invalid={!!errores.brandTagline}
-            {...register("brandTagline")}
-          />
-        </Campo>
-
-        <Campo
           label="Instagram"
           htmlFor="instagramHandle"
           error={errores.instagramHandle?.message}

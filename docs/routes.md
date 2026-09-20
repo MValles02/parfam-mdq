@@ -12,11 +12,11 @@ Inventario completo. Extraído de `src/app/**/{page,route,layout}.tsx` y de
 
 ## Layouts
 
-| Layout     | Archivo                            | Envuelve        | Qué aporta                                                                                                                                                                                |
-| ---------- | ---------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Root**   | `src/app/layout.tsx`               | todo            | `<html lang="es-AR">`, fuente Outfit, `generateMetadata()` que lee `SiteSetting` (título/descripción por defecto + `template: "%s — {brandName}"`), verificación de Google Search Console |
-| **Tienda** | `src/app/(tienda)/layout.tsx`      | las 10 públicas | `NuqsAdapter` → `Header` + `<main>` + `Footer` + `Toaster`                                                                                                                                |
-| **Panel**  | `src/app/admin/(panel)/layout.tsx` | las 9 del panel | **`auth()` + `redirect("/admin/login")`** ← control de acceso real · `TooltipProvider` · `NuqsAdapter` · `SidebarProvider` + `AdminSidebar` + `UserMenu` · `Toaster`                      |
+| Layout     | Archivo                            | Envuelve        | Qué aporta                                                                                                                                                                                             |
+| ---------- | ---------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Root**   | `src/app/layout.tsx`               | todo            | `<html lang="es-AR">`, fuente Outfit, `generateMetadata()` que lee `SiteSetting` (título/descripción por defecto) y arma `template: "%s — {siteDefaults.name}"`, verificación de Google Search Console |
+| **Tienda** | `src/app/(tienda)/layout.tsx`      | las 10 públicas | `NuqsAdapter` → `Header` + `<main>` + `Footer` + `Toaster`                                                                                                                                             |
+| **Panel**  | `src/app/admin/(panel)/layout.tsx` | las 9 del panel | **`auth()` + `redirect("/admin/login")`** ← control de acceso real · `TooltipProvider` · `NuqsAdapter` · `SidebarProvider` + `AdminSidebar` + `UserMenu` · `Toaster`                                   |
 
 `/admin/login` queda **fuera** de `(panel)`: usa sólo el root layout, así que no
 se envuelve en el guard ni en el sidebar.
@@ -29,14 +29,14 @@ Ninguna requiere autenticación. Todas usan el layout de tienda.
 
 ### `/` — Home
 
-| Campo            | Valor                                                                                              |
-| ---------------- | -------------------------------------------------------------------------------------------------- |
-| **Archivo**      | `src/app/(tienda)/page.tsx`                                                                        |
-| **Datos**        | `cargarFiltros(searchParams)` + `opcionesDeFiltro()`, en paralelo                                  |
-| **Render**       | `<Hero>` (lee `SiteSetting.brandTagline`) + `<SeccionCatalogo titulo="Catálogo" nivelTitulo="h2">` |
-| **Query params** | Los de `parsersCatalogo` (ver abajo)                                                               |
-| **Navegación**   | `/producto/:slug`, `/marca/:slug`, `/catalogo`, ancla al catálogo                                  |
-| **Nota**         | El `<h1>` es el logotipo del hero; por eso el catálogo entra como `h2`                             |
+| Campo            | Valor                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------- |
+| **Archivo**      | `src/app/(tienda)/page.tsx`                                                                              |
+| **Datos**        | `cargarFiltros(searchParams)` + `opcionesDeFiltro()`, en paralelo                                        |
+| **Render**       | `<Hero>` (tagline fijo, `siteDefaults.tagline`) + `<SeccionCatalogo titulo="Catálogo" nivelTitulo="h2">` |
+| **Query params** | Los de `parsersCatalogo` (ver abajo)                                                                     |
+| **Navegación**   | `/producto/:slug`, `/marca/:slug`, `/catalogo`, ancla al catálogo                                        |
+| **Nota**         | El `<h1>` es el logotipo del hero; por eso el catálogo entra como `h2`                                   |
 
 ### `/catalogo`
 

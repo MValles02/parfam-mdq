@@ -7,6 +7,7 @@ import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 import { etiquetaVariante } from "@/lib/catalogo";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
+import { siteDefaults } from "@/lib/site";
 import type { RazonInvalido } from "@/lib/tienda/carrito-servidor";
 import {
   armarMensajePedido,
@@ -205,7 +206,7 @@ export async function crearPedido(entrada: {
 
   const mensaje = armarMensajePedido({
     plantilla: config.whatsappMessageTemplate,
-    marca: config.brandName,
+    marca: siteDefaults.name,
     nombre,
     numero: resultado.number,
     items: lineasMensaje,

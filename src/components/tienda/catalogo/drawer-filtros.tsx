@@ -29,9 +29,8 @@ import {
 import { Buscador } from "./buscador";
 
 /**
- * Drawer de filtros de mobile (design/HomeMobile.dc.html, bloque
- * "Drawer de filtros"). Usa el `Sheet` de shadcn con `side="bottom"` -- ya
- * esta instalado, no hace falta `vaul`.
+ * Drawer de filtros de mobile. Usa el `Sheet` de shadcn con `side="bottom"` --
+ * ya esta instalado, no hace falta `vaul`.
  *
  * El contador del boton "Filtrar · N" se calcula en el cliente con
  * `contarFiltrosActivos`, sin pedirle nada al servidor: los valores ya estan

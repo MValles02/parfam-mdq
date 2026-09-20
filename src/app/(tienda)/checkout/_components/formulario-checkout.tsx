@@ -21,15 +21,14 @@ import {
 import { crearPedido } from "../actions";
 
 /**
- * Prefijo fijo del telefono (design/Checkout.dc.html): el cliente sólo
- * tipea el numero local, nunca el codigo de pais ni el "9" de celular. Eso
- * hace que la validacion sea mucho menos ambigua que tratar de adivinar si
- * escribió "0223 15…" o "223…".
+ * Prefijo fijo del telefono: el cliente sólo tipea el numero local, nunca el
+ * codigo de pais ni el "9" de celular. Eso hace que la validacion sea mucho
+ * menos ambigua que tratar de adivinar si escribió "0223 15…" o "223…".
  */
 const PREFIJO = "+54 9";
 
 /**
- * El paso final del checkout (design/Checkout.dc.html). El honeypot es un
+ * El paso final del checkout. El honeypot es un
  * `useRef` sin pasar por react-hook-form ni por `checkoutSchema` a propósito:
  * si viniera con validación normal, un error de zod en un campo que el
  * usuario nunca ve sería una pista rara en el formState. Se lee a mano al

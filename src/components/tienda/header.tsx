@@ -30,11 +30,10 @@ const CUADRADO =
   "flex size-[46px] shrink-0 items-center justify-center rounded border border-border bg-card";
 
 /**
- * Header de la tienda. Desktop sale de design/Main.dc.html (1440px), mobile
- * de design/HomeMobile.dc.html (390px). El mockup mobile solo dibuja lupa y
- * carrito: el boton de menu y el Sheet que abre son un agregado nuestro
- * porque sin eso las paginas de contenido (Contacto, Como comprar, etc.) no
- * tienen forma de alcanzarse desde mobile. Ver reporte de la tarea.
+ * Header de la tienda, con un layout para desktop y otro para mobile. En
+ * mobile el boton de menu y el Sheet que abre son un agregado nuestro: sin
+ * eso las paginas de contenido (Contacto, Como comprar, etc.) no tienen
+ * forma de alcanzarse desde mobile.
  */
 export function Header() {
   const pathname = usePathname();

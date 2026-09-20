@@ -7,10 +7,9 @@ import { precioArs } from "@/lib/catalogo";
 import { useCarrito, useHidratado } from "@/lib/carrito";
 
 /**
- * Subtotal + CTA a /checkout (design/Carrito.dc.html). La usan el drawer y
- * `/carrito`. El mockup dibuja el boton en negro, pero para esta fase se
- * decidio usar el token `--whatsapp` (verde, ver comentario en globals.css)
- * en vez de un hex hardcodeado (AGENTS.md).
+ * Subtotal + CTA a /checkout. La usan el drawer y `/carrito`. El diseño
+ * original lo tenía en negro; se usa el token `--whatsapp` (verde) a
+ * propósito en vez de un hex hardcodeado (AGENTS.md).
  *
  * El checkout (nombre, telefono, mensaje de WhatsApp) es una pagina aparte
  * ya implementada en `/checkout` -- esto solo navega para alla, no manda

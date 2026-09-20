@@ -31,9 +31,8 @@ import {
 
 /**
  * El chip de ESTADO y el menú de acciones son dos columnas no adyacentes de
- * la tabla (ver AdminProductos.dc.html), asi que van como dos componentes
- * separados en este archivo en vez de uno solo que no podria ocupar dos
- * <TableCell> salteados.
+ * la tabla, asi que van como dos componentes separados en este archivo en
+ * vez de uno solo que no podria ocupar dos <TableCell> salteados.
  */
 
 export function EstadoChip({

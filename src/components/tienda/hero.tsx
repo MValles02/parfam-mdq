@@ -3,9 +3,8 @@ import { Logotipo } from "@/components/tienda/logotipo";
 import { obtenerConfiguracionSitio } from "@/lib/configuracion";
 
 /**
- * Hero de la home (design/Main.dc.html, bloque "Hero"; version mobile en
- * design/HomeMobile.dc.html). Todo centrado, con el link ancla que baja al
- * catalogo.
+ * Hero de la home, con una version para desktop y otra para mobile. Todo
+ * centrado, con el link ancla que baja al catalogo.
  *
  * El logotipo (el nombre de marca) sigue siendo tipografia fija a proposito,
  * pero el tagline es editable desde `/admin/configuracion`, asi que sale de

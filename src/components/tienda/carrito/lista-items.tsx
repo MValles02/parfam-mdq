@@ -8,7 +8,7 @@ import { ItemFila } from "@/components/tienda/carrito/item-fila";
 
 /**
  * Lista de items del carrito, con el estado vacio y el renglon "Seguir
- * mirando el catalogo" (design/Carrito.dc.html). La usan tanto el drawer
+ * mirando el catalogo". La usan tanto el drawer
  * (`carrito-drawer.tsx`) como `/carrito` para no duplicar la logica de
  * items/stepper -- por eso vive aca y no en ninguno de los dos.
  *

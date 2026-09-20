@@ -14,8 +14,7 @@ const FALLBACK_TOTAL = (
 
 /**
  * Cuerpo del catalogo, compartido por la home, `/catalogo` y
- * `/marca/[slug]` (design/Main.dc.html y design/HomeMobile.dc.html, bloque
- * "Catálogo").
+ * `/marca/[slug]`.
  *
  * `opcionesDeFiltro()` se pide una vez, en la pagina (Server Component), y
  * baja por props via `opciones`. `listarCatalogo()` en cambio se llama

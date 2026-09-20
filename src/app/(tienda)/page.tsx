@@ -12,7 +12,7 @@ export const metadata: Metadata = metadataDePagina({
   ruta: "/",
 });
 
-/** Home: hero + catalogo (design/Main.dc.html y design/HomeMobile.dc.html). */
+/** Home: hero + catalogo. */
 export default async function Page(props: PageProps<"/">) {
   const [filtros, opciones] = await Promise.all([
     cargarFiltros(props.searchParams),

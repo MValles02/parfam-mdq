@@ -6,8 +6,8 @@ import { ListaItems } from "@/components/tienda/carrito/lista-items";
 import { ResumenCarrito } from "@/components/tienda/carrito/resumen-carrito";
 
 /**
- * Contenido del drawer del carrito (design/Carrito.dc.html): header "Tu
- * pedido" + contador, lista de items y subtotal + CTA al pie.
+ * Contenido del drawer del carrito: header "Tu pedido" + contador, lista de
+ * items y subtotal + CTA al pie.
  *
  * El `<Sheet>` que lo envuelve vive en `header.tsx`, no aca, porque tiene
  * DOS triggers -- el chip de desktop y el boton cuadrado de mobile -- que

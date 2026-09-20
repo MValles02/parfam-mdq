@@ -4,10 +4,9 @@ import { precioArs } from "@/lib/catalogo";
 import { FotoProducto } from "@/components/tienda/foto-producto";
 
 /**
- * Tarjeta del catalogo (design/Main.dc.html y HomeMobile.dc.html). La usan la
- * grilla, la home y los relacionados de la ficha, asi que todo lo que muestra
- * ya viene armado desde `listarCatalogo` -- acá no se formatea nada salvo el
- * precio.
+ * Tarjeta del catalogo. La usan la grilla, la home y los relacionados de la
+ * ficha, asi que todo lo que muestra ya viene armado desde `listarCatalogo` --
+ * acá no se formatea nada salvo el precio.
  */
 export function TarjetaProductoCard({
   producto,

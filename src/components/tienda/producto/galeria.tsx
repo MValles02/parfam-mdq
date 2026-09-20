@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
 type Imagen = { id: string; url: string; alt: string };
 
 /**
- * Galeria de la ficha (design/Producto.dc.html). Foto principal en un
- * Carousel de shadcn/embla con swipe en mobile y flechas en desktop, y hasta
- * cuatro miniaturas debajo para saltar de foto.
+ * Galeria de la ficha. Foto principal en un Carousel de shadcn/embla con swipe
+ * en mobile y flechas en desktop, y hasta cuatro miniaturas debajo para saltar
+ * de foto.
  *
  * La miniatura activa se calcula con `indiceActual` del contexto de
  * `useCarousel()` -- que ya lee embla con `useSyncExternalStore` -- y no con

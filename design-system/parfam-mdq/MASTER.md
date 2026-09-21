@@ -284,7 +284,6 @@ the stack.
 | B-02 | Control borders are 1.26:1 and fail 1.4.11 non-text contrast      | A11y        | M      | Medium |
 | B-08 | Type and spacing scales are ad hoc                                | Consistency | L      | Medium |
 | B-09 | Four nearly identical radii and two spellings for the base radius | Consistency | S      | Low    |
-| B-10 | “Perfumeria” requires a brand and legal-name decision             | Brand       | S      | Medium |
 
 S means at most one file or a mechanical change; M means several files with a bounded criterion; L requires a prior design decision.
 
@@ -317,6 +316,8 @@ Keep `--border` decorative, set functional `--input` to a value reaching 3:1 on 
   review its focus outline if the trigger markup changes.
 - Storefront source comments no longer cite nonexistent `design/` or `brand/`
   files.
+- The owner confirmed the venture name as “ParfamMdq Perfumería”. The logo,
+  Open Graph image, and `siteDefaults.legalName` now use that spelling.
 
 ## B-08 · Typography and spacing are ad hoc
 
@@ -329,12 +330,6 @@ First, introduce a `Container` component or `@layer components` class for `mx-au
 The code uses `rounded` (4 px), `rounded-lg` (the same 4 px), `rounded-sm` (2.4 px), `rounded-[3px]`, and `rounded-[2px]`. The last three are visually indistinguishable in the small chips, badges, and characteristic steps where they are used; class names do not reveal whether a base radius is intentional.
 
 Replace `rounded-[3px]` and `rounded-[2px]` with `rounded-sm`, then choose one base spelling: `rounded-lg` to align with shadcn or bare `rounded` for brevity. Document the choice here; leave `--radius` and its scale intact. The largest visual shift is one radius pixel on 20 px controls.
-
-## B-10 · “Perfumeria” requires a brand and legal-name decision
-
-The old editable `SiteSetting.brandName` / `brandTagline` inconsistency no longer exists: branding is now fixed in `siteDefaults`. Customer-visible “Perfumeria” appears in the logo, Open Graph image, and `siteDefaults.legalName`.
-
-This may be intentional brand styling or a legal name, so the owner must decide whether “Perfumería” / “PERFUMERÍA” should replace it and whether `legalName` may change. Do not apply a copy correction as part of implementation terminology refactoring. Independently, the mobile footer can render `<Logo size="header">` rather than duplicate its markup.
 
 ---
 

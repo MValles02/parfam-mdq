@@ -69,7 +69,7 @@ export default async function Image() {
           paddingLeft: "0.45em",
         }}
       >
-        PERFUMERIA
+        PERFUMERÍA
       </div>
     </div>,
     {

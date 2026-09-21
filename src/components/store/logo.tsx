@@ -42,7 +42,7 @@ export function Logo({
           styles.subtitle,
         )}
       >
-        Perfumeria
+        Perfumería
       </span>
     </Tag>
   );

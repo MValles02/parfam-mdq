@@ -11,7 +11,7 @@
  */
 export const siteDefaults = {
   name: "ParfamMdq",
-  legalName: "ParfamMdq Perfumeria",
+  legalName: "ParfamMdq Perfumería",
   tagline: "No solo es un perfume",
   description:
     "Perfumes originales en Mar del Plata: frascos, testers y decants. Consultas y pedidos por WhatsApp.",

@@ -1,27 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ESTADO_PRODUCTO } from "@/lib/catalogo";
-import { listarAcordes, productoParaEditar } from "@/lib/admin/productos";
-import { r2Configurado } from "@/lib/r2";
+import { PRODUCT_STATUS_LABELS as productStatusLabels } from "@/lib/catalog";
+import { getProductForEdit, listAccords } from "@/lib/admin/products";
+import { isR2Configured } from "@/lib/r2";
 import { env } from "@/lib/env";
-import { ProductoForm } from "../_components/producto-form";
+import { ProductForm } from "../_components/product-form";
 
 export async function generateMetadata(
   props: PageProps<"/admin/productos/[id]">,
 ): Promise<Metadata> {
   const { id } = await props.params;
-  const producto = await productoParaEditar(id);
-  return { title: producto ? producto.name : "Producto" };
+  const product = await getProductForEdit(id);
+  return { title: product ? product.name : "Producto" };
 }
 
 export default async function Page(props: PageProps<"/admin/productos/[id]">) {
   const { id } = await props.params;
-  const [producto, acordes] = await Promise.all([
-    productoParaEditar(id),
-    listarAcordes(),
+  const [product, accords] = await Promise.all([
+    getProductForEdit(id),
+    listAccords(),
   ]);
-  if (!producto) notFound();
+  if (!product) notFound();
 
   return (
     <>
@@ -30,25 +30,24 @@ export default async function Page(props: PageProps<"/admin/productos/[id]">) {
           <Link href="/admin/productos" className="hover:text-foreground">
             Productos
           </Link>
-          {` · ${ESTADO_PRODUCTO[producto.status]}`}
+          {` · ${productStatusLabels[product.status]}`}
         </p>
         <h1 className="mt-1.5 text-3xl leading-none font-extrabold tracking-tight">
-          {producto.name}
+          {product.name}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          {producto.brand.name}
+          {product.brand.name}
         </p>
       </div>
 
-      {/* La `key` fuerza el remonte cuando el servidor devuelve datos nuevos
-          despues de guardar: sin eso el formulario seguiria con las variantes
-          e imagenes sin id y el proximo guardado las duplicaria. */}
-      <ProductoForm
-        key={producto.updatedAt.toISOString()}
-        producto={producto}
-        acordes={acordes}
-        r2Listo={r2Configurado()}
-        basePublica={env.R2_PUBLIC_URL ?? null}
+      {/* The key remounts the form after the server returns fresh data, keeping
+          persisted variant and image IDs for the next save. */}
+      <ProductForm
+        key={product.updatedAt.toISOString()}
+        product={product}
+        accords={accords}
+        isR2Configured={isR2Configured()}
+        publicBaseUrl={env.R2_PUBLIC_URL ?? null}
       />
     </>
   );

@@ -1,10 +1,10 @@
 export { cn } from "cn";
 
 /**
- * Cadena de foco visible para controles custom que no vienen de shadcn/ui
- * (los primitivos de `src/components/ui/` ya la traen incorporada). Mismo
- * criterio que usa `src/components/ui/input.tsx`: sin esto, un boton propio
- * cae al anillo por defecto del navegador, que no respeta `--ring`.
+ * Visible focus classes for custom controls outside shadcn/ui. Primitives in
+ * `src/components/ui/` already include them. This matches
+ * `src/components/ui/input.tsx`; without it, custom buttons fall back to the
+ * browser focus ring, which does not respect `--ring`.
  */
-export const FOCO_VISIBLE =
+export const FOCUS_VISIBLE =
   "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none";

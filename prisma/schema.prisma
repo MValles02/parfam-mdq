@@ -1,23 +1,23 @@
-// Esquema de Parfam MDQ.
+// Parfam MDQ schema.
 //
-// Tres capas:
-//   1. Referencia  — sembrada por scripts/import-fragrantica.ts, read-only en la app.
-//   2. Tienda      — lo que edita el admin (Product y sus relaciones).
-//   3. Operación   — pedidos, configuración del sitio y usuarios.
+// Three layers:
+//   1. Reference — seeded by scripts/import-fragrantica.ts and read-only in the app.
+//   2. Store — managed by the administrator (`Product` and its relations).
+//   3. Operations — orders, site settings, and users.
 
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
-// Prisma 7: la URL de conexión ya no va acá — vive en prisma.config.ts (para
-// Migrate/CLI) y en el driver adapter que arma src/lib/db.ts (para runtime).
+// Prisma 7 keeps the connection URL in prisma.config.ts for Migrate/CLI and
+// in the driver adapter created by src/lib/db.ts at runtime.
 datasource db {
   provider = "postgresql"
 }
 
 // ---------------------------------------------------------------------------
-// Enums compartidos
+// Shared enums
 // ---------------------------------------------------------------------------
 
 enum Gender {
@@ -78,11 +78,10 @@ enum UserRole {
 }
 
 // ---------------------------------------------------------------------------
-// Capa 1 — Referencia (sembrada desde data/fragrantica/*.csv)
+// Layer 1 — Reference data seeded from data/fragrantica/*.csv
 // ---------------------------------------------------------------------------
 
-/// Marca/casa perfumista. Se crea al vuelo durante el import a partir del
-/// segmento de marca en la URL de Fragrantica.
+/// Perfume brand or house. The importer creates it from the brand URL segment.
 model Brand {
   id        String   @id @default(cuid())
   slug      String   @unique
@@ -97,7 +96,7 @@ model Brand {
   @@index([name])
 }
 
-/// Perfumista/nariz detrás de la fragancia.
+/// Perfumer or nose behind the fragrance.
 model Perfumer {
   id        String   @id @default(cuid())
   slug      String   @unique
@@ -110,9 +109,9 @@ model Perfumer {
   @@index([name])
 }
 
-/// Nota olfativa (ingrediente). `nameEs` viene de
-/// data/dictionaries/notes.es.json; si no está traducida queda null y la UI
-/// cae al inglés hasta que se complete desde /admin/notas.
+/// Olfactory note or ingredient. `nameEs` comes from
+/// data/dictionaries/notes.es.json. It remains null until the administrator
+/// translates it through /admin/notas, when UI falls back to English.
 model Note {
   id         String   @id @default(cuid())
   slug       String   @unique
@@ -127,8 +126,8 @@ model Note {
   @@index([nameEn])
 }
 
-/// Acorde olfativo. `color` sale de data/dictionaries/accords.es.json
-/// (paleta propia, no copiada de ningún tercero).
+/// Olfactory accord. `color` comes from data/dictionaries/accords.es.json,
+/// an in-house palette that does not copy third-party data.
 model Accord {
   id        String   @id @default(cuid())
   slug      String   @unique
@@ -141,29 +140,29 @@ model Accord {
   products      ProductAccord[]
 }
 
-/// Una fragancia del catálogo de referencia (69.948 filas esperadas).
-/// Nunca se muestra directamente en la tienda: el admin la "adopta" creando
-/// un Product que copia estos datos y los deja editables.
+/// A fragrance in the reference catalog (69,948 expected rows). The store
+/// never displays it directly: an administrator adopts it into an editable
+/// `Product` copy.
 model FragranceRef {
   id            String   @id @default(cuid())
-  /// PID original del dataset (clave de join entre fra_cleaned y fra_perfumes).
+  /// Original dataset PID, joining fra_cleaned and fra_perfumes.
   pid           Int      @unique
   url           String
   brandId       String
   name          String
   year          Int?
   gender        Gender?
-  /// Interno: ordena resultados en el buscador del admin, nunca se publica.
+  /// Internal score used to rank administrator search results; never public.
   ratingValue   Decimal? @db.Decimal(3, 2)
   ratingCount   Int?
-  /// Interno: texto en inglés de Fragrantica, sólo referencia en el panel.
+  /// Internal English text from Fragrantica, used only as an admin reference.
   descriptionEn String?
   hasPyramid    Boolean  @default(false)
   originCountry String?
-  /// Desnormalizado: "<nombre> <marca>", normalizado y con indice GIN trgm
-  /// (ver la migracion busqueda_difusa_referencias). Sin esto el buscador del
-  /// panel no puede usar indice, porque el OR entre FragranceRef y Brand obliga
-  /// a un seq scan de las 70k filas. Lo escribe scripts/import-fragrantica.ts.
+  /// Denormalized "<name> <brand>" text, normalized and indexed with GIN trgm.
+  /// Without it, the admin search cannot use an index because an OR across
+  /// FragranceRef and Brand requires a sequential scan of 70k rows. Written by
+  /// scripts/import-fragrantica.ts.
   searchText    String   @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -196,8 +195,7 @@ model FragranceRefAccord {
   id             String @id @default(cuid())
   fragranceRefId String
   accordId       String
-  /// Orden de aparición en el dataset (1 = más relevante). El dataset no
-  /// trae porcentaje real, sólo el orden.
+  /// Dataset occurrence order (1 is most relevant); no real percentage exists.
   rank           Int
 
   fragranceRef FragranceRef @relation(fields: [fragranceRefId], references: [id], onDelete: Cascade)
@@ -220,7 +218,7 @@ model FragranceRefPerfumer {
 }
 
 // ---------------------------------------------------------------------------
-// Capa 2 — Tienda (lo que edita el admin)
+// Layer 2 — Store data managed by the administrator
 // ---------------------------------------------------------------------------
 
 model Product {
@@ -228,18 +226,18 @@ model Product {
   slug           String         @unique
   name           String
   brandId        String
-  /// Referencia adoptada, si vino del buscador. Null si se cargó a mano.
+  /// Adopted reference selected from search; null for a manually created item.
   fragranceRefId String?
-  /// Link a Fragrantica cuando no hay FragranceRef (carga manual).
+  /// Fragrantica URL for manual entries without a FragranceRef.
   sourceUrl      String?
-  /// Texto en español escrito por el admin — lo único que ve el cliente.
+  /// Spanish text written by the administrator; the only description customers see.
   description    String?
   gender         Gender?
   concentration  Concentration?
   year           Int?
   seasons        Season[]
   occasions      Occasion[]
-  /// Barras de carácter 1-5, fijadas por el admin (no votación pública).
+  /// Character bars from 1 to 5, set by the administrator instead of public votes.
   longevity      Int?
   sillage        Int?
   intensity      Int?
@@ -306,10 +304,9 @@ model ProductPerfumer {
 model ProductImage {
   id         String  @id @default(cuid())
   productId  String
-  /// Clave del objeto en Cloudflare R2 ("productos/2026/09/uuid.jpg"), nunca
-  /// una imagen de Fragrantica. Se guarda la clave y no la URL absoluta para
-  /// que el host público (R2_PUBLIC_URL) sea configuración: cambiarlo no
-  /// obliga a reescribir las filas ya cargadas.
+  /// Cloudflare R2 object key ("productos/2026/09/uuid.jpg"), never a
+  /// Fragrantica image. Storing a key instead of an absolute URL makes the
+  /// public host (R2_PUBLIC_URL) configurable without rewriting existing rows.
   storageKey String
   alt        String?
   sortOrder  Int     @default(0)
@@ -326,7 +323,7 @@ model ProductVariant {
   kind      VariantKind
   sizeMl    Int?
   priceArs  Decimal     @db.Decimal(10, 2)
-  /// Sin stock: el admin activa/desactiva la variante a mano.
+  /// Out of stock is represented by an administrator toggling this variant.
   isActive  Boolean     @default(true)
   sortOrder Int         @default(0)
   sku       String?
@@ -338,12 +335,12 @@ model ProductVariant {
 }
 
 // ---------------------------------------------------------------------------
-// Capa 3 — Pedidos, configuración y usuarios
+// Layer 3 — Orders, settings, and users
 // ---------------------------------------------------------------------------
 
 model Order {
   id            String      @id @default(cuid())
-  /// Correlativo legible para el cliente y el admin, ej. "PM-0042".
+  /// Customer and administrator readable sequence, for example "PM-0042".
   number        String      @unique
   customerName  String
   customerPhone String
@@ -362,11 +359,11 @@ model Order {
 model OrderItem {
   id           String  @id @default(cuid())
   orderId      String
-  /// FKs opcionales: si el producto o la variante se borran despues, el
-  /// pedido no se rompe, sólo pierde el link de navegación.
+  /// Optional FKs prevent an order from breaking when a product or variant is
+  /// deleted; it only loses its navigation link.
   productId    String?
   variantId    String?
-  /// Snapshot al momento de la compra — nunca cambia con el catálogo.
+  /// Purchase-time snapshot that never changes with the catalog.
   productName  String
   variantLabel String
   unitPriceArs Decimal @db.Decimal(10, 2)
@@ -379,7 +376,7 @@ model OrderItem {
   @@index([orderId])
 }
 
-/// Fila única (singleton) con la configuración editable desde /admin/configuracion.
+/// Singleton row with settings editable from /admin/configuracion.
 model SiteSetting {
   id                      String   @id @default("singleton")
   whatsappNumber          String

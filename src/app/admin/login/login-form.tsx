@@ -6,7 +6,7 @@ import { AlertCircle, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { login, type LoginState } from "./actions";
+import { authenticate, type LoginState } from "./actions";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,12 +28,17 @@ function SubmitButton() {
   );
 }
 
-export function LoginForm({ volverA }: { volverA?: string }) {
-  const [state, formAction] = useActionState<LoginState, FormData>(login, {});
+export function LoginForm({ returnTo }: { returnTo?: string }) {
+  const [state, formAction] = useActionState<LoginState, FormData>(
+    authenticate,
+    {},
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      {volverA ? <input type="hidden" name="volverA" value={volverA} /> : null}
+      {returnTo ? (
+        <input type="hidden" name="volverA" value={returnTo} />
+      ) : null}
 
       <div className="flex flex-col gap-2">
         <Label

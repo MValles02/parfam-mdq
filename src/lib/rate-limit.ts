@@ -1,9 +1,9 @@
 import { LRUCache } from "lru-cache";
 
 /**
- * Rate limit en memoria. Alcanza porque la app corre con una sola réplica;
- * si algún día se escala horizontalmente hay que moverlo a Redis, porque
- * cada instancia tendría su propio contador.
+ * In-memory rate limit. It works because the application has one replica. A
+ * horizontally scaled deployment needs Redis because each instance would keep
+ * its own counter.
  */
 const buckets = new LRUCache<string, number[]>({
   max: 5_000,
@@ -12,12 +12,12 @@ const buckets = new LRUCache<string, number[]>({
 
 export interface RateLimitResult {
   ok: boolean;
-  /** Segundos que faltan para poder reintentar, cuando `ok` es false. */
+  /** Seconds before a retry is allowed when `ok` is false. */
   retryAfter: number;
 }
 
 /**
- * Ventana deslizante: permite `limit` intentos cada `windowMs`.
+ * Sliding window that allows `limit` attempts every `windowMs`.
  */
 export function rateLimit(
   key: string,
@@ -39,7 +39,7 @@ export function rateLimit(
   return { ok: true, retryAfter: 0 };
 }
 
-/** Borra el contador de una clave — se usa tras un login exitoso. */
+/** Clears a key counter after a successful sign-in. */
 export function resetRateLimit(key: string): void {
   buckets.delete(key);
 }

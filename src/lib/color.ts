@@ -1,42 +1,40 @@
 /**
- * Colores legibles para los chips de acordes.
+ * Legible colors for accord chips.
  *
- * Los 93 acordes traen su color propio desde la base (`Accord.color`, del
- * diccionario en data/dictionaries/accords.es.json). Es el unico color del
- * sitio que no sale de un token de globals.css -- justamente porque es un
- * dato, no una decision de tema -- y por eso el texto que va encima tampoco
- * puede salir de un token: tiene que contrastar contra ese hex, que puede
- * caer en cualquier punto de la rampa.
+ * The 93 accords each have their own database color (`Accord.color`, from
+ * data/dictionaries/accords.es.json). It is the only site color that does
+ * not come from a globals.css token because it is data rather than a theme
+ * decision. Its foreground cannot use a token either: it must contrast with
+ * that hex value, which can fall anywhere on the color ramp.
  *
- * Elegir el mejor de los dos extremos de la paleta no alcanza: 40 de los 93
- * colores son tonos medios que no llegan a 4,5:1 contra ninguno de los dos
- * (el mejor caso da 4,01), y el texto del chip es de 12 px, asi que WCAG AA
- * pide 4,5:1. Por eso el fondo se corrige: se lo aleja del color del texto lo
- * justo para llegar al umbral. El ajuste maximo sobre el diccionario actual es
- * de un 8 % hacia el otro extremo -- el tono se mantiene, el chip sigue siendo
- * reconociblemente el color del acorde.
+ * Choosing the better palette endpoint is insufficient: 40 of the 93 colors
+ * are middle tones that do not reach 4.5:1 against either endpoint (the best
+ * case is 4.01), and chip text is 12 px, so WCAG AA requires 4.5:1. Adjust
+ * the background just enough away from the foreground to reach that threshold.
+ * The maximum adjustment in the current dictionary is 8% toward the opposite
+ * endpoint, preserving the accord's recognizable hue.
  */
 
-const TINTA = "#14120F";
-const CREMA = "#F2EEE9";
+const INK = "#14120F";
+const CREAM = "#F2EEE9";
 
-/** WCAG AA para texto normal. El chip tiene 12 px, no califica como grande. */
-const CONTRASTE_MINIMO = 4.5;
+/** WCAG AA for normal text. The 12 px chip text does not qualify as large. */
+const MINIMUM_CONTRAST = 4.5;
 
-/** Cuanto se acerca el fondo al otro extremo en cada intento. */
-const PASO = 0.02;
+/** The amount each iteration moves the background toward the other endpoint. */
+const STEP = 0.02;
 
 type Rgb = [number, number, number];
 
-function aRgb(hex: string): Rgb | null {
-  const limpio = hex.trim().replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(limpio)) return null;
-  return [0, 2, 4].map((i) =>
-    Number.parseInt(limpio.slice(i, i + 2), 16),
+function toRgb(hex: string): Rgb | null {
+  const normalizedHex = hex.trim().replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(normalizedHex)) return null;
+  return [0, 2, 4].map((index) =>
+    Number.parseInt(normalizedHex.slice(index, index + 2), 16),
   ) as Rgb;
 }
 
-function aHex(rgb: Rgb): string {
+function toHex(rgb: Rgb): string {
   return `#${rgb
     .map((v) =>
       Math.round(Math.min(255, Math.max(0, v)))
@@ -46,62 +44,65 @@ function aHex(rgb: Rgb): string {
     .join("")}`;
 }
 
-/** Canal a luz lineal, como define WCAG para la luminancia relativa. */
-function lineal(canal: number): number {
-  return canal <= 0.04045
-    ? canal / 12.92
-    : Math.pow((canal + 0.055) / 1.055, 2.4);
+/** Converts a color channel to linear light as WCAG defines relative luminance. */
+function toLinearLight(channel: number): number {
+  return channel <= 0.04045
+    ? channel / 12.92
+    : Math.pow((channel + 0.055) / 1.055, 2.4);
 }
 
-function luminancia([r, g, b]: Rgb): number {
+function getLuminance([red, green, blue]: Rgb): number {
   return (
-    0.2126 * lineal(r / 255) +
-    0.7152 * lineal(g / 255) +
-    0.0722 * lineal(b / 255)
+    0.2126 * toLinearLight(red / 255) +
+    0.7152 * toLinearLight(green / 255) +
+    0.0722 * toLinearLight(blue / 255)
   );
 }
 
-/** Razon de contraste WCAG entre dos colores, de 1 a 21. */
-function contraste(a: Rgb, b: Rgb): number {
-  const la = luminancia(a);
-  const lb = luminancia(b);
-  const [alto, bajo] = la > lb ? [la, lb] : [lb, la];
-  return (alto + 0.05) / (bajo + 0.05);
+/** WCAG contrast ratio between two colors, from 1 to 21. */
+function getContrastRatio(first: Rgb, second: Rgb): number {
+  const firstLuminance = getLuminance(first);
+  const secondLuminance = getLuminance(second);
+  const [higher, lower] =
+    firstLuminance > secondLuminance
+      ? [firstLuminance, secondLuminance]
+      : [secondLuminance, firstLuminance];
+  return (higher + 0.05) / (lower + 0.05);
 }
 
-function mezclar(desde: Rgb, hacia: Rgb, proporcion: number): Rgb {
-  return desde.map((v, i) => v + (hacia[i] - v) * proporcion) as Rgb;
+function blend(from: Rgb, to: Rgb, ratio: number): Rgb {
+  return from.map((value, index) => value + (to[index] - value) * ratio) as Rgb;
 }
 
-export type ColorDeChip = { fondo: string; texto: string };
+export type ChipColor = { background: string; foreground: string };
 
 /**
- * Devuelve el fondo y el color de texto de un chip de acorde, garantizando
- * 4,5:1. Si el color no es un hex valido, cae a los tokens neutros por las
- * dudas: un chip ilegible es peor que un chip sin color.
+ * Returns an accord chip's background and foreground while guaranteeing 4.5:1.
+ * Invalid hex colors fall back to neutral tokens because an uncolored chip is
+ * better than an illegible one.
  */
-export function colorDeChip(color: string): ColorDeChip {
-  const base = aRgb(color);
-  if (!base) return { fondo: CREMA, texto: TINTA };
+export function getChipColor(color: string): ChipColor {
+  const base = toRgb(color);
+  if (!base) return { background: CREAM, foreground: INK };
 
-  const tinta = aRgb(TINTA)!;
-  const crema = aRgb(CREMA)!;
+  const ink = toRgb(INK)!;
+  const cream = toRgb(CREAM)!;
 
-  // Se arranca por el extremo que ya contrasta mejor: asi el ajuste posterior
-  // es el minimo posible.
-  const usaTinta = contraste(base, tinta) >= contraste(base, crema);
-  const texto = usaTinta ? tinta : crema;
-  const opuesto = usaTinta ? crema : tinta;
+  // Start from the endpoint that already has the better contrast so the later
+  // adjustment is as small as possible.
+  const usesInk = getContrastRatio(base, ink) >= getContrastRatio(base, cream);
+  const foreground = usesInk ? ink : cream;
+  const opposite = usesInk ? cream : ink;
 
-  if (contraste(base, texto) >= CONTRASTE_MINIMO) {
-    return { fondo: aHex(base), texto: aHex(texto) };
+  if (getContrastRatio(base, foreground) >= MINIMUM_CONTRAST) {
+    return { background: toHex(base), foreground: toHex(foreground) };
   }
 
-  for (let p = PASO; p <= 1; p += PASO) {
-    const candidato = mezclar(base, opuesto, p);
-    if (contraste(candidato, texto) >= CONTRASTE_MINIMO) {
-      return { fondo: aHex(candidato), texto: aHex(texto) };
+  for (let ratio = STEP; ratio <= 1; ratio += STEP) {
+    const candidate = blend(base, opposite, ratio);
+    if (getContrastRatio(candidate, foreground) >= MINIMUM_CONTRAST) {
+      return { background: toHex(candidate), foreground: toHex(foreground) };
     }
   }
-  return { fondo: aHex(opuesto), texto: aHex(texto) };
+  return { background: toHex(opposite), foreground: toHex(foreground) };
 }

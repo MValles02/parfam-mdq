@@ -19,7 +19,7 @@ export interface NoteDictEntry {
   usageCount: number;
 }
 
-/** slug -> canonical english name, para fusionar typos del dataset (ver README). */
+/** slug -> canonical English name, used to merge dataset typos. */
 export function loadNoteAliases(): Map<string, string> {
   const raw = JSON.parse(
     readFileSync(path.join(DICT_DIR, "note-aliases.json"), "utf-8"),
@@ -32,7 +32,7 @@ export function loadNoteAliases(): Map<string, string> {
   return map;
 }
 
-/** nombre en ingles (lowercase, tal cual aparece en los CSV) -> entrada del diccionario. */
+/** Lowercase English name as it appears in CSV files -> dictionary entry. */
 export function loadAccordDict(): Map<string, AccordDictEntry> {
   const list = JSON.parse(
     readFileSync(path.join(DICT_DIR, "accords.es.json"), "utf-8"),

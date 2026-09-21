@@ -3,9 +3,9 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { env } from "@/lib/env";
 
 /**
- * Cliente Prisma singleton. En dev, Next.js recarga módulos en caliente y
- * cada recarga crearía un pool de conexiones nuevo si no lo cacheamos en
- * `globalThis` — el patrón estándar para evitar agotar conexiones locales.
+ * Prisma client singleton. In development, Next.js hot-reloads modules, and
+ * each reload would create a new connection pool without a `globalThis` cache.
+ * This standard pattern avoids exhausting local connections.
  */
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

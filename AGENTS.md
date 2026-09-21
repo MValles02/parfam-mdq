@@ -10,121 +10,115 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Parfam MDQ
 
-Tienda de perfumes (frascos, testers y decants) en Mar del Plata, con checkout
-por WhatsApp y panel de administracion. **No cobra**: el checkout persiste el
-pedido, le da un numero correlativo (`PM-0042`) y devuelve un link `wa.me` con
-el detalle escrito. El pago y la entrega se arreglan por chat.
+Perfume store for Mar del Plata (bottles, testers, and decants), with a
+WhatsApp checkout and an administration panel. It **does not charge**: checkout
+persists the order, assigns a sequential number (`PM-0042`), and returns a
+prewritten `wa.me` link. Payment and delivery are arranged in chat.
 
-Aplicacion unica de Next.js (no es monorepo): un proceso sirve la tienda y el
-panel, contra un Postgres y un bucket de Cloudflare R2.
+This is one Next.js application, not a monorepo. One process serves the store
+and the panel, backed by PostgreSQL and a Cloudflare R2 bucket.
 
-## Documentacion
+## Documentation
 
-`docs/` es el mapa tecnico del sistema, escrito contra el codigo. Empezar por
-[`docs/README.md`](docs/README.md), que tiene el indice y una tabla de
-"donde toco para cambiar X".
+`docs/` is the technical map of the system and is maintained against the code.
+Start with [`docs/README.md`](docs/README.md), which contains the index and a
+"where to change X" table.
 
-| Necesito…                             | Leer                     |
-| ------------------------------------- | ------------------------ |
-| Entender capas, modulos y boundaries  | `docs/architecture.md`   |
-| Encontrar una ruta o su archivo       | `docs/routes.md`         |
-| Server Actions y endpoints            | `docs/api.md`            |
-| Seguir un caso de uso end-to-end      | `docs/flows/`            |
-| Entender un dominio a fondo           | `docs/modules/`          |
-| Modelo de datos, indices, migraciones | `docs/persistence.md`    |
-| Login, sesion, guards, permisos       | `docs/authentication.md` |
-| Caches, revalidacion, estado          | `docs/data-flow.md`      |
-| R2, WhatsApp, variables de entorno    | `docs/integrations.md`   |
-| Docker, CI, migraciones en runtime    | `docs/deployment.md`     |
-| Deuda conocida y riesgos abiertos     | `docs/findings.md`       |
+| Need                                       | Read                     |
+| ------------------------------------------ | ------------------------ |
+| Understand layers, modules, and boundaries | `docs/architecture.md`   |
+| Find a route or its file                   | `docs/routes.md`         |
+| Server Actions and endpoints               | `docs/api.md`            |
+| Follow an end-to-end use case              | `docs/flows/`            |
+| Understand a domain in depth               | `docs/modules/`          |
+| Data model, indexes, and migrations        | `docs/persistence.md`    |
+| Login, session, guards, and permissions    | `docs/authentication.md` |
+| Caches, revalidation, and state            | `docs/data-flow.md`      |
+| R2, WhatsApp, and environment variables    | `docs/integrations.md`   |
+| Docker, CI, and runtime migrations         | `docs/deployment.md`     |
+| Known debt and open risks                  | `docs/findings.md`       |
 
-Si algo de `docs/` contradice al codigo, **gana el codigo** — y corregir el
-documento es parte del cambio.
+If `docs/` contradicts the code, **the code wins**. Correcting the document is
+part of the change.
 
 ## Stack
 
 Next.js 16 (App Router, Server Actions) · React 19 · TypeScript ·
-Tailwind v4 · shadcn/ui (preset `radix-nova`, iconos Lucide) ·
+Tailwind v4 · shadcn/ui (preset `radix-nova`, Lucide icons) ·
 Prisma 7 + PostgreSQL · Auth.js v5 (JWT, provider Credentials + argon2) ·
-`nuqs` (estado en la URL) · `zustand` (carrito) · `zod` (validacion) ·
+`nuqs` (URL state) · `zustand` (cart) · `zod` (validation) ·
 `react-hook-form` · Cloudflare R2.
 Deploy: Docker multi-stage → GHCR → Dokploy.
 
-## Reglas que no se negocian
+## Non-negotiable rules
 
-- **Precios en ARS con `Decimal` de Prisma, nunca `float`.** Viajan como
-  `string` hacia el cliente (un `Decimal` no es serializable a un Client
-  Component) y los calculos que se persisten usan `Prisma.Decimal`.
-- **El precio sale siempre de la base.** Toda Server Action que escriba
-  relee `ProductVariant.priceArs` y descarta el que mando el cliente.
-- **Los pedidos guardan snapshot** de nombre, variante y precio en `OrderItem`.
-  Un cambio de precio o el borrado de un producto no pueden alterar un pedido
-  ya hecho: las FK son opcionales y van con `onDelete: SetNull`.
-- **La tienda solo muestra productos `PUBLISHED` con variantes `isActive`.**
-  Esto se filtra en la consulta, no en el componente: un borrador tiene que dar
-  404 aunque se conozca el slug.
-- **Toda Server Action del panel arranca con `requireAdmin()`.** Una Server
-  Action es un endpoint POST publico: el layout de `/admin` protege lo que se
-  renderiza, no los datos. `src/proxy.ts` es solo una redireccion optimista.
-- **Nada del cliente se cree sin verificar**: ids de notas/acordes/perfumistas,
-  claves de R2 (`esClaveDeProducto`), `variantId`, `contentType` de una subida.
+- **Use Prisma `Decimal` for ARS prices; never `float`.** Prices cross to the
+  client as `string` because `Decimal` is not Client Component serializable;
+  persisted calculations use `Prisma.Decimal`.
+- **The database is always the price source.** Each writing Server Action
+  rereads `ProductVariant.priceArs` and ignores the client supplied price.
+- **Orders keep name, variant, and price snapshots in `OrderItem`.** A price
+  change or product deletion cannot alter an existing order: FKs are optional
+  and use `onDelete: SetNull`.
+- **The store exposes only `PUBLISHED` products with `isActive` variants.**
+  This belongs in the query, not the component; a known draft slug returns 404.
+- **Every panel Server Action begins with `requireAdmin()`.** A Server Action is
+  a public POST endpoint. The `/admin` layout protects rendering, not data;
+  `src/proxy.ts` only performs an optimistic redirect.
+- **Verify all client input**: note, accord, and perfumer IDs; R2 keys
+  (`isProductStorageKey`); `variantId`; and an upload `contentType`.
 
-## Convenciones
+## Conventions
 
-- **Usar librerias existentes.** Antes de escribir un componente o utilidad,
-  revisar si ya existe en shadcn/ui o en el ecosistema. El stack de arriba y
-  `docs/architecture.md` tienen lo que ya esta elegido.
-- **UI en espaniol** (es-AR, voseo). El codigo, los identificadores y los
-  commits en ingles o castellano sin tildes; los textos de cara al usuario
-  siempre en espaniol y con tildes.
-- **Comentarios autoexplicativos.** Un comentario tiene que entenderse solo:
-  explicar el _por que_ de una decision, sin depender de un documento externo
-  ni de vocabulario de proyecto. Si hace falta una referencia, que sea a un
-  archivo que existe en el repo.
-- **Estado de filtros en la URL** (`nuqs`), no en estado local: los parsers se
-  definen una sola vez y los comparten el Server Component y los controles.
-- **Consultas fuera de las rutas.** Las paginas orquestan; las consultas viven
-  en `src/lib/tienda/` (publicas) y `src/lib/admin/` (panel). Ninguno de esos
-  dos importa al otro: lo comun sube a `src/lib/`.
-- **Un Client Component no puede importar un modulo que traiga Prisma.** Si
-  necesita un dato o una etiqueta de ahi, se le pasa como prop.
-- **Validacion con el mismo schema en las dos puntas** (`src/lib/validations/`):
-  el cliente valida para dar feedback, el servidor porque es el unico borde real.
+- **Use existing libraries.** Before writing a component or utility, check
+  shadcn/ui and the selected ecosystem in `docs/architecture.md`.
+- **Use English for code, identifiers, comments, commits, and developer docs.**
+  Keep user-facing UI in Spanish (`es-AR`, including voseo and accents).
+- **Write self-contained comments.** Explain why a decision exists without
+  relying on an external document or project-specific vocabulary. References
+  must point to a file that exists in this repository.
+- **Keep filter state in the URL** with `nuqs`, not local state. Define parsers
+  once and share them between Server Components and controls.
+- **Keep queries outside routes.** Pages orchestrate; public queries live in
+  `src/lib/store/`, panel queries in `src/lib/admin/`. Shared code belongs in
+  `src/lib/`.
+- **Client Components cannot import modules that bring Prisma.** Pass data or
+  labels as props.
+- **Use the same validation schema on both sides** (`src/lib/validations/`):
+  the client provides feedback and the server is the actual boundary.
 
-## Datos
+## Data
 
-`data/fragrantica/` tiene los CSV de referencia (69.948 fragancias) — ver el
-README de esa carpeta para el formato y las trampas del parseo.
-`data/dictionaries/` tiene las traducciones al espaniol de notas y acordes, que
-el dataset no trae.
+`data/fragrantica/` holds the 69,948 reference-fragrance CSV records; see its
+README for the format and parser traps. `data/dictionaries/` holds Spanish note
+and accord translations missing from the dataset.
 
-Las imagenes y descripciones de Fragrantica **no se muestran en publico**: son
-referencia interna del panel. Las fotos son propias, en R2, y los textos los
-escribe el admin en espaniol.
+Fragrantica images and descriptions are **never public**. They are internal
+panel reference material. Photos are stored in R2 and customer copy is written
+in Spanish by an administrator.
 
-Las migraciones ya aplicadas son artefactos historicos: **no se editan**, ni
-siquiera sus comentarios. Un cambio de esquema es una migracion nueva.
+Applied migrations are historical artifacts: **do not edit them**, including
+their comments. Create a new migration for a schema change.
 
-## Comandos
+## Commands
 
 ```bash
-pnpm dev          # servidor de desarrollo
-pnpm build        # build de produccion (prisma generate + next build)
+pnpm dev          # development server
+pnpm build        # production build (prisma generate + next build)
 pnpm typecheck    # tsc --noEmit
 pnpm lint         # eslint
 pnpm format       # prettier --write
-pnpm db:up        # Postgres local (docker compose, puerto 5433)
+pnpm db:up        # local PostgreSQL (Docker Compose, port 5433)
 pnpm db:down
 pnpm db:migrate   # prisma migrate dev
-pnpm db:seed      # usuario admin + fila singleton de SiteSetting
-pnpm db:seed-dev  # productos de ejemplo (necesita R2 configurado)
-pnpm db:import-fragrantica   # catalogo de referencia (acepta --limit N)
+pnpm db:seed      # admin user + singleton SiteSetting row
+pnpm db:seed-dev  # example products (requires configured R2)
+pnpm db:import-fragrantica   # reference catalog (accepts --limit N)
 ```
 
-## Antes de dar algo por terminado
+## Before declaring work complete
 
-`pnpm typecheck`, `pnpm lint` y `pnpm test` (Vitest) tienen que pasar limpios.
-El único archivo de tests hoy es `scripts/lib/fragrantica-parse.test.ts`, para
-los parsers del importador. No hay Playwright ni ningún e2e instalado, pese a
-lo que decía un comentario viejo (ver F-09 en `docs/findings.md`). El CI no
-corre ninguno de los tres — buildea y publica.
+`pnpm typecheck`, `pnpm lint`, and `pnpm test` (Vitest) must pass cleanly. The
+current test coverage covers the importer parsers and cart migration. Playwright
+and other end-to-end tooling are not installed. CI builds and publishes but does
+not run these checks.

@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 import { authConfig } from "@/lib/auth.config";
 
 /**
- * En Next 16 `middleware.ts` pasó a llamarse `proxy.ts` y corre en runtime
- * Node (antes era Edge). Ver node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md
+ * In Next 16, `middleware.ts` was renamed to `proxy.ts` and runs in the Node
+ * runtime. See node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md.
  *
- * Esto es un chequeo optimista para redirigir rápido: valida el JWT de la
- * cookie, no consulta la base. La autorización de verdad la hace el layout
- * de `/admin` con `auth()`, que es lo que protege los datos.
+ * This is an optimistic check for fast redirects: it validates the cookie JWT
+ * without querying the database. The `/admin` layout uses `auth()` for the
+ * authorization that protects data.
  */
 const { auth } = NextAuth(authConfig);
 
@@ -18,7 +18,7 @@ export default auth((req) => {
   const isLoginPage = pathname === "/admin/login";
 
   if (isLoginPage) {
-    // Ya logueado: no tiene sentido mostrarle el login de nuevo.
+    // An authenticated user does not need to see the login screen again.
     if (isLoggedIn) {
       return NextResponse.redirect(new URL("/admin", req.nextUrl));
     }
@@ -27,7 +27,7 @@ export default auth((req) => {
 
   if (!isLoggedIn) {
     const loginUrl = new URL("/admin/login", req.nextUrl);
-    // Para volver a donde queria ir despues de entrar.
+    // Preserve the requested destination after a successful sign-in.
     loginUrl.searchParams.set("volverA", pathname + search);
     return NextResponse.redirect(loginUrl);
   }

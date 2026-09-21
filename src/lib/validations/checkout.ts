@@ -5,24 +5,21 @@ import {
 import { z } from "zod";
 
 /**
- * Contrato del checkout: el mismo schema en cliente y servidor (mismo patrón
- * que `src/lib/validations/producto.ts`). El cliente valida para dar
- * feedback; el servidor porque es el único borde real (AGENTS.md).
+ * Checkout request contract shared by client and server. The client provides
+ * feedback while the server enforces the real boundary; see AGENTS.md.
  */
 
-const itemCheckoutSchema = z.object({
+const checkoutItemSchema = z.object({
   variantId: z.string().min(1),
   qty: z.number().int().min(1).max(99),
 });
 
 /**
- * `libphonenumber-js` normaliza los mil formatos en que un argentino escribe
- * su número ("223 616-3910", "0223 15 6163910", "+54 9 223…") contra la
- * región AR — no hace falta (ni conviene) parsearlo a mano.
+ * libphonenumber-js normalizes Argentine phone-number formats such as
+ * "223 616-3910", "0223 15 6163910", and "+54 9 223…" for the AR region.
  */
-// Se exporta: `src/lib/validations/configuracion.ts` la reusa para el número
-// de WhatsApp de `SiteSetting` (mismo criterio, AGENTS.md).
-export const telefono = z
+// This schema is also used for SiteSetting's WhatsApp number validation.
+export const phoneSchema = z
   .string()
   .trim()
   .min(6, "Ese teléfono no parece completo.")
@@ -30,39 +27,32 @@ export const telefono = z
     (v) => isValidPhoneNumber(v, "AR"),
     "Revisá el teléfono: no parece un número argentino válido.",
   )
-  // E.164 ("+5492236163910"): es lo que se guarda en Order.customerPhone y lo
-  // que arma el link wa.me del admin al chat del cliente.
+  // E.164 values are stored in Order.customerPhone and used to create admin
+  // wa.me chat links.
   .transform((v) => parsePhoneNumberWithError(v, "AR").number);
 
-export const checkoutSchema = z.object({
+export const checkoutRequestSchema = z.object({
   nombre: z
     .string()
     .trim()
     .min(2, "Poné tu nombre completo.")
     .max(120, "Nombre muy largo."),
-  telefono,
-  items: z.array(itemCheckoutSchema).min(1, "Tu carrito está vacío.").max(50),
+  telefono: phoneSchema,
+  items: z.array(checkoutItemSchema).min(1, "Tu carrito está vacío.").max(50),
 });
-
-type CheckoutFormInput = z.input<typeof checkoutSchema>;
-type CheckoutFormValues = z.output<typeof checkoutSchema>;
 
 /**
- * Lo que valida react-hook-form en el cliente: sólo nombre y teléfono, y el
- * teléfono con un chequeo liviano (largo mínimo), no el `isValidPhoneNumber`
- * completo de `checkoutSchema`. Motivo: el input del cliente sólo tiene el
- * número local (el "+54 9" es un prefijo fijo en la UI, ver
- * `FormularioCheckout`), así que validarlo con la región AR acá daría falso
- * negativo todo el tiempo -- el string completo recién existe cuando se arma
- * `"+54 9 " + telefono` antes de mandarlo al servidor. La validación real
- * (y la que manda) es la del servidor, que si rechaza el teléfono vuelve el
- * error por campo y el formulario lo muestra con `setError`.
+ * This React Hook Form schema validates only the customer name and a minimum
+ * phone length. The client input contains only the local number; the UI adds
+ * the fixed "+54 9" prefix before sending it. Full AR validation therefore
+ * belongs on the server, which returns field errors that CheckoutForm renders
+ * with `setError`.
  *
- * `items` tampoco es un campo de este formulario -- sale del carrito de
- * Zustand al armar el envío -- así que no entra en este schema.
+ * `items` comes from the Zustand cart while building the request, so it does
+ * not belong to this form schema.
  */
-export const checkoutClienteSchema = z.object({
-  nombre: checkoutSchema.shape.nombre,
+export const checkoutCustomerSchema = z.object({
+  nombre: checkoutRequestSchema.shape.nombre,
   telefono: z.string().trim().min(6, "Ese teléfono no parece completo."),
 });
-export type CheckoutClienteInput = z.input<typeof checkoutClienteSchema>;
+export type CheckoutCustomerInput = z.input<typeof checkoutCustomerSchema>;

@@ -26,9 +26,9 @@ export interface MergedFragrance {
   ratingCount: number | null;
   descriptionEn: string | null;
   originCountry: string | null;
-  /** Nombres de perfumista, sin normalizar (se resuelven a slug al escribir). */
+  /** Unnormalized perfumer names, resolved to slugs on write. */
   perfumerNames: string[];
-  /** Nombres de acorde en minuscula, en el orden del dataset. */
+  /** Lowercase accord names in dataset order. */
   accordNames: string[];
   pyramid: Pyramid | null;
 }
@@ -38,16 +38,16 @@ interface Options {
 }
 
 /**
- * Lee y fusiona fra_perfumes.csv + fra_cleaned.csv en un Map por pid.
- * fra_perfumes.csv es la base (union completa de pids); fra_cleaned.csv la
- * enriquece/pisa donde tiene mejor dato. Ver data/fragrantica/README.md.
+ * Reads and merges fra_perfumes.csv + fra_cleaned.csv into a PID map.
+ * fra_perfumes.csv is the complete PID base; fra_cleaned.csv enriches or
+ * overrides fields where it has better data.
  */
 export function readAndMergeFragrantica(
   opts: Options,
 ): Map<number, MergedFragrance> {
   const merged = new Map<number, MergedFragrance>();
 
-  // ---- fra_perfumes.csv (utf-8, delimitador ",") — base -------------------
+  // ---- fra_perfumes.csv (utf-8, comma delimiter) — base ------------------
   const perfumesPath = path.join(opts.dataDir, "fra_perfumes.csv");
   const perfumesRaw = readFileSync(perfumesPath, "utf-8");
   const perfumesRows = parseCsvSync(perfumesRaw, {
@@ -58,7 +58,7 @@ export function readAndMergeFragrantica(
   for (const row of perfumesRows) {
     const parts = parseFragranticaUrl(row.url ?? "");
     if (!parts) continue;
-    if (merged.has(parts.pid)) continue; // fra_perfumes.csv trae ~155 pids duplicados
+    if (merged.has(parts.pid)) continue; // fra_perfumes.csv has about 155 duplicate PIDs
 
     const description = row.Description ?? "";
     const pyramid = parsePyramidFromDescription(description);
@@ -89,7 +89,7 @@ export function readAndMergeFragrantica(
     });
   }
 
-  // ---- fra_cleaned.csv (windows-1252, delimitador ";") — enriquece --------
+  // ---- fra_cleaned.csv (windows-1252, semicolon delimiter) — enriches -----
   const cleanedPath = path.join(opts.dataDir, "fra_cleaned.csv");
   const cleanedBuffer = readFileSync(cleanedPath);
   const cleanedText = new TextDecoder("windows-1252").decode(cleanedBuffer);

@@ -3,55 +3,55 @@
 import { revalidatePath } from "next/cache";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
-import { fallo, type Resultado } from "@/lib/admin/resultado";
+import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { prisma } from "@/lib/db";
 
 /**
- * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
- * es un endpoint POST publico: el layout de /admin no la protege.
+ * Every action in this file starts with `requireAdmin()`. A Server Action is a
+ * public POST endpoint, so the `/admin` layout does not protect it.
  */
 
-function revalidarPedido(id: string) {
+function revalidateOrder(id: string) {
   revalidatePath("/admin/pedidos");
   revalidatePath(`/admin/pedidos/${id}`);
 }
 
-export async function cambiarEstadoPedido(
+export async function changeOrderStatus(
   id: string,
-  estado: OrderStatus,
-): Promise<Resultado> {
+  status: OrderStatus,
+): Promise<ActionResult> {
   await requireAdmin();
 
-  const existe = await prisma.order.findUnique({
+  const orderExists = await prisma.order.findUnique({
     where: { id },
     select: { id: true },
   });
-  if (!existe) return fallo("Ese pedido ya no existe.");
+  if (!orderExists) return actionFailure("Ese pedido ya no existe.");
 
   await prisma.order.update({
     where: { id },
-    data: { status: estado },
+    data: { status },
   });
-  revalidarPedido(id);
+  revalidateOrder(id);
   return { ok: true };
 }
 
-export async function guardarNotasPedido(
+export async function saveOrderNotes(
   id: string,
-  notas: string,
-): Promise<Resultado> {
+  notes: string,
+): Promise<ActionResult> {
   await requireAdmin();
 
-  const existe = await prisma.order.findUnique({
+  const orderExists = await prisma.order.findUnique({
     where: { id },
     select: { id: true },
   });
-  if (!existe) return fallo("Ese pedido ya no existe.");
+  if (!orderExists) return actionFailure("Ese pedido ya no existe.");
 
   await prisma.order.update({
     where: { id },
-    data: { adminNotes: notas.trim() || null },
+    data: { adminNotes: notes.trim() || null },
   });
-  revalidarPedido(id);
+  revalidateOrder(id);
   return { ok: true };
 }

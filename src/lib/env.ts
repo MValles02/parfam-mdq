@@ -2,22 +2,22 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 /**
- * `.env` suele copiarse de `.env.example` con las variables opcionales en
- * blanco ("") en vez de ausentes — este helper trata "" como "no seteada"
- * para que zod no las rechace por `.min(1)`/`.url()`/`.email()`.
+ * `.env` is commonly copied from `.env.example`, leaving optional variables
+ * blank ("") instead of absent. This helper treats "" as unset so Zod does
+ * not reject it through `.min(1)`/`.url()`/`.email()`.
  */
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
 
 /**
- * Valida las variables de entorno al arrancar: si falta algo, el proceso
- * falla acá con un mensaje claro en vez de romperse a mitad de un request.
+ * Validates environment variables at startup. Missing values fail the process
+ * with a clear message instead of breaking during a request.
  */
 export const env = createEnv({
   server: {
     DATABASE_URL: z.url(),
-    // Obligatoria: sin esto Auth.js no puede firmar la cookie de sesión.
-    // Se genera con `openssl rand -base64 32`.
+    // Required for Auth.js to sign the session cookie.
+    // Generate it with `openssl rand -base64 32`.
     AUTH_SECRET: z.string().min(32),
     R2_ACCOUNT_ID: optional(z.string().min(1)),
     R2_ACCESS_KEY_ID: optional(z.string().min(1)),

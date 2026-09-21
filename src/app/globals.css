@@ -2,10 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* La paleta es crema fija y nadie pone la clase `.dark`. Sin esta linea,
-   Tailwind compilaria las utilidades `dark:` de los primitivos de
-   src/components/ui/ como `@media (prefers-color-scheme: dark)` y el modo
-   oscuro volveria por preferencia del SO; con ella, quedan inertes. */
+/* The palette is fixed cream and nothing adds the `.dark` class. Without this,
+   Tailwind would compile `dark:` utilities from `src/components/ui/` as
+   `@media (prefers-color-scheme: dark)`, restoring dark mode based on the OS
+   preference. This keeps those utilities inactive. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -52,7 +52,7 @@
 }
 
 :root {
-  /* Identidad Parfam MDQ: crema #F2EEE9 sobre tinta negra. */
+  /* Parfam MDQ identity: #F2EEE9 cream over black ink. */
   --background: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
   --foreground: oklch(0 0 0); /* #000000 */
   --card: oklch(0.9798 0.0045 78.3); /* #FAF8F5 */
@@ -68,26 +68,24 @@
   --accent: oklch(0.915 0.0138 78.26);
   --accent-foreground: oklch(0 0 0);
   --destructive: oklch(0.52 0.245 27.325);
-  /* Verde de "publicado". Es el unico color fuera de la paleta crema/negro,
-     y esta desaturado a proposito para no pelearse con los chips de acordes. */
+  /* The published-state green is the only color outside the cream and black
+     palette. Its reduced saturation prevents it from competing with accord chips. */
   --success: oklch(0.9294 0.0219 145.6); /* #E4EDE4 */
   --success-foreground: oklch(0.4258 0.0734 148.6); /* #2C5E34 */
   --success-border: oklch(0.8383 0.0433 146.7); /* #B9D2BC */
-  /* Verde de los CTA de WhatsApp (el diseño original usaba #1DA851 hardcodeado).
-     Oscurecido a proposito: el hex del mockup da 2,68:1 de contraste contra el
-     texto crema del boton, por debajo del 4,5:1 de WCAG AA -- mismo criterio que
-     colorDeChip(). #107D3A da 4,53:1 y sigue leyendose como el verde
-     de WhatsApp. Es un boton solido (como --primary), no una etiqueta tenue como
-     --success: el contraste es interno al boton, no depende del fondo de la
-     pagina. */
+  /* The original WhatsApp CTA used hardcoded #1DA851. #107D3A has a 4.53:1
+     contrast ratio with the cream button text, compared with the mockup's
+     2.68:1 ratio. It still reads as WhatsApp green. This solid button follows
+     `--primary`; its contrast is internal to the button and does not depend on
+     the page background. */
   --whatsapp: oklch(0.5175 0.137 149.95); /* #107D3A */
   --whatsapp-foreground: oklch(0.9508 0.008 73.74); /* #F2EEE9 */
   --border: oklch(0.8756 0.0168 79.34); /* #DCD5CA */
   --input: oklch(0.62 0.0168 79.34); /* #8C857B */
   --ring: oklch(0.5095 0.0158 78.18);
   --radius: 0.25rem;
-  /* El panel usa sidebar negro sobre la tienda crema: se lee como
-     herramienta interna sin salirse de la paleta de marca. */
+  /* The panel uses a black sidebar over the cream store palette so it reads as
+     an internal tool while staying within the brand palette. */
   --sidebar: oklch(0.1834 0.0068 78.14); /* #14120F */
   --sidebar-foreground: oklch(0.8573 0.0157 77.06); /* #D6CFC5 */
   --sidebar-primary: oklch(0.9508 0.008 73.74); /* #F2EEE9 */

@@ -1,30 +1,22 @@
 # syntax=docker/dockerfile:1
 #
-# Imagen de produccion de Parfam MDQ.
+# Parfam MDQ production image.
 #
-# Se buildea en GitHub Actions y se despliega en Dokploy desde GHCR: la VPS es
-# compartida (4 vCPU) y compilar ahi competiria con la otra app que corre en el
-# mismo server.
+# GitHub Actions builds it and Dokploy deploys it from GHCR. The shared 4-vCPU
+# VPS would otherwise compile alongside another application.
 #
-# El build NO necesita Postgres: ninguna ruta consulta la base en tiempo de
-# prerender (ver src/lib/configuracion.ts y src/app/sitemap.ts). Los unicos
-# valores que si tienen que ser reales aca son los que Next inlinea en el
-# bundle: NEXT_PUBLIC_* y R2_PUBLIC_URL (que alimenta `images.remotePatterns`
-# y queda serializado en el output standalone).
+# The build does not need Postgres because no route queries the database while
+# prerendering. The values that must be real are the ones Next inlines into the
+# bundle: NEXT_PUBLIC_* and R2_PUBLIC_URL for `images.remotePatterns`.
 #
-# DATABASE_URL_BUILD y FIRMA_PLACEHOLDER_BUILD son placeholders, NO secretos
-# (el nombre evita "SECRET" a proposito: el linter de BuildKit avisa por ARG/ENV
-# con nombres que suenan a credencial -- AUTH, SECRET, KEY -- y este no lo es):
-# `src/lib/env.ts` valida todas las variables al importarse (tambien durante el
-# build) y `prisma.config.ts` resuelve `env("DATABASE_URL")` apenas la CLI lo
-# carga, asi que las dos tienen que existir para que `pnpm install` y
-# `pnpm build` no fallen. No se conecta nadie a esa URL ni se firma ninguna
-# cookie con ese secreto: si algun dia el build volviera a necesitar la base de
-# verdad, fallaria aca con un ECONNREFUSED ruidoso, que es lo que queremos.
-# Van inline en cada RUN y no como ENV para que no queden en el entorno de la
-# imagen ni en sus metadatos.
+# DATABASE_URL_BUILD and AUTH_SECRET_PLACEHOLDER_BUILD are placeholders, not
+# secrets. src/lib/env.ts validates variables at import time, including builds,
+# and prisma.config.ts resolves DATABASE_URL when the CLI loads. Both values
+# therefore exist so pnpm install and pnpm build succeed. Nothing connects to
+# this database URL or signs a cookie with this secret. Inline them per RUN so
+# they do not remain in image environment metadata.
 ARG DATABASE_URL_BUILD="postgresql://build:build@127.0.0.1:5432/build?schema=public"
-ARG FIRMA_PLACEHOLDER_BUILD="placeholder-de-build-sin-valor-en-runtime"
+ARG AUTH_SECRET_PLACEHOLDER_BUILD="build-placeholder-with-no-runtime-value"
 
 FROM node:22-alpine AS base
 ENV PNPM_HOME="/pnpm" \
@@ -36,13 +28,13 @@ WORKDIR /app
 
 
 # ---------------------------------------------------------------------------
-# deps — node_modules completo, con el cliente de Prisma generado
+# deps — complete node_modules with generated Prisma client
 # ---------------------------------------------------------------------------
 FROM base AS deps
 ARG DATABASE_URL_BUILD
 
-# El `postinstall` del package.json corre `prisma generate`, asi que el schema
-# y el prisma.config.ts tienen que estar ANTES del install o el install falla.
+# package.json postinstall runs `prisma generate`, so schema and prisma.config.ts
+# must be present before install.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml prisma.config.ts ./
 COPY prisma ./prisma
 
@@ -51,15 +43,14 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 
 # ---------------------------------------------------------------------------
-# builder — next build con output standalone
+# builder — next build with standalone output
 # ---------------------------------------------------------------------------
 FROM base AS builder
 ARG DATABASE_URL_BUILD
-ARG FIRMA_PLACEHOLDER_BUILD
+ARG AUTH_SECRET_PLACEHOLDER_BUILD
 
-# Reales: Next los inlinea en el bundle del cliente / los serializa en el
-# config del standalone. Cambiar cualquiera de estos obliga a rebuildear la
-# imagen: no alcanza con tocar la variable en Dokploy.
+# Next inlines these into the client bundle or standalone config. Changing one
+# requires rebuilding the image; changing only the Dokploy variable is not enough.
 ARG NEXT_PUBLIC_SITE_URL
 ARG R2_PUBLIC_URL
 ARG NEXT_PUBLIC_UMAMI_URL=""
@@ -72,35 +63,30 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Un build con la URL por defecto del .env.example se sube a GHCR igual y
-# recien se nota en produccion, con los canonical apuntando a localhost.
-RUN test -n "$NEXT_PUBLIC_SITE_URL" || { echo "ERROR: falta el build arg NEXT_PUBLIC_SITE_URL"; exit 1; }
-RUN test -n "$R2_PUBLIC_URL" || { echo "ERROR: falta el build arg R2_PUBLIC_URL (sin el, next/image rechaza las fotos)"; exit 1; }
+# GHCR accepts a build with the default .env.example URL, which would only fail
+# in production with canonical URLs pointing to localhost.
+RUN test -n "$NEXT_PUBLIC_SITE_URL" || { echo "ERROR: NEXT_PUBLIC_SITE_URL build argument is required"; exit 1; }
+RUN test -n "$R2_PUBLIC_URL" || { echo "ERROR: R2_PUBLIC_URL build argument is required because next/image rejects photos without it"; exit 1; }
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# El repo hoy no tiene `public/`: el favicon lo genera src/app/icon.tsx, las
-# fuentes viven en src/assets/ y las fotos salen de R2. Pero el server
-# standalone sirve ese directorio automaticamente si existe, y el COPY del
-# runner falla si no existe, asi que se garantiza aca. Es un no-op cuando
-# alguien agrega estaticos de verdad -- y sin esto, ese estatico futuro no
-# llegaria a la imagen y el fallo seria silencioso.
+# The repository has no public/ directory: src/app/icon.tsx generates the
+# favicon, fonts live in src/assets/, and photos come from R2. Standalone serves
+# public/ if it exists, but runner COPY fails otherwise, so ensure it exists.
 RUN mkdir -p public
 
-RUN DATABASE_URL="$DATABASE_URL_BUILD" AUTH_SECRET="$FIRMA_PLACEHOLDER_BUILD" pnpm build
+RUN DATABASE_URL="$DATABASE_URL_BUILD" AUTH_SECRET="$AUTH_SECRET_PLACEHOLDER_BUILD" pnpm build
 
 
 # ---------------------------------------------------------------------------
-# migrador — CLI de Prisma sola, para el `migrate deploy` del entrypoint
+# migrator — Prisma CLI for entrypoint `migrate deploy`
 # ---------------------------------------------------------------------------
-# El output standalone no trae la CLI ni las migraciones: trae solo lo que el
-# trace considera necesario para servir requests. En vez de arrastrar el
-# node_modules entero del builder (cientos de MB de dev deps), se instala la
-# CLI sola, con la version exacta que declara el package.json del repo para que
-# no se desincronice del `prisma migrate dev` de desarrollo.
-FROM base AS migrador
-WORKDIR /migrador
+# Standalone output does not include the CLI or migrations, only request-traced
+# files. Install the CLI alone at the package.json version instead of carrying
+# the builder's full node_modules with hundreds of MB of development dependencies.
+FROM base AS migrator
+WORKDIR /migrator
 COPY package.json ./package.json
 RUN PRISMA_VERSION="$(node -p "require('./package.json').devDependencies.prisma")" \
  && rm package.json \
@@ -109,7 +95,7 @@ RUN PRISMA_VERSION="$(node -p "require('./package.json').devDependencies.prisma"
 
 
 # ---------------------------------------------------------------------------
-# runner — lo unico que se publica
+# runner — the only published stage
 # ---------------------------------------------------------------------------
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -119,26 +105,24 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-# openssl lo pide el schema engine de Prisma en musl.
+# Prisma schema engine requires openssl on musl.
 RUN apk add --no-cache openssl \
  && addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs
 
-# `server.js` hace `process.chdir(__dirname)`, asi que el `process.cwd()` de
-# runtime es /app: por eso las fuentes que leen `src/assets/fonts/` (el favicon
-# y las OG images) resuelven desde aca. Entran al standalone via
-# `outputFileTracingIncludes` en next.config.ts, no copiadas a mano.
+# server.js calls process.chdir(__dirname), so runtime process.cwd() is /app.
+# Font readers resolve src/assets/fonts/ from there. next.config.ts includes
+# them through outputFileTracingIncludes.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Todo lo de las migraciones vive junto en /app/migraciones: el prisma.config.ts
-# del repo resuelve `dotenv/config` y las rutas relativas (`prisma/schema.prisma`,
-# `prisma/migrations`) contra ese directorio, que es el cwd del entrypoint.
-COPY --from=migrador --chown=nextjs:nodejs /migrador ./migraciones
-COPY --chown=nextjs:nodejs prisma.config.ts ./migraciones/prisma.config.ts
-COPY --chown=nextjs:nodejs prisma/schema.prisma ./migraciones/prisma/schema.prisma
-COPY --chown=nextjs:nodejs prisma/migrations ./migraciones/prisma/migrations
+# Migration assets live in /app/migrations. prisma.config.ts resolves dotenv and
+# relative schema/migration paths from that entrypoint working directory.
+COPY --from=migrator --chown=nextjs:nodejs /migrator ./migrations
+COPY --chown=nextjs:nodejs prisma.config.ts ./migrations/prisma.config.ts
+COPY --chown=nextjs:nodejs prisma/schema.prisma ./migrations/prisma/schema.prisma
+COPY --chown=nextjs:nodejs prisma/migrations ./migrations/prisma/migrations
 
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
@@ -146,16 +130,10 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER nextjs
 EXPOSE 3000
 
-# Pega contra /api/health, que hace un SELECT 1: un servidor que levanta pero
-# no llega a Postgres tiene que dar rojo, o el rollback de Dokploy no se
-# dispara nunca. `start-period` le da aire a las migraciones.
-#
-# Los tiempos importan para el rollback: un contenedor roto queda `unhealthy`
-# a los ~70s (40s de start-period + 3 reintentos cada 10s), y el `Monitor` del
-# update config de Swarm tiene que ser MAS largo que eso o el deploy se da por
-# bueno antes de que el healthcheck alcance a fallar. Swarm hereda este
-# HEALTHCHECK, asi que estos son los valores de verdad; lo que se cargue en
-# Dokploy tiene que decir lo mismo.
+# Probe /api/health, which runs SELECT 1. A server that starts without reaching
+# Postgres must fail so Dokploy can roll back. start-period allows migrations.
+# A broken container becomes unhealthy after roughly 70 seconds, so the Swarm
+# update Monitor must exceed that interval. Swarm inherits this HEALTHCHECK.
 HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"
 

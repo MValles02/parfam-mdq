@@ -6,7 +6,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { cerrarSesion } from "./actions";
+import { signOutAdmin } from "./actions";
 
 export function UserMenu({ name, email }: { name: string; email: string }) {
   const initial = (name || email).charAt(0).toUpperCase();
@@ -28,7 +28,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
       </SidebarMenuItem>
 
       <SidebarMenuItem>
-        <form action={cerrarSesion} className="w-full">
+        <form action={signOutAdmin} className="w-full">
           <SidebarMenuButton type="submit" tooltip="Cerrar sesión">
             <LogOut />
             <span>Cerrar sesión</span>

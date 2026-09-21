@@ -2,26 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/guard";
-import { fallo, type Resultado } from "@/lib/admin/resultado";
+import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { prisma } from "@/lib/db";
-import { erroresPorCampo } from "@/lib/validations/errores";
-import { marcaSchema } from "@/lib/validations/marca";
+import { fieldErrors } from "@/lib/validations/errors";
+import { brandSchema } from "@/lib/validations/brand";
 
 /**
- * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
- * es un endpoint POST publico: el layout de /admin no la protege.
+ * Every action in this file starts with `requireAdmin()`. A Server Action is
+ * a public POST endpoint, so the `/admin` layout does not protect it.
  */
 
 /**
- * Invalida lo que muestra el nombre de esta marca en la tienda: la grilla
- * (catalogo y home), la ficha de cada producto suyo, y `/marca/[slug]`.
- * Mismo criterio que `revalidarTienda()` en productos/actions.ts, pero acá
- * hay que revalidar potencialmente varias fichas de producto en vez de una
- * sola -- son pocas, porque el catálogo entero son decenas de productos y no
- * decenas por marca, así que iterar es más simple que inventar otro mecanismo.
+ * Invalidates every store page that displays this brand name: the grid, home,
+ * each associated product page, and `/marca/[slug]`. Iterating product pages
+ * is sufficient because each brand has relatively few store products.
  */
-async function revalidarMarca(brandId: string, slug: string) {
-  const productos = await prisma.product.findMany({
+async function revalidateBrand(brandId: string, slug: string) {
+  const products = await prisma.product.findMany({
     where: { brandId },
     select: { slug: true },
   });
@@ -29,26 +26,27 @@ async function revalidarMarca(brandId: string, slug: string) {
   revalidatePath("/");
   revalidatePath("/catalogo");
   revalidatePath(`/marca/${slug}`, "page");
-  for (const p of productos) revalidatePath(`/producto/${p.slug}`, "page");
+  for (const product of products)
+    revalidatePath(`/producto/${product.slug}`, "page");
 }
 
-export async function actualizarMarca(
+export async function updateBrand(
   id: string,
-  entrada: unknown,
-): Promise<Resultado> {
+  input: unknown,
+): Promise<ActionResult> {
   await requireAdmin();
 
-  const parseado = marcaSchema.safeParse(entrada);
-  if (!parseado.success) {
-    return fallo("Revisá el nombre.", erroresPorCampo(parseado.error));
+  const parsed = brandSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionFailure("Revisá el nombre.", fieldErrors(parsed.error));
   }
 
-  const marca = await prisma.brand.update({
+  const brand = await prisma.brand.update({
     where: { id },
-    data: { name: parseado.data.name },
+    data: { name: parsed.data.name },
     select: { id: true, slug: true },
   });
 
-  await revalidarMarca(marca.id, marca.slug);
+  await revalidateBrand(brand.id, brand.slug);
   return { ok: true };
 }

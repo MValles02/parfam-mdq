@@ -3,22 +3,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { precioArs } from "@/lib/catalogo";
-import { hace } from "@/lib/fecha";
-import { ESTADO_PEDIDO, pedidoPorId } from "@/lib/admin/pedidos";
-import { ChipEstadoPedido } from "../_components/chip-estado-pedido";
-import { SelectorEstado } from "../_components/selector-estado";
-import { NotasPedido } from "../_components/notas-pedido";
+import { formatArsPrice } from "@/lib/catalog";
+import { formatRelativeDate } from "@/lib/date";
+import { ORDER_STATUS_LABELS, getOrderById } from "@/lib/admin/orders";
+import { OrderStatusChip } from "../_components/order-status-chip";
+import { StatusSelector } from "../_components/status-selector";
+import { OrderNotes } from "../_components/order-notes";
 
 export async function generateMetadata(
   props: PageProps<"/admin/pedidos/[id]">,
 ): Promise<Metadata> {
   const { id } = await props.params;
-  const pedido = await pedidoPorId(id);
-  return { title: pedido ? pedido.number : "Pedido" };
+  const order = await getOrderById(id);
+  return { title: order ? order.number : "Pedido" };
 }
 
-function Etiqueta({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
       {children}
@@ -28,8 +28,8 @@ function Etiqueta({ children }: { children: React.ReactNode }) {
 
 export default async function Page(props: PageProps<"/admin/pedidos/[id]">) {
   const { id } = await props.params;
-  const pedido = await pedidoPorId(id);
-  if (!pedido) notFound();
+  const order = await getOrderById(id);
+  if (!order) notFound();
 
   return (
     <>
@@ -39,32 +39,32 @@ export default async function Page(props: PageProps<"/admin/pedidos/[id]">) {
             <Link href="/admin/pedidos" className="hover:text-foreground">
               Pedidos
             </Link>
-            {` · ${hace(pedido.createdAt)}`}
+            {` · ${formatRelativeDate(order.createdAt)}`}
           </p>
           <div className="mt-1.5 flex items-center gap-3">
             <h1 className="text-3xl leading-none font-extrabold tracking-tight">
-              {pedido.number}
+              {order.number}
             </h1>
-            <ChipEstadoPedido status={pedido.status} />
+            <OrderStatusChip status={order.status} />
           </div>
         </div>
-        <SelectorEstado
-          id={pedido.id}
-          status={pedido.status}
-          etiquetas={ESTADO_PEDIDO}
+        <StatusSelector
+          id={order.id}
+          status={order.status}
+          labels={ORDER_STATUS_LABELS}
         />
       </div>
 
       <div className="flex flex-col gap-6 p-8">
         <div className="rounded border bg-card p-5">
-          <Etiqueta>Cliente</Etiqueta>
+          <SectionLabel>Cliente</SectionLabel>
           <div className="mt-2 flex items-center justify-between gap-4">
             <div>
               <p className="text-base font-semibold text-foreground">
-                {pedido.customerName}
+                {order.customerName}
               </p>
               <p className="text-sm text-muted-foreground">
-                {pedido.customerPhone}
+                {order.customerPhone}
               </p>
             </div>
             <Button
@@ -72,7 +72,7 @@ export default async function Page(props: PageProps<"/admin/pedidos/[id]">) {
               className="bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
             >
               <a
-                href={pedido.linkChat}
+                href={order.whatsappChatLink}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -85,10 +85,10 @@ export default async function Page(props: PageProps<"/admin/pedidos/[id]">) {
 
         <div className="overflow-hidden rounded border bg-card">
           <div className="border-b px-5 py-3">
-            <Etiqueta>Items</Etiqueta>
+            <SectionLabel>Items</SectionLabel>
           </div>
           <div className="divide-y">
-            {pedido.items.map((item) => (
+            {order.items.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between gap-4 px-5 py-3"
@@ -107,28 +107,28 @@ export default async function Page(props: PageProps<"/admin/pedidos/[id]">) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    {item.variantLabel} · {precioArs(item.unitPriceArs)} ×{" "}
+                    {item.variantLabel} · {formatArsPrice(item.unitPriceArs)} ×{" "}
                     {item.qty}
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-foreground">
-                  {precioArs(item.subtotal)}
+                  {formatArsPrice(item.subtotalArs)}
                 </p>
               </div>
             ))}
           </div>
           <div className="flex items-center justify-between border-t bg-muted/40 px-5 py-3">
-            <Etiqueta>Total</Etiqueta>
+            <SectionLabel>Total</SectionLabel>
             <p className="text-base font-extrabold text-foreground">
-              {precioArs(pedido.totalArs)}
+              {formatArsPrice(order.totalArs)}
             </p>
           </div>
         </div>
 
         <div className="rounded border bg-card p-5">
-          <Etiqueta>Notas del admin</Etiqueta>
+          <SectionLabel>Notas del admin</SectionLabel>
           <div className="mt-2.5">
-            <NotasPedido id={pedido.id} notasIniciales={pedido.adminNotes} />
+            <OrderNotes id={order.id} initialNotes={order.adminNotes} />
           </div>
         </div>
       </div>

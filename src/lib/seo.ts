@@ -1,106 +1,102 @@
 import type { Metadata } from "next";
 import { env } from "@/lib/env";
 import { siteDefaults } from "@/lib/site";
-import { GENERO, PRESENTACION } from "@/lib/catalogo";
-import type { ProductoPublico } from "@/lib/tienda/consultas";
+import { GENDER_LABELS, VARIANT_KIND_LABELS } from "@/lib/catalog";
+import type { PublicProduct } from "@/lib/store/queries";
 
 /**
- * Helpers de SEO compartidos por las paginas de la tienda.
+ * Shared SEO helpers for store pages.
  *
- * La URL del sitio sale de NEXT_PUBLIC_SITE_URL (validada en src/lib/env.ts) y
- * no de siteDefaults: en local es http://localhost:3000 y los canonical tienen
- * que apuntar al entorno donde corre, no siempre a produccion.
+ * The site URL comes from NEXT_PUBLIC_SITE_URL (validated in src/lib/env.ts),
+ * not siteDefaults: local development uses http://localhost:3000 and canonical
+ * URLs must point to the running environment instead of always production.
  */
 
-export const URL_SITIO = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+export const SITE_URL = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
 
-export function urlAbsoluta(ruta: string): string {
-  return `${URL_SITIO}${ruta.startsWith("/") ? ruta : `/${ruta}`}`;
+export function absoluteUrl(path: string): string {
+  return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 /**
- * Metadata con canonical y Open Graph, que es lo que repite cada pagina.
+ * Metadata with canonical and Open Graph values shared by each page.
  *
- * A proposito no setea `openGraph.images`: la imagen la ponen los archivos
- * `opengraph-image.tsx` (convencion de Next). Si una pagina la declarara acá,
- * la explicita gana y la generada nunca se usaria -- y la generada es la que
- * tiene la marca y sale en 1200x630, mientras que las fotos de producto son
- * verticales y las redes las recortan mal.
+ * It intentionally does not set `openGraph.images`: `opengraph-image.tsx`
+ * files provide it through Next's convention. An explicit page image would
+ * override the generated one, which contains the brand at 1200x630; product
+ * photos are vertical and social networks crop them poorly.
  */
-export function metadataDePagina(opciones: {
-  titulo: string;
-  descripcion: string;
-  ruta: string;
+export function buildPageMetadata(options: {
+  title: string;
+  description: string;
+  path: string;
 }): Metadata {
-  const url = urlAbsoluta(opciones.ruta);
+  const url = absoluteUrl(options.path);
   return {
-    title: opciones.titulo,
-    description: opciones.descripcion,
+    title: options.title,
+    description: options.description,
     alternates: { canonical: url },
     openGraph: {
       type: "website",
       url,
       siteName: siteDefaults.name,
       locale: "es_AR",
-      title: opciones.titulo,
-      description: opciones.descripcion,
+      title: options.title,
+      description: options.description,
     },
     twitter: { card: "summary_large_image" },
   };
 }
 
 /**
- * Serializa JSON-LD para meterlo en un <script>. El `<` escapado es lo que
- * evita que un texto del admin con HTML adentro cierre el script y se
- * convierta en XSS (ver node_modules/next/dist/docs/01-app/02-guides/json-ld.md).
+ * Serializes JSON-LD for a <script>. Escaping `<` prevents administrator text
+ * containing HTML from closing the script and becoming XSS (see
+ * node_modules/next/dist/docs/01-app/02-guides/json-ld.md).
  */
-export function jsonLd(dato: unknown): string {
-  return JSON.stringify(dato).replace(/</g, "\\u003c");
+export function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
 /**
- * Product + AggregateOffer para la ficha. Los precios salen de las variantes
- * activas, que son las unicas que se pueden comprar; si no hay ninguna, no se
- * publica oferta en vez de inventar un precio.
+ * Product and AggregateOffer data only includes active, purchasable variants.
  */
-export function productoJsonLd(
-  producto: ProductoPublico,
-  urlImagenes: string[],
-) {
-  const precios = producto.variantes.map((v) => Number(v.precio));
-  const url = urlAbsoluta(`/producto/${producto.slug}`);
+export function productJsonLd(product: PublicProduct, imageUrls: string[]) {
+  const prices = product.variants.map((variant) => Number(variant.price));
+  const url = absoluteUrl(`/producto/${product.slug}`);
 
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: producto.nombre,
+    name: product.name,
     url,
-    ...(producto.descripcion ? { description: producto.descripcion } : {}),
-    ...(urlImagenes.length > 0 ? { image: urlImagenes } : {}),
-    brand: { "@type": "Brand", name: producto.marca },
-    ...(producto.genero
+    ...(product.description ? { description: product.description } : {}),
+    ...(imageUrls.length > 0 ? { image: imageUrls } : {}),
+    brand: { "@type": "Brand", name: product.brandName },
+    ...(product.gender
       ? {
           audience: {
             "@type": "PeopleAudience",
-            suggestedGender: GENERO[producto.genero],
+            suggestedGender: GENDER_LABELS[product.gender],
           },
         }
       : {}),
-    ...(producto.perfumistas.length > 0
-      ? { manufacturer: { "@type": "Organization", name: producto.marca } }
+    ...(product.perfumers.length > 0
+      ? {
+          manufacturer: { "@type": "Organization", name: product.brandName },
+        }
       : {}),
-    ...(precios.length > 0
+    ...(prices.length > 0
       ? {
           offers: {
             "@type": "AggregateOffer",
             priceCurrency: "ARS",
-            lowPrice: Math.min(...precios),
-            highPrice: Math.max(...precios),
-            offerCount: precios.length,
-            offers: producto.variantes.map((v) => ({
+            lowPrice: Math.min(...prices),
+            highPrice: Math.max(...prices),
+            offerCount: prices.length,
+            offers: product.variants.map((variant) => ({
               "@type": "Offer",
-              name: `${producto.nombre} — ${PRESENTACION[v.kind]}${v.sizeMl ? ` ${v.sizeMl} ml` : ""}`,
-              price: v.precio,
+              name: `${product.name} — ${VARIANT_KIND_LABELS[variant.kind]}${variant.sizeMl ? ` ${variant.sizeMl} ml` : ""}`,
+              price: variant.price,
               priceCurrency: "ARS",
               availability: "https://schema.org/InStock",
               itemCondition: "https://schema.org/NewCondition",
@@ -113,16 +109,18 @@ export function productoJsonLd(
   };
 }
 
-/** Migas de pan para Google, que las muestra arriba del resultado. */
-export function migasJsonLd(migas: { nombre: string; ruta: string }[]) {
+/** Breadcrumbs for Google, which displays them above the search result. */
+export function buildBreadcrumbJsonLd(
+  breadcrumbs: { name: string; path: string }[],
+) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: migas.map((m, i) => ({
+    itemListElement: breadcrumbs.map((breadcrumb, index) => ({
       "@type": "ListItem",
-      position: i + 1,
-      name: m.nombre,
-      item: urlAbsoluta(m.ruta),
+      position: index + 1,
+      name: breadcrumb.name,
+      item: absoluteUrl(breadcrumb.path),
     })),
   };
 }

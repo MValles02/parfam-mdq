@@ -1,74 +1,80 @@
 import type { Metadata } from "next";
-import { BuscadorAdmin } from "@/components/admin/buscador-admin";
+import { AdminSearch } from "@/components/admin/admin-search";
 import { PageHeader } from "@/components/admin/page-header";
-import { TabsFiltro } from "@/components/admin/tabs-filtro";
-import { listarPedidos, type FiltroEstadoPedido } from "@/lib/admin/pedidos";
-import { TablaPedidos } from "./_components/tabla-pedidos";
+import { FilterTabs } from "@/components/admin/filter-tabs";
+import { OrderStatus } from "@/generated/prisma/enums";
+import { listOrders, type OrderStatusFilter } from "@/lib/admin/orders";
+import { OrdersTable } from "./_components/orders-table";
 
 export const metadata: Metadata = { title: "Pedidos" };
 
-const ESTADOS_VALIDOS: FiltroEstadoPedido[] = [
-  "todos",
-  "pendientes",
-  "confirmados",
-  "entregados",
-  "cancelados",
-];
+const ORDER_STATUS_QUERY_VALUES = {
+  todos: "all",
+  pendientes: OrderStatus.PENDING,
+  confirmados: OrderStatus.CONFIRMED,
+  entregados: OrderStatus.DELIVERED,
+  cancelados: OrderStatus.CANCELLED,
+} as const satisfies Record<string, OrderStatusFilter>;
 
-function esFiltroEstado(
-  valor: string | undefined,
-): valor is FiltroEstadoPedido {
-  return ESTADOS_VALIDOS.includes(valor as FiltroEstadoPedido);
+function parseOrderStatusFilter(value: string | undefined): OrderStatusFilter {
+  return (
+    ORDER_STATUS_QUERY_VALUES[
+      value as keyof typeof ORDER_STATUS_QUERY_VALUES
+    ] ?? "all"
+  );
 }
 
 export default async function Page(props: PageProps<"/admin/pedidos">) {
-  const sp = await props.searchParams;
-  const q = typeof sp.q === "string" ? sp.q : "";
-  const estadoParam = typeof sp.estado === "string" ? sp.estado : undefined;
-  const estado = esFiltroEstado(estadoParam) ? estadoParam : "todos";
+  const searchParams = await props.searchParams;
+  const query = typeof searchParams.q === "string" ? searchParams.q : "";
+  const statusQueryValue =
+    typeof searchParams.estado === "string" ? searchParams.estado : undefined;
+  const statusFilter = parseOrderStatusFilter(statusQueryValue);
 
-  const { filas, pendientes, confirmados, entregados, total } =
-    await listarPedidos({ q, estado });
+  const { rows, pending, confirmed, delivered, total } = await listOrders({
+    query,
+    status: statusFilter,
+  });
 
-  const hayFiltrosActivos = q.trim() !== "" || estado !== "todos";
+  const hasActiveFilters = query.trim() !== "" || statusFilter !== "all";
 
   return (
     <>
       <PageHeader
         title="Pedidos"
-        description={`${pendientes} pendientes · ${confirmados} confirmados · ${entregados} entregados`}
+        description={`${pending} pendientes · ${confirmed} confirmados · ${delivered} entregados`}
         action={
-          <BuscadorAdmin placeholder="Buscar número o nombre del cliente" />
+          <AdminSearch placeholder="Buscar número o nombre del cliente" />
         }
       />
 
       <div className="p-8 pt-6">
         <div className="mb-4 flex items-center gap-2">
-          <TabsFiltro
-            opciones={[
+          <FilterTabs
+            options={[
               { id: "todos", label: "Todos" },
               { id: "pendientes", label: "Pendientes" },
               { id: "confirmados", label: "Confirmados" },
               { id: "entregados", label: "Entregados" },
               { id: "cancelados", label: "Cancelados" },
             ]}
-            valorDefecto="todos"
+            defaultValue="todos"
           />
           <span className="ml-auto text-sm text-muted-foreground">
-            {filas.length} de {total}
+            {rows.length} de {total}
           </span>
         </div>
 
-        {filas.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded border border-dashed p-16 text-center">
             <p className="text-sm text-muted-foreground">
-              {hayFiltrosActivos
+              {hasActiveFilters
                 ? "No hay pedidos que coincidan con la búsqueda."
                 : "Todavía no entró ningún pedido."}
             </p>
           </div>
         ) : (
-          <TablaPedidos filas={filas} />
+          <OrdersTable rows={rows} />
         )}
       </div>
     </>

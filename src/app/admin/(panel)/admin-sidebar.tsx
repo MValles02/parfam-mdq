@@ -53,7 +53,7 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV.map((item) => {
-                // `/admin` sólo coincide exacto; el resto también en sus subrutas.
+                // `/admin` matches exactly; the other entries include subroutes.
                 const isActive =
                   item.href === "/admin"
                     ? pathname === "/admin"

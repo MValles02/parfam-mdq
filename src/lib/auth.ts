@@ -11,10 +11,10 @@ const credentialsSchema = z.object({
 });
 
 /**
- * Hash descartable de una contraseña random. Si el email no existe igual
- * corremos un `verify` contra esto para que la respuesta tarde lo mismo que
- * con un email válido — si no, la diferencia de tiempos permite averiguar
- * qué emails están registrados.
+ * Disposable hash for a random password. When the email does not exist, a
+ * `verify` still runs against this value so the response takes the same time
+ * as a valid email. Otherwise, timing differences could reveal registered
+ * addresses.
  */
 const DUMMY_HASH =
   "$argon2id$v=19$m=19456,t=2,p=1$keEaT4q3U3YZt4iNsOXi+w$M3VA5pYzqzq8bdNho7z/XzOkEvMl6qH2t9cTbd+WUmw";

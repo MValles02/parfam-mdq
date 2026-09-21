@@ -2,16 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 /**
- * Healthcheck del contenedor. Lo consultan el `HEALTHCHECK` del
- * Dockerfile y el de Dokploy, que es lo que dispara el rollback cuando un
- * deploy sale mal.
+ * Container health check. Dockerfile and Dokploy `HEALTHCHECK` probes call it
+ * and trigger a rollback after a failed deployment.
  *
- * Por eso pega contra la base de verdad y no devuelve 200 fijo: un servidor
- * que levanta pero no puede consultar Postgres no sirve ninguna página, y
- * darlo por sano dejaría el sitio caído sin que el rollback se active nunca.
+ * It queries the real database instead of always returning 200. A server that
+ * starts without reaching Postgres cannot serve pages, and reporting it healthy
+ * would prevent a rollback.
  *
- * `force-dynamic` para que no se prerenderice: un health cacheado en el build
- * sería exactamente el 200 fijo que queremos evitar.
+ * `force-dynamic` prevents prerendering. A build-cached health response would
+ * be equivalent to the fixed 200 response this endpoint avoids.
  */
 export const dynamic = "force-dynamic";
 
@@ -23,7 +22,7 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    console.error("[health] la base de datos no responde:", error);
+    console.error("[health] database did not respond:", error);
     return NextResponse.json(
       { estado: "error", base: "sin conexión" },
       { status: 503, headers: { "Cache-Control": "no-store" } },

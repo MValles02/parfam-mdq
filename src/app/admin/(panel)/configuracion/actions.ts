@@ -2,51 +2,48 @@
 
 import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/guard";
-import { fallo, type Resultado } from "@/lib/admin/resultado";
-import { TAG_CONFIGURACION_SITIO } from "@/lib/configuracion";
+import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
+import { SITE_SETTINGS_TAG } from "@/lib/settings";
 import { prisma } from "@/lib/db";
-import { erroresPorCampo } from "@/lib/validations/errores";
-import { configuracionSchema } from "@/lib/validations/configuracion";
+import { fieldErrors } from "@/lib/validations/errors";
+import { settingsSchema } from "@/lib/validations/settings";
 
 /**
- * Toda accion de este archivo arranca con `requireAdmin()`. Una Server Action
- * es un endpoint POST publico: el layout de /admin no la protege.
+ * Every action in this file starts with `requireAdmin()`. A Server Action is
+ * a public POST endpoint, so the `/admin` layout does not protect it.
  */
 
 /**
- * `SiteSetting` siempre tiene la fila `singleton` (la siembra
- * `prisma/seed.ts`): esto es siempre un update, nunca un create.
+ * `SiteSetting` always has the seeded `singleton` row, so this is always an
+ * update rather than a create.
  */
-export async function guardarConfiguracion(
-  entrada: unknown,
-): Promise<Resultado> {
+export async function saveSettings(input: unknown): Promise<ActionResult> {
   await requireAdmin();
 
-  const parseado = configuracionSchema.safeParse(entrada);
-  if (!parseado.success) {
-    return fallo(
+  const parsed = settingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionFailure(
       "Revisá los campos marcados.",
-      erroresPorCampo(parseado.error),
+      fieldErrors(parsed.error),
     );
   }
-  const v = parseado.data;
+  const settings = parsed.data;
 
   await prisma.siteSetting.update({
     where: { id: "singleton" },
     data: {
-      whatsappNumber: v.whatsappNumber,
-      whatsappMessageTemplate: v.whatsappMessageTemplate,
-      instagramHandle: v.instagramHandle,
-      shippingInfo: v.shippingInfo,
-      seoDefaultTitle: v.seoDefaultTitle,
-      seoDefaultDescription: v.seoDefaultDescription,
+      whatsappNumber: settings.whatsappNumber,
+      whatsappMessageTemplate: settings.whatsappMessageTemplate,
+      instagramHandle: settings.instagramHandle,
+      shippingInfo: settings.shippingInfo,
+      seoDefaultTitle: settings.seoDefaultTitle,
+      seoDefaultDescription: settings.seoDefaultDescription,
     },
   });
 
-  // `{ expire: 0 }` en vez de un profile como "max": acá no vale
-  // stale-while-revalidate -- el checkout del pedido siguiente (y el resto
-  // de la tienda) tienen que ver el dato nuevo ya, no eventualmente.
-  revalidateTag(TAG_CONFIGURACION_SITIO, { expire: 0 });
+  // `{ expire: 0 }` provides read-your-own-writes behavior. The next checkout
+  // and the rest of the store must see the new value immediately.
+  revalidateTag(SITE_SETTINGS_TAG, { expire: 0 });
 
   return { ok: true };
 }

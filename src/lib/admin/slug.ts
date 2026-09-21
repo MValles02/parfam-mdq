@@ -1,32 +1,32 @@
 import slugify from "slugify";
 import type { Prisma } from "@/generated/prisma/client";
 
-/** Mismas opciones que usa el importador, para que marca y producto coincidan. */
-export function aSlug(texto: string) {
-  return slugify(texto, { lower: true, strict: true, trim: true });
+/** Uses the importer settings so brand and product slugs stay consistent. */
+export function toSlug(text: string) {
+  return slugify(text, { lower: true, strict: true, trim: true });
 }
 
 /**
- * Devuelve un slug libre, agregando -2, -3... si hace falta.
+ * Returns an available slug, appending -2, -3, and so on when needed.
  *
- * `excluirId` es el propio producto al editar: sin eso, guardar sin cambiar el
- * nombre chocaria consigo mismo y le sumaria un sufijo en cada guardado.
+ * `excludedProductId` is the product being edited. Without it, saving an
+ * unchanged name would collide with itself and add a suffix on every save.
  */
-export async function slugLibre(
-  tx: Prisma.TransactionClient,
-  base: string,
-  excluirId: string | null,
+export async function findAvailableSlug(
+  transaction: Prisma.TransactionClient,
+  baseSlug: string,
+  excludedProductId: string | null,
 ) {
-  const raiz = aSlug(base) || "producto";
-  for (let intento = 0; ; intento++) {
-    const candidato = intento === 0 ? raiz : `${raiz}-${intento + 1}`;
-    const chocado = await tx.product.findFirst({
+  const root = toSlug(baseSlug) || "product";
+  for (let attempt = 0; ; attempt++) {
+    const candidate = attempt === 0 ? root : `${root}-${attempt + 1}`;
+    const collision = await transaction.product.findFirst({
       where: {
-        slug: candidato,
-        id: excluirId ? { not: excluirId } : undefined,
+        slug: candidate,
+        id: excludedProductId ? { not: excludedProductId } : undefined,
       },
       select: { id: true },
     });
-    if (!chocado) return candidato;
+    if (!collision) return candidate;
   }
 }

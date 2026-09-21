@@ -7,7 +7,7 @@ import { z } from "zod";
 import { signIn } from "@/lib/auth";
 import { rateLimit, resetRateLimit } from "@/lib/rate-limit";
 
-const schema = z.object({
+const loginSchema = z.object({
   email: z.email("Revisá el email."),
   password: z.string().min(1, "Escribí tu contraseña."),
 });
@@ -16,41 +16,47 @@ export interface LoginState {
   error?: string;
 }
 
-/** Mensaje genérico a propósito: no revelamos si el email existe o no. */
-const CREDENCIALES_INVALIDAS = "Email o contraseña incorrectos.";
+/** The response intentionally does not reveal whether the email exists. */
+const INVALID_CREDENTIALS_MESSAGE = "Email o contraseña incorrectos.";
 
-export async function login(
+export async function authenticate(
   _prevState: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
-  const parsed = schema.safeParse({
+  const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? CREDENCIALES_INVALIDAS };
-  }
-
-  const headerList = await headers();
-  const ip =
-    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headerList.get("x-real-ip") ??
-    "desconocida";
-  const key = `login:${ip}:${parsed.data.email.toLowerCase()}`;
-
-  const limit = rateLimit(key, { limit: 5, windowMs: 1000 * 60 * 10 });
-  if (!limit.ok) {
-    const minutos = Math.ceil(limit.retryAfter / 60);
     return {
-      error: `Demasiados intentos. Probá de nuevo en ${minutos} ${minutos === 1 ? "minuto" : "minutos"}.`,
+      error: parsed.error.issues[0]?.message ?? INVALID_CREDENTIALS_MESSAGE,
     };
   }
 
-  const volverA = formData.get("volverA");
-  const destino =
-    typeof volverA === "string" && volverA.startsWith("/admin")
-      ? volverA
+  const headerList = await headers();
+  const ipAddress =
+    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    headerList.get("x-real-ip") ??
+    "desconocida";
+  const rateLimitKey = `login:${ipAddress}:${parsed.data.email.toLowerCase()}`;
+
+  const limit = rateLimit(rateLimitKey, {
+    limit: 5,
+    windowMs: 1000 * 60 * 10,
+  });
+  if (!limit.ok) {
+    const retryAfterMinutes = Math.ceil(limit.retryAfter / 60);
+    return {
+      error: `Demasiados intentos. Probá de nuevo en ${retryAfterMinutes} ${retryAfterMinutes === 1 ? "minuto" : "minutos"}.`,
+    };
+  }
+
+  // `volverA` is the established login form and URL query boundary key.
+  const rawReturnTo = formData.get("volverA");
+  const returnTo =
+    typeof rawReturnTo === "string" && rawReturnTo.startsWith("/admin")
+      ? rawReturnTo
       : "/admin";
 
   try {
@@ -61,11 +67,11 @@ export async function login(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: CREDENCIALES_INVALIDAS };
+      return { error: INVALID_CREDENTIALS_MESSAGE };
     }
     throw error;
   }
 
-  resetRateLimit(key);
-  redirect(destino);
+  resetRateLimit(rateLimitKey);
+  redirect(returnTo);
 }

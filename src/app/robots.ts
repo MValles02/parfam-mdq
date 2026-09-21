@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
-import { URL_SITIO, urlAbsoluta } from "@/lib/seo";
+import { absoluteUrl, SITE_URL } from "@/lib/seo";
 
 /**
- * `robots.ts` tambien es un Route Handler cacheado por defecto, pero acá no
- * lee de la base: es estatico, asi que no hace falta `revalidate`.
+ * `robots.ts` is also a Route Handler cached by default, but it does not read
+ * the database: it is static, so it does not need `revalidate`.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/api/"],
     },
-    sitemap: urlAbsoluta("/sitemap.xml"),
-    host: URL_SITIO,
+    sitemap: absoluteUrl("/sitemap.xml"),
+    host: SITE_URL,
   };
 }

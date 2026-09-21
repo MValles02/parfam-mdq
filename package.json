@@ -76,5 +76,5 @@
     "vitest": "^5.0.1"
   },
   "packageManager": "pnpm@12.4.2",
-  "description": "Tienda online y panel de administracion de Parfam MDQ"
+  "description": "Parfam MDQ online store and administration panel"
 }

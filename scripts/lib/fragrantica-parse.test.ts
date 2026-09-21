@@ -1,5 +1,5 @@
 /**
- * Chequeo de los parsers contra casos reales del dataset.
+ * Parser coverage using real dataset cases.
  *   pnpm test -- scripts/lib/fragrantica-parse.test.ts
  */
 import { describe, expect, it } from "vitest";
@@ -17,7 +17,7 @@ import {
 } from "./fragrantica-parse";
 
 describe("parseFragranticaUrl", () => {
-  it("separa marca y nombre de una URL de perfume", () => {
+  it("separates the brand and name from a perfume URL", () => {
     expect(
       parseFragranticaUrl(
         "https://www.fragrantica.com/perfume/Jean-Paul-Gaultier/Scandal-A-Paris-54275.html",
@@ -34,7 +34,7 @@ describe("parseFragranticaUrl", () => {
     ).toEqual({ pid: 78611, brandName: "Afnan", name: "9am Dive" });
   });
 
-  it("devuelve null para una URL que no es de perfume", () => {
+  it("returns null for a URL outside the perfume path", () => {
     expect(
       parseFragranticaUrl("https://www.fragrantica.com/news/x-123.html"),
     ).toBeNull();
@@ -42,7 +42,7 @@ describe("parseFragranticaUrl", () => {
 });
 
 describe("titleCaseFromSlug", () => {
-  it("convierte un slug a Title Case", () => {
+  it("converts a slug to title case", () => {
     expect(titleCaseFromSlug("jean-paul-gaultier")).toBe("Jean Paul Gaultier");
     expect(titleCaseFromSlug("accento-overdose-pride-edition")).toBe(
       "Accento Overdose Pride Edition",
@@ -50,21 +50,21 @@ describe("titleCaseFromSlug", () => {
   });
 });
 
-describe("géneros", () => {
-  it("normaliza el género limpio", () => {
+describe("genders", () => {
+  it("normalizes a cleaned gender", () => {
     expect(normalizeGenderCleaned("women")).toBe("WOMEN");
     expect(normalizeGenderCleaned("unisex")).toBe("UNISEX");
     expect(normalizeGenderCleaned("bogus")).toBeNull();
   });
 
-  it("normaliza el género en prosa de Perfumes.csv", () => {
+  it("normalizes a Perfumes.csv prose gender", () => {
     expect(normalizeGenderPerfumes("for women and men")).toBe("UNISEX");
     expect(normalizeGenderPerfumes("N/A")).toBeNull();
   });
 });
 
 describe("splitProseList", () => {
-  it("separa una lista en prosa con comas y 'and'", () => {
+  it("splits a prose list with commas and 'and'", () => {
     expect(
       splitProseList("Lemon, Mandarin Orange, Cardamom and Pink Pepper"),
     ).toEqual(["Lemon", "Mandarin Orange", "Cardamom", "Pink Pepper"]);
@@ -77,7 +77,7 @@ describe("parsePyramidFromDescription", () => {
   const desc1 =
     "9am Dive byAfnanis a Aromatic Aquatic fragrance for women and men. This is a new fragrance.9am Divewas launched in 2022. Top notes are Lemon, Mint, Black Currant and Pink Pepper; middle notes are Apple, Incense and Cedar; base notes are Ginger, Sandalwood, Patchouli and Jasmine.";
 
-  it("extrae la pirámide olfativa de una descripción real", () => {
+  it("extracts an olfactory pyramid from a real description", () => {
     expect(parsePyramidFromDescription(desc1)).toEqual({
       top: ["Lemon", "Mint", "Black Currant", "Pink Pepper"],
       middle: ["Apple", "Incense", "Cedar"],
@@ -85,17 +85,17 @@ describe("parsePyramidFromDescription", () => {
     });
   });
 
-  it("extrae el año de la misma descripción", () => {
+  it("extracts the year from the same description", () => {
     expect(parseYearFromDescription(desc1)).toBe(2022);
   });
 
-  it("devuelve null si la descripción no tiene pirámide", () => {
+  it("returns null when a description has no pyramid", () => {
     expect(parsePyramidFromDescription("No notes info here at all")).toBeNull();
   });
 });
 
 describe("parsePyStringList", () => {
-  it("parsea listas con la sintaxis de repr() de Python", () => {
+  it("parses lists with Python repr() syntax", () => {
     expect(parsePyStringList("[]")).toEqual([]);
     expect(parsePyStringList("['Clement Gavarry']")).toEqual([
       "Clement Gavarry",
@@ -110,14 +110,14 @@ describe("parsePyStringList", () => {
   });
 });
 
-describe("números", () => {
-  it("parsea decimales con coma o punto", () => {
+describe("numbers", () => {
+  it("parses decimals with a comma or dot", () => {
     expect(parseDecimal("1,42")).toBe(1.42);
     expect(parseDecimal("3.73")).toBe(3.73);
     expect(parseDecimal("")).toBeNull();
   });
 
-  it("parsea enteros opcionales", () => {
+  it("parses optional integers", () => {
     expect(parseIntOrNull("2022")).toBe(2022);
     expect(parseIntOrNull("")).toBeNull();
   });

@@ -3,12 +3,11 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 /**
- * Favicon de la marca. Reemplaza el .ico por defecto del scaffold de Next
- * (que ademas pesaba 25 KB y mostraba el logo de Next en la pestania).
+ * Brand favicon. It replaces the default Next scaffold .ico, which was 25 KB
+ * and displayed the Next logo in the browser tab.
  *
- * Se genera con la misma Outfit ExtraBold de las OG images: el logotipo de
- * ParfamMdq es tipografia, no un dibujo, asi que la "P" sale de la fuente y
- * no de un path a mano.
+ * It uses the same Outfit ExtraBold font as the OG images. The ParfamMdq logo
+ * is typography, so the "P" comes from the font instead of a hand-written path.
  */
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";

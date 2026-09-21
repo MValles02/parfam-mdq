@@ -1,67 +1,71 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BuscadorAdmin } from "@/components/admin/buscador-admin";
+import { AdminSearch } from "@/components/admin/admin-search";
 import { PageHeader } from "@/components/admin/page-header";
-import { TabsFiltro } from "@/components/admin/tabs-filtro";
+import { FilterTabs } from "@/components/admin/filter-tabs";
 import { Button } from "@/components/ui/button";
-import { listarNotas } from "@/lib/admin/notas";
-import { FilaNota } from "./_components/fila-nota";
+import { listNotes } from "@/lib/admin/notes";
+import { NoteRow } from "./_components/note-row";
 
 export const metadata: Metadata = { title: "Notas sin traducir" };
 
-const formatoNumero = new Intl.NumberFormat("es-AR");
+const numberFormatter = new Intl.NumberFormat("es-AR");
 
-function leerString(valor: string | string[] | undefined) {
-  return typeof valor === "string" ? valor : "";
+function readString(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : "";
 }
 
 export default async function Page(props: PageProps<"/admin/notas">) {
-  const sp = await props.searchParams;
+  const searchParams = await props.searchParams;
 
-  const q = leerString(sp.q).trim();
-  const estado =
-    leerString(sp.estado) === "traducidas" ? "traducidas" : "pendientes";
-  const paginaSolicitada = Number(leerString(sp.pagina));
-  const pagina =
-    Number.isFinite(paginaSolicitada) && paginaSolicitada > 1
-      ? Math.floor(paginaSolicitada)
+  const q = readString(searchParams.q).trim();
+  // `estado` and `pagina` are established URL boundary keys and values.
+  const status =
+    readString(searchParams.estado) === "traducidas" ? "translated" : "pending";
+  const requestedPage = Number(readString(searchParams.pagina));
+  const page =
+    Number.isFinite(requestedPage) && requestedPage > 1
+      ? Math.floor(requestedPage)
       : 1;
 
-  const { notas, total, pendientes, traducidas, totalPaginas } =
-    await listarNotas({ q, estado, pagina });
+  const { notes, total, pending, translated, totalPages } = await listNotes({
+    q,
+    status,
+    page,
+  });
 
-  const totalGeneral = pendientes + traducidas;
+  const totalNotes = pending + translated;
 
-  function hrefPagina(destino: number) {
+  function getPageHref(destination: number) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
-    if (estado !== "pendientes") params.set("estado", estado);
-    if (destino > 1) params.set("pagina", String(destino));
-    const qs = params.toString();
-    return qs ? `/admin/notas?${qs}` : "/admin/notas";
+    if (status !== "pending") params.set("estado", "traducidas");
+    if (destination > 1) params.set("pagina", String(destination));
+    const queryString = params.toString();
+    return queryString ? `/admin/notas?${queryString}` : "/admin/notas";
   }
 
   return (
     <>
       <PageHeader
         title="Notas sin traducir"
-        description={`Faltan ${formatoNumero.format(pendientes)} de ${formatoNumero.format(totalGeneral)}. Se traducen primero las que más aparecen.`}
+        description={`Faltan ${numberFormatter.format(pending)} de ${numberFormatter.format(totalNotes)}. Se traducen primero las que más aparecen.`}
       />
 
       <div className="flex flex-col gap-4 p-8">
         <div className="flex items-center justify-between gap-4">
-          <TabsFiltro<"pendientes" | "traducidas">
-            opciones={[
+          <FilterTabs<"pendientes" | "traducidas">
+            options={[
               { id: "pendientes", label: "Pendientes" },
               { id: "traducidas", label: "Traducidas" },
             ]}
-            valorDefecto="pendientes"
-            contadores={{ pendientes, traducidas }}
-            resetPagina
+            defaultValue="pendientes"
+            counts={{ pendientes: pending, traducidas: translated }}
+            resetPage
           />
-          <BuscadorAdmin
+          <AdminSearch
             placeholder="Buscar nota en inglés o español"
-            resetPagina
+            resetPage
           />
         </div>
 
@@ -76,42 +80,42 @@ export default async function Page(props: PageProps<"/admin/notas">) {
             <span />
           </div>
 
-          {notas.length === 0 ? (
+          {notes.length === 0 ? (
             <div className="p-12 text-center text-sm text-muted-foreground">
               {q
                 ? "No hay notas que coincidan con la búsqueda."
-                : estado === "pendientes"
+                : status === "pending"
                   ? "No quedan notas sin traducir. 🎉"
                   : "Todavía no se tradujo ninguna nota."}
             </div>
           ) : (
-            notas.map((nota) => (
-              <FilaNota
-                key={nota.id}
-                id={nota.id}
-                nameEn={nota.nameEn}
-                nameEs={nota.nameEs}
-                usageCount={nota.usageCount}
+            notes.map((note) => (
+              <NoteRow
+                key={note.id}
+                id={note.id}
+                nameEn={note.nameEn}
+                nameEs={note.nameEs}
+                usageCount={note.usageCount}
               />
             ))
           )}
         </div>
 
-        {totalPaginas > 1 ? (
+        {totalPages > 1 ? (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              {formatoNumero.format(total)} notas · página {pagina} de{" "}
-              {totalPaginas}
+              {numberFormatter.format(total)} notas · página {page} de{" "}
+              {totalPages}
             </span>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                disabled={pagina <= 1}
-                asChild={pagina > 1}
+                disabled={page <= 1}
+                asChild={page > 1}
               >
-                {pagina > 1 ? (
-                  <Link href={hrefPagina(pagina - 1)}>Anterior</Link>
+                {page > 1 ? (
+                  <Link href={getPageHref(page - 1)}>Anterior</Link>
                 ) : (
                   <span>Anterior</span>
                 )}
@@ -119,11 +123,11 @@ export default async function Page(props: PageProps<"/admin/notas">) {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={pagina >= totalPaginas}
-                asChild={pagina < totalPaginas}
+                disabled={page >= totalPages}
+                asChild={page < totalPages}
               >
-                {pagina < totalPaginas ? (
-                  <Link href={hrefPagina(pagina + 1)}>Siguiente</Link>
+                {page < totalPages ? (
+                  <Link href={getPageHref(page + 1)}>Siguiente</Link>
                 ) : (
                   <span>Siguiente</span>
                 )}

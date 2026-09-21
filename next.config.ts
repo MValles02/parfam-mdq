@@ -1,22 +1,20 @@
 import type { NextConfig } from "next";
 
 /**
- * El host de las fotos es configuracion (R2_PUBLIC_URL), pero `remotePatterns`
- * se evalua al construir el config, no por request: por eso se lee de
- * `process.env` y no de `src/lib/env.ts`, que valida del lado del server.
- * Si la variable falta, la lista queda vacia y `next/image` rechaza el host
- * en vez de servir cualquier cosa.
+ * Photo host configuration comes from R2_PUBLIC_URL, but `remotePatterns` is
+ * evaluated while building config rather than per request. Read `process.env`
+ * instead of the server-validated src/lib/env.ts. Without the variable, an
+ * empty list makes `next/image` reject the host.
  *
- * OJO: como esto se resuelve en `next build` y queda serializado en
- * el output standalone, R2_PUBLIC_URL tiene que estar presente COMO BUILD ARG
- * en el build de CI. Cambiar el host de las imagenes obliga a rebuildear la
- * imagen; no alcanza con tocar la variable en Dokploy.
+ * This resolves during `next build` and is serialized into standalone output,
+ * so CI must provide R2_PUBLIC_URL as a build argument. Changing the image
+ * host requires rebuilding the image; updating it only in Dokploy is not enough.
  */
-const hostDeImagenes = (() => {
-  const crudo = process.env.R2_PUBLIC_URL;
-  if (!crudo) return [];
+const imageHosts = (() => {
+  const rawUrl = process.env.R2_PUBLIC_URL;
+  if (!rawUrl) return [];
   try {
-    const { protocol, hostname } = new URL(crudo);
+    const { protocol, hostname } = new URL(rawUrl);
     return [{ protocol: protocol.replace(":", ""), hostname } as const];
   } catch {
     return [];
@@ -24,23 +22,21 @@ const hostDeImagenes = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  // El Dockerfile despliega `.next/standalone` (server.js + solo los
-  // node_modules que el trace considera necesarios), no el repo entero.
+  // Docker deploys `.next/standalone`: server.js plus only traced node_modules.
   output: "standalone",
 
   /**
-   * `src/app/icon.tsx`, `src/app/opengraph-image.tsx` y la OG de producto leen
-   * la fuente del disco en runtime con `join(process.cwd(), "src/assets/...")`.
-   * El trace de @vercel/nft no resuelve ese path armado a mano, asi que hay que
-   * pedirlo explicito o el standalone arranca sin la fuente y las OG revientan
-   * recien cuando alguien comparte un link.
+   * src/app/icon.tsx and OG image files read fonts from disk at runtime through
+   * `join(process.cwd(), "src/assets/...")`. @vercel/nft cannot trace that
+   * constructed path, so list it explicitly to keep standalone OG rendering
+   * from failing when someone shares a link.
    */
   outputFileTracingIncludes: {
     "/*": ["src/assets/fonts/*.ttf"],
   },
 
   images: {
-    remotePatterns: hostDeImagenes.map(({ protocol, hostname }) => ({
+    remotePatterns: imageHosts.map(({ protocol, hostname }) => ({
       protocol: protocol as "https" | "http",
       hostname,
       pathname: "/**",

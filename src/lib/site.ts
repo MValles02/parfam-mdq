@@ -1,13 +1,13 @@
 /**
- * Valores por defecto de la marca.
+ * Default brand values.
  *
- * `name` y `tagline` son fijos: no tienen columna en `SiteSetting` ni se
- * editan desde `/admin/configuracion` (decision del dueño de la marca).
+ * `name` and `tagline` are fixed: `SiteSetting` has no columns for them, and
+ * they cannot be edited from `/admin/configuracion` by brand-owner decision.
  *
- * `whatsapp`, `instagram` y `description` en cambio sí siguen siendo
- * editables: las columnas correspondientes de `SiteSetting` son opcionales,
- * y estos valores son la semilla (`prisma/seed.ts`) y el fallback que usa
- * `src/lib/configuracion.ts` cuando el admin las deja vacías.
+ * `whatsapp`, `instagram`, and `description` remain editable. Their matching
+ * `SiteSetting` columns are optional, and these values are the seed
+ * (`prisma/seed.ts`) and fallback used by `src/lib/settings.ts` when the
+ * administrator leaves them empty.
  */
 export const siteDefaults = {
   name: "ParfamMdq",

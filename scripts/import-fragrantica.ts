@@ -1,14 +1,14 @@
 /**
- * Importa el catalogo de referencia desde data/fragrantica/*.csv a Postgres.
+ * Imports the reference catalog from data/fragrantica/*.csv into Postgres.
  *
  *   pnpm db:import-fragrantica                  # dataset completo
- *   pnpm db:import-fragrantica -- --limit 500    # prueba rapida
+ *   pnpm db:import-fragrantica -- --limit 500    # quick check
  *   pnpm db:import-fragrantica -- --data-dir data/fragrantica/samples
  *
- * Idempotente: cada corrida borra (por pid) y vuelve a crear las
- * FragranceRef del lote que procesa, así se puede re-ejecutar sin duplicar.
- * Ver data/fragrantica/README.md para el formato de origen y las trampas
- * del parseo, y prisma/schema.prisma para el modelo que se escribe.
+ * Idempotent: each run deletes and recreates the batch FragranceRef rows by
+ * PID, allowing safe reruns without duplicates. See data/fragrantica/README.md
+ * for source format and parsing caveats, and prisma/schema.prisma for the
+ * written model.
  */
 import { parseArgs } from "node:util";
 import path from "node:path";
@@ -44,10 +44,10 @@ function fmt(n: number): string {
 
 async function main() {
   const startedAt = Date.now();
-  console.log(`Leyendo CSV desde ${dataDir} ...`);
+  console.log(`Reading CSV files from ${dataDir} ...`);
   const merged = readAndMergeFragrantica({ dataDir });
   console.log(
-    `  ${fmt(merged.size)} fragancias fusionadas (fra_perfumes + fra_cleaned)`,
+    `  ${fmt(merged.size)} merged fragrances (fra_perfumes + fra_cleaned)`,
   );
 
   const noteAliases = loadNoteAliases();
@@ -63,16 +63,16 @@ async function main() {
   if (limit) {
     records = records.slice(0, limit);
     console.log(
-      `  --limit ${limit}: se procesan las primeras ${fmt(records.length)}`,
+      `  --limit ${limit}: processing the first ${fmt(records.length)}`,
     );
   }
 
   // -------------------------------------------------------------------
-  // Dimensiones: Brand, Perfumer, Note, Accord
+  // Dimensions: Brand, Perfumer, Note, Accord
   // -------------------------------------------------------------------
   const brandSlugs = new Map<string, string>(); // slug -> name (primera ocurrencia)
   const perfumerSlugs = new Map<string, string>();
-  const noteSlugs = new Map<string, string>(); // slug -> nombre canonico (en, minuscula)
+  const noteSlugs = new Map<string, string>(); // slug -> canonical lowercase English name
 
   for (const r of records) {
     const bSlug = slug(r.brandName);
@@ -94,10 +94,10 @@ async function main() {
   }
 
   console.log(
-    `Dimensiones detectadas: ${fmt(brandSlugs.size)} marcas, ${fmt(perfumerSlugs.size)} perfumistas, ${fmt(noteSlugs.size)} notas`,
+    `Detected dimensions: ${fmt(brandSlugs.size)} brands, ${fmt(perfumerSlugs.size)} perfumers, ${fmt(noteSlugs.size)} notes`,
   );
 
-  console.log("Escribiendo marcas...");
+  console.log("Writing brands...");
   await prisma.brand.createMany({
     data: [...brandSlugs.entries()].map(([bslug, name]) => ({
       slug: bslug,
@@ -110,7 +110,7 @@ async function main() {
   });
   const brandIdBySlug = new Map(brandRows.map((b) => [b.slug, b.id]));
 
-  console.log("Escribiendo perfumistas...");
+  console.log("Writing perfumers...");
   await prisma.perfumer.createMany({
     data: [...perfumerSlugs.entries()].map(([pslug, name]) => ({
       slug: pslug,
@@ -124,7 +124,7 @@ async function main() {
   const perfumerIdBySlug = new Map(perfumerRows.map((p) => [p.slug, p.id]));
 
   console.log(
-    "Escribiendo acordes (catalogo completo de 93, no depende de --limit)...",
+    "Writing accords (the full 93-item catalog does not depend on --limit)...",
   );
   await prisma.accord.createMany({
     data: [...accordDict.values()].map((a) => ({
@@ -140,7 +140,7 @@ async function main() {
   });
   const accordIdBySlug = new Map(accordRows.map((a) => [a.slug, a.id]));
 
-  console.log("Escribiendo notas...");
+  console.log("Writing notes...");
   await prisma.note.createMany({
     data: [...noteSlugs.entries()].map(([nslug, canonical]) => {
       const dictEntry = noteDict.get(canonical);
@@ -148,8 +148,8 @@ async function main() {
         slug: nslug,
         nameEn: dictEntry?.en ?? titleCaseFromSlug(canonical),
         nameEs: dictEntry?.es ?? null,
-        // Placeholder: el valor real se calcula al final del import, cuando
-        // ya existen todas las filas de FragranceRefNote.
+        // Placeholder: calculate the actual value after all FragranceRefNote
+        // rows have been written.
         usageCount: 0,
       };
     }),
@@ -164,11 +164,11 @@ async function main() {
     ([, canonical]) => !noteDict.has(canonical),
   );
   console.log(
-    `  ${fmt(noteSlugs.size)} notas totales, ${fmt(untranslated.length)} sin traducir (quedan en ingles, editables desde /admin/notas)`,
+    `  ${fmt(noteSlugs.size)} total notes, ${fmt(untranslated.length)} untranslated (kept in English and editable from /admin/notas)`,
   );
 
   // -------------------------------------------------------------------
-  // FragranceRef + relaciones, en lotes
+  // FragranceRef records and relations in batches
   // -------------------------------------------------------------------
   let processed = 0;
   let withPyramid = 0;
@@ -187,7 +187,7 @@ async function main() {
         data: batch.map((r) => {
           const brandId = brandIdBySlug.get(slug(r.brandName));
           if (!brandId)
-            throw new Error(`marca no resuelta: ${r.brandName} (pid ${r.pid})`);
+            throw new Error(`Unresolved brand: ${r.brandName} (PID ${r.pid})`);
           return {
             pid: r.pid,
             url: r.url,
@@ -200,9 +200,8 @@ async function main() {
             descriptionEn: r.descriptionEn,
             hasPyramid: Boolean(r.pyramid),
             originCountry: r.originCountry,
-            // Desnormalizado para el buscador del panel: es lo unico que
-            // permite resolver "sauvage dior" con un solo indice GIN.
-            // Ver prisma/migrations/*_busqueda_difusa_referencias.
+            // The denormalized admin search field resolves "sauvage dior"
+            // through one GIN index. See the matching Prisma migration.
             searchText: `${r.name} ${r.brandName}`,
           };
         }),
@@ -286,12 +285,11 @@ async function main() {
     console.log(`  ${fmt(processed)}/${fmt(records.length)} (${pct}%)`);
   }
 
-  // usageCount recien se puede saber aca: el diccionario solo trae el conteo
-  // de las ~500 notas que alguien tradujo, asi que tomarlo de ahi dejaba en
-  // cero las 1.398 sin traducir — justo las que /admin/notas tiene que
-  // priorizar. Se recalcula del uso real, que es el unico dato verdadero.
-  console.log("Recalculando el uso de cada nota...");
-  const actualizadas = await prisma.$executeRaw`
+  // usageCount is only known now. The dictionary counts only roughly 500
+  // translated notes, so it would leave 1,398 untranslated notes at zero even
+  // though /admin/notas needs to prioritize them. Recalculate real usage.
+  console.log("Recalculating each note's usage...");
+  const updatedCount = await prisma.$executeRaw`
     UPDATE "Note" n
        SET "usageCount" = COALESCE(u.total, 0)
       FROM (
@@ -303,20 +301,20 @@ async function main() {
      WHERE u."id" = n."id"
        AND n."usageCount" IS DISTINCT FROM COALESCE(u.total, 0)
   `;
-  console.log(`  ${fmt(actualizadas)} notas con el conteo actualizado`);
+  console.log(`  ${fmt(updatedCount)} notes with updated counts`);
 
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-  console.log("\nListo:");
-  console.log(`  fragancias importadas: ${fmt(processed)}`);
+  console.log("\nDone:");
+  console.log(`  imported fragrances: ${fmt(processed)}`);
   console.log(
-    `  con piramide de notas: ${fmt(withPyramid)} (${((withPyramid / processed) * 100).toFixed(1)}%)`,
+    `  with a note pyramid: ${fmt(withPyramid)} (${((withPyramid / processed) * 100).toFixed(1)}%)`,
   );
   if (skippedNotes || skippedAccords || skippedPerfumers) {
     console.log(
-      `  relaciones omitidas (dimension no resuelta): ${skippedNotes} notas, ${skippedAccords} acordes, ${skippedPerfumers} perfumistas`,
+      `  skipped relations (unresolved dimension): ${skippedNotes} notes, ${skippedAccords} accords, ${skippedPerfumers} perfumers`,
     );
   }
-  console.log(`  tiempo: ${elapsed}s`);
+  console.log(`  elapsed: ${elapsed}s`);
 }
 
 main()

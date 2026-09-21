@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import { obtenerConfiguracionSitio } from "@/lib/configuracion";
-import { URL_SITIO } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/settings";
+import { SITE_URL } from "@/lib/seo";
 import { siteDefaults } from "@/lib/site";
 
 const outfit = Outfit({
@@ -11,30 +11,28 @@ const outfit = Outfit({
 });
 
 /**
- * El nombre de marca es fijo (`siteDefaults.name`), pero
- * `seoDefaultTitle`/`seoDefaultDescription` siguen saliendo de
- * `SiteSetting` (editable desde `/admin/configuracion`): son el
- * título/descripción por defecto de TODO el sitio (el template de acá
- * envuelve cualquier página que no ponga el suyo propio), así que
- * `obtenerConfiguracionSitio()` sigue siendo la única fuente que tiene
- * sentido para esos dos campos.
+ * The brand name is fixed (`siteDefaults.name`), but
+ * `seoDefaultTitle`/`seoDefaultDescription` still come from `SiteSetting`
+ * (editable from `/admin/configuracion`): they are the default title and
+ * description for the entire site. The template here wraps every page that
+ * does not provide its own, so `getSiteSettings()` remains the only sensible
+ * source for these two fields.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const config = await obtenerConfiguracionSitio();
+  const config = await getSiteSettings();
 
   return {
-    // Con metadataBase, las rutas relativas de openGraph/canonical se
-    // resuelven solas contra el entorno donde corre (localhost en dev, el
-    // dominio real en produccion).
-    metadataBase: new URL(URL_SITIO),
+    // metadataBase resolves relative openGraph/canonical paths against the
+    // running environment (localhost in development, the production domain).
+    metadataBase: new URL(SITE_URL),
     title: {
       default: config.seoDefaultTitle,
       template: `%s — ${siteDefaults.name}`,
     },
     description: config.seoDefaultDescription,
-    // Verificacion de propiedad para Google Search Console. No es un secreto:
-    // se publica en el HTML de todas las paginas, que es justo como Google la
-    // comprueba. Va en el layout raiz para que tambien cubra /admin.
+    // Google Search Console property verification is not secret: it is
+    // published in every page's HTML, as Google expects. The root layout also
+    // covers /admin.
     verification: {
       google: "Sie6f0R_-nTdSrgWAUCwjFG8j-dE3Eu1Ud4JQCwMoVQ",
     },

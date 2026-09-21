@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 
 export default async function LoginPage(props: PageProps<"/admin/login">) {
   const searchParams = await props.searchParams;
-  const volverA =
+  // `volverA` is the established query parameter accepted by the login route.
+  const returnTo =
     typeof searchParams.volverA === "string" ? searchParams.volverA : undefined;
 
   return (
@@ -24,7 +25,7 @@ export default async function LoginPage(props: PageProps<"/admin/login">) {
           </span>
         </div>
 
-        <LoginForm volverA={volverA} />
+        <LoginForm returnTo={returnTo} />
       </div>
     </main>
   );

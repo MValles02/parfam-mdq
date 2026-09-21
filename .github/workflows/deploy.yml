@@ -1,71 +1,65 @@
-# Build de la imagen de produccion y redespliegue en Dokploy.
+# Production image build and Dokploy redeployment.
 #
-# La VPS es compartida y tiene 4 vCPU: por eso la imagen se compila aca y el
-# server solo baja el artefacto ya hecho.
+# The VPS has four shared vCPUs, so CI builds the image and the server only
+# pulls the completed artifact.
 name: Deploy
 
 on:
   push:
     branches: [main]
-    # Un commit que solo toca documentacion no tiene por que rebuildear la
-    # imagen ni redesplegar. Si el commit mezcla .md con codigo, igual corre.
+    # Documentation-only commits do not need an image rebuild or redeployment.
     paths-ignore:
       - "**.md"
-  # Para poder reconstruir sin un commit (por ejemplo si cambia un build arg).
+  # Allows rebuilding without a commit, for example after a build argument change.
   workflow_dispatch:
 
 concurrency:
-  # Dos deploys pisandose dejarian a Dokploy tirando de un `latest` a medio
-  # subir. Se encolan; no se cancela uno en curso.
+  # Concurrent deployments could make Dokploy pull a partially pushed `latest`.
+  # Queue them instead of cancelling an in-progress deployment.
   group: deploy-main
   cancel-in-progress: false
 
 env:
-  # GHCR exige el nombre en minusculas, aunque el owner del repo sea MValles02.
-  IMAGEN: ghcr.io/mvalles02/parfam-mdq
+  # GHCR requires lowercase names even when the repository owner is MValles02.
+  IMAGE: ghcr.io/mvalles02/parfam-mdq
 
 jobs:
-  imagen:
-    name: Buildear y publicar en GHCR
+  image:
+    name: Build and publish to GHCR
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Traer el repo
+      - name: Check out repository
         uses: actions/checkout@v5
 
-      - name: Preparar Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v4
 
-      # Con `secrets.GITHUB_TOKEN` GHCR rechaza el push con
-      # `permission_denied: write_package`, aunque el runner emita el token con
-      # `Packages: write` (verificado en el log de "Set up job", y con el
-      # default del repo tanto en `read` como en `write`). No deja crear un
-      # package nuevo en un namespace personal. Por eso va un PAT clasico con
-      # `write:packages` -- el mismo que usa Dokploy para bajar la imagen.
-      - name: Entrar a GHCR
+      # GHCR rejects a GITHUB_TOKEN push for a new personal-namespace package
+      # despite Packages: write permissions. Use the classic write:packages PAT
+      # that Dokploy also uses to pull the image.
+      - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      # NEXT_PUBLIC_SITE_URL y R2_PUBLIC_URL NO son secretos, son variables del
-      # repo (Settings -> Variables): Next las inlinea en el bundle del cliente
-      # y quedan a la vista en el HTML igual. Pero tienen que estar ACA, en el
-      # build: ponerlas solo en Dokploy no alcanza, y cambiarlas obliga a
-      # rebuildear la imagen (por eso existe el `workflow_dispatch`).
-      - name: Buildear y publicar
+      # NEXT_PUBLIC_SITE_URL and R2_PUBLIC_URL are repository variables, not
+      # secrets. Next inlines them into client HTML during this build, so changing
+      # either requires workflow_dispatch or a commit-triggered rebuild.
+      - name: Build and publish
         uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ env.IMAGEN }}:${{ github.sha }}
-            ${{ env.IMAGEN }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
           build-args: |
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
             R2_PUBLIC_URL=${{ vars.R2_PUBLIC_URL }}
@@ -74,17 +68,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # El webhook lo genera Dokploy cuando se crea la app, que es despues del
-      # primer push (Dokploy necesita una imagen que ya exista en GHCR para
-      # poder crearla). Mientras el secret no este cargado, el job publica la
-      # imagen y no falla por esto.
-      - name: Avisar a Dokploy
+      # Dokploy creates the webhook after its first image exists in GHCR. Until
+      # the secret is configured, publish the image without failing the job.
+      - name: Notify Dokploy
         env:
           WEBHOOK: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
         run: |
           if [ -z "$WEBHOOK" ]; then
-            echo "DOKPLOY_WEBHOOK_URL todavia no esta cargado: se omite el redespliegue."
+            echo "DOKPLOY_WEBHOOK_URL is not configured yet; skipping redeployment."
             exit 0
           fi
           curl -fsS -X POST "$WEBHOOK"
-          echo "Webhook de redespliegue enviado."
+          echo "Redeployment webhook sent."

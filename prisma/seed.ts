@@ -1,12 +1,12 @@
 /**
- * Seed inicial: usuario admin (si hay credenciales en el env) + fila
- * singleton de SiteSetting con los valores reales de la marca.
+ * Initial seed: an administrator user when environment credentials exist, plus
+ * the SiteSetting singleton with production brand values.
  *
  *   pnpm db:seed
  *
- * Es seguro re-ejecutarlo: el usuario sólo se crea si no existe uno con ese
- * email, y SiteSetting usa upsert con `update: {}` — si ya existe, no pisa
- * lo que el admin haya cambiado desde el panel.
+ * It is safe to run again. The user is created only when that email does not
+ * exist, and SiteSetting uses an empty upsert update so it preserves admin
+ * changes from the panel.
  */
 import { hash } from "@node-rs/argon2";
 import { prisma } from "@/lib/db";
@@ -22,22 +22,21 @@ Nombre: {{nombre}}
 Pedido: {{numero}}`;
 
 async function seedAdminUser() {
-  // En minúsculas porque `authorize()` (src/lib/auth.ts) busca así: si
-  // `ADMIN_SEED_EMAIL` trae alguna mayúscula, el usuario se crearía con un
-  // email que el login nunca encuentra (ver F-08 en docs/findings.md).
+  // `authorize()` in src/lib/auth.ts searches lowercase email addresses. This
+  // prevents uppercase ADMIN_SEED_EMAIL input from creating an unreachable user.
   const email = process.env.ADMIN_SEED_EMAIL?.toLowerCase();
   const password = process.env.ADMIN_SEED_PASSWORD;
 
   if (!email || !password) {
     console.log(
-      "ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD no están seteados: se omite el usuario admin.",
+      "ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD are not set; skipping admin user.",
     );
     return;
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    console.log(`Usuario admin ya existe (${email}), no se toca.`);
+    console.log(`Admin user already exists (${email}); leaving it unchanged.`);
     return;
   }
 
@@ -45,7 +44,7 @@ async function seedAdminUser() {
   await prisma.user.create({
     data: { email, passwordHash, name: "Admin", role: "ADMIN" },
   });
-  console.log(`Usuario admin creado: ${email}`);
+  console.log(`Created admin user: ${email}`);
 }
 
 async function seedSiteSettings() {
@@ -62,7 +61,7 @@ async function seedSiteSettings() {
     },
     update: {},
   });
-  console.log("SiteSetting listo.");
+  console.log("SiteSetting is ready.");
 }
 
 async function main() {

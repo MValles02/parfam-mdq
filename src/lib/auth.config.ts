@@ -1,11 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 
 /**
- * Configuracion base de Auth.js, sin acceso a base de datos ni a argon2.
+ * Base Auth.js configuration without database or argon2 access.
  *
- * Se separa del archivo `auth.ts` a proposito: `proxy.ts` importa SOLO esto,
- * asi el proxy no arrastra Prisma ni el binario de argon2 y queda liviano
- * (corre en cada request antes del render).
+ * This stays separate from `auth.ts` so `proxy.ts` imports only this module.
+ * That prevents Proxy from loading Prisma and the argon2 binary on every
+ * request before rendering.
  */
 export const authConfig = {
   pages: {
@@ -13,21 +13,19 @@ export const authConfig = {
   },
   session: {
     strategy: "jwt",
-    // 30 dias: es un panel interno de una sola persona, no hace falta
-    // que expire seguido.
+    // Thirty days suits this single-person internal panel.
     maxAge: 60 * 60 * 24 * 30,
   },
   callbacks: {
     /**
-     * Copia el id al token la primera vez (cuando viene `user`), y de ahi a la
-     * sesion: asi `auth()` puede devolver quien es sin consultar la base.
+     * Copies the ID to the token when `user` is available, then to the session,
+     * so `auth()` can identify the user without querying the database.
      *
-     * No se guarda el rol a proposito. La autorizacion de este panel es
-     * binaria -- hay sesion o no la hay, ver `src/lib/admin/guard.ts` -- y
-     * `UserRole` tiene un unico valor. Si alguna vez hay mas de un rol, el
-     * valor tiene que salir de `User.role` en la base y viajar desde
-     * `authorize()`, nunca de un literal escrito aca: un literal le daria el
-     * rol mas alto a cualquiera que se loguee.
+     * The role is intentionally not stored. Authorization is binary in this
+     * panel: a session exists or it does not (see `src/lib/admin/guard.ts`),
+     * and `UserRole` has one value. If multiple roles are added, `User.role`
+     * must supply the value through `authorize()`; a literal here would grant
+     * every signed-in user the highest role.
      */
     jwt({ token, user }) {
       if (user) {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
-import { obtenerEstadisticasPanel } from "@/lib/admin/panel";
+import { getDashboardStats } from "@/lib/admin/dashboard";
 
 export const metadata: Metadata = { title: "Panel" };
 
@@ -35,7 +35,7 @@ function Stat({
 }
 
 export default async function AdminHomePage() {
-  const stats = await obtenerEstadisticasPanel();
+  const stats = await getDashboardStats();
 
   return (
     <>
@@ -47,25 +47,25 @@ export default async function AdminHomePage() {
       <div className="grid gap-4 p-8 sm:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="PRODUCTOS PUBLICADOS"
-          value={stats.publicados}
-          hint={`${stats.borradores} en borrador`}
+          value={stats.publishedProducts}
+          hint={`${stats.draftProducts} en borrador`}
           href="/admin/productos"
         />
         <Stat
           label="PEDIDOS PENDIENTES"
-          value={stats.pedidosPendientes}
+          value={stats.pendingOrders}
           hint="Esperando confirmación"
           href="/admin/pedidos"
         />
         <Stat
           label="NOTAS SIN TRADUCIR"
-          value={stats.notasSinTraducir}
+          value={stats.untranslatedNotes}
           hint="Se muestran en inglés"
           href="/admin/notas"
         />
         <Stat
           label="CATÁLOGO DE REFERENCIA"
-          value={stats.referencias}
+          value={stats.fragranceReferences}
           hint="Fragancias para buscar"
           href="/admin/productos"
         />

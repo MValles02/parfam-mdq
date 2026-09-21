@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listarAcordes } from "@/lib/admin/productos";
-import { r2Configurado } from "@/lib/r2";
+import { listAccords } from "@/lib/admin/products";
+import { isR2Configured } from "@/lib/r2";
 import { env } from "@/lib/env";
-import { ProductoForm } from "../_components/producto-form";
+import { ProductForm } from "../_components/product-form";
 
 export const metadata: Metadata = { title: "Nuevo producto" };
 
 export default async function Page() {
-  const acordes = await listarAcordes();
+  const accords = await listAccords();
 
   return (
     <>
@@ -24,11 +24,11 @@ export default async function Page() {
         </h1>
       </div>
 
-      <ProductoForm
-        producto={null}
-        acordes={acordes}
-        r2Listo={r2Configurado()}
-        basePublica={env.R2_PUBLIC_URL ?? null}
+      <ProductForm
+        product={null}
+        accords={accords}
+        isR2Configured={isR2Configured()}
+        publicBaseUrl={env.R2_PUBLIC_URL ?? null}
       />
     </>
   );

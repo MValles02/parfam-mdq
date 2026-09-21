@@ -28,8 +28,8 @@ type CarouselContextProps = {
   scrollNext: () => void
   canScrollPrev: boolean
   canScrollNext: boolean
-  /** Indice del slide visible. Lo agregamos nosotros: lo usan las miniaturas. */
-  indiceActual: number
+  /** The visible slide index, used by thumbnail controls. */
+  currentIndex: number
 } & CarouselProps
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null)
@@ -44,46 +44,47 @@ function useCarousel() {
   return context
 }
 
-const SIN_EMBLA = "0:0:0"
+const EMPTY_EMBLA_STATE = "0:0:0"
 
 /**
- * Estado del carrusel leido de Embla con `useSyncExternalStore`.
+ * Reads carousel state from Embla with `useSyncExternalStore`.
  *
- * El componente que genera shadcn lo resuelve con `useState` + un `useEffect`
- * que llama a `setState` en el cuerpo, y la regla `react-hooks/set-state-in-effect`
- * de React 19 lo marca como error (le pasó lo mismo a `src/hooks/use-mobile.ts`).
- * Embla ya es un store externo con `on`/`off`: suscribirse es la
- * API correcta y ademas evita el render de mas.
+ * The shadcn-generated component uses `useState` and a `useEffect` that calls
+ * `setState` in its body. React 19's `react-hooks/set-state-in-effect` rule
+ * rejects that pattern, as it does in `src/hooks/use-mobile.ts`. Embla already
+ * provides an external store through `on` and `off`, so subscribing is the
+ * appropriate API and avoids an extra render.
  *
- * El snapshot es un string y no un objeto porque `useSyncExternalStore` compara
- * por identidad: un objeto nuevo en cada lectura seria un bucle infinito.
+ * The snapshot is a string instead of an object because `useSyncExternalStore`
+ * compares identity. Returning a new object for every read would cause an
+ * infinite loop.
  */
-function useEstadoEmbla(api: CarouselApi) {
-  const suscribir = React.useCallback(
-    (alCambiar: () => void) => {
+function useEmblaState(api: CarouselApi) {
+  const subscribe = React.useCallback(
+    (onChange: () => void) => {
       if (!api) return () => {}
-      api.on("reInit", alCambiar)
-      api.on("select", alCambiar)
+      api.on("reInit", onChange)
+      api.on("select", onChange)
       return () => {
-        api.off("reInit", alCambiar)
-        api.off("select", alCambiar)
+        api.off("reInit", onChange)
+        api.off("select", onChange)
       }
     },
     [api]
   )
 
-  const leer = React.useCallback(() => {
-    if (!api) return SIN_EMBLA
+  const getSnapshot = React.useCallback(() => {
+    if (!api) return EMPTY_EMBLA_STATE
     return `${api.canScrollPrev() ? 1 : 0}:${api.canScrollNext() ? 1 : 0}:${api.selectedScrollSnap()}`
   }, [api])
 
-  const snapshot = React.useSyncExternalStore(suscribir, leer, () => SIN_EMBLA)
-  const [prev, next, indice] = snapshot.split(":")
+  const snapshot = React.useSyncExternalStore(subscribe, getSnapshot, () => EMPTY_EMBLA_STATE)
+  const [prev, next, index] = snapshot.split(":")
 
   return {
     canScrollPrev: prev === "1",
     canScrollNext: next === "1",
-    indiceActual: Number(indice),
+    currentIndex: Number(index),
   }
 }
 
@@ -103,7 +104,7 @@ function Carousel({
     },
     plugins
   )
-  const { canScrollPrev, canScrollNext, indiceActual } = useEstadoEmbla(api)
+  const { canScrollPrev, canScrollNext, currentIndex } = useEmblaState(api)
 
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev()
@@ -143,7 +144,7 @@ function Carousel({
         scrollNext,
         canScrollPrev,
         canScrollNext,
-        indiceActual,
+        currentIndex,
       }}
     >
       <div

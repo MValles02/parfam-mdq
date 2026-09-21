@@ -1,19 +1,19 @@
 import { auth } from "@/lib/auth";
 
 /**
- * Autorizacion para Server Actions.
+ * Authorization for Server Actions.
  *
- * El layout de `/admin` protege lo que se *renderiza*, pero una Server Action
- * es un endpoint HTTP publico: cualquiera que conozca su ID puede invocarla sin
- * pasar nunca por el layout ni por `proxy.ts`. Asi que toda accion que lea o
- * escriba datos del panel arranca llamando a esto.
+ * The `/admin` layout protects rendering, while a Server Action is a public
+ * HTTP endpoint. Anyone with its ID can invoke it without passing through the
+ * layout or `proxy.ts`, so every panel action that reads or writes data starts
+ * with this guard.
  *
  * Ver node_modules/next/dist/docs/01-app/02-guides/authentication.md
  */
 export async function requireAdmin() {
   const session = await auth();
   if (!session?.user) {
-    throw new Error("No autorizado.");
+    throw new Error("Unauthorized");
   }
   return session.user;
 }

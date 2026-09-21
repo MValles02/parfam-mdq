@@ -13,9 +13,8 @@ import { UserMenu } from "./user-menu";
 
 export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
   /**
-   * Éste es el control de acceso real. `proxy.ts` ya redirige antes de llegar
-   * acá, pero eso es sólo una optimización de UX: la autorización que cuenta
-   * es ésta, del lado del servidor y pegada a los datos.
+   * This is the render-time access check. `proxy.ts` redirects earlier as a
+   * UX optimization, while Server Actions authorize independently.
    */
   const session = await auth();
   if (!session?.user) {
@@ -23,13 +22,12 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
   }
 
   return (
-    // El sidebar colapsado muestra tooltips, y Radix los exige dentro de un
-    // TooltipProvider. Va acá y no en el layout raíz para no cargar ese JS
-    // de cliente en toda la tienda.
+    // The collapsed sidebar shows tooltips, which Radix requires under a
+    // TooltipProvider. Keeping it here avoids loading that client JavaScript
+    // across the store.
     <TooltipProvider>
-      {/* nuqs mantiene los filtros de las tablas en la URL (ver AGENTS.md).
-          El adapter va acá y no en el layout raíz porque hoy el único estado
-          en la URL es el del panel. */}
+      {/* nuqs keeps table filters in the URL. The adapter stays here because
+          this panel is the only current consumer of URL state. */}
       <NuqsAdapter>
         <SidebarProvider>
           <AdminSidebar>

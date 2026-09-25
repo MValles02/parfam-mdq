@@ -137,7 +137,7 @@ Tailwind v4 resolves bare `rounded` to `var(--radius)`, which equals `rounded-lg
 
 ## A.5 Spacing, grid, and containers
 
-- **Container:** literal `mx-auto max-w-[1440px]` in the header, footer, catalog section, and store pages.
+- **Container:** `mx-auto max-w-page`, backed by the `--container-page: 1440px` token in the `@theme inline` layer (`src/app/globals.css`), in the header, footer, catalog section, and store pages.
 - **Gutters:** `px-5` on mobile and `lg:px-16` on desktop.
 - **Catalog grid:** `grid-cols-2 gap-3.5 lg:grid-cols-4 lg:gap-7` in `catalog/grid.tsx`; `grid-skeleton.tsx` mirrors it, while related products use `gap-5`.
 - **Product detail:** fixed gallery `lg:w-[620px] lg:shrink-0`, flexible purchasing column, `gap-9 lg:gap-14`.
@@ -278,12 +278,12 @@ the stack.
 
 ## Ranked summary
 
-| #    | Item                                                              | Type        | Effort | Risk   |
-| ---- | ----------------------------------------------------------------- | ----------- | ------ | ------ |
-| B-01 | Light `--destructive` is 4.12:1, below AA for form errors         | A11y        | S      | Low    |
-| B-02 | Control borders are 1.26:1 and fail 1.4.11 non-text contrast      | A11y        | M      | Medium |
-| B-08 | Type and spacing scales are ad hoc                                | Consistency | L      | Medium |
-| B-09 | Four nearly identical radii and two spellings for the base radius | Consistency | S      | Low    |
+| #    | Item                                                         | Type        | Effort | Risk   |
+| ---- | ------------------------------------------------------------ | ----------- | ------ | ------ |
+| B-01 | Light `--destructive` is 4.12:1, below AA for form errors    | A11y        | S      | Low    |
+| B-02 | Control borders are 1.26:1 and fail 1.4.11 non-text contrast | A11y        | M      | Medium |
+| B-08 | Eyebrow label typography scale is ad hoc                     | Consistency | L      | Medium |
+| B-09 | Two spellings for the same base radius                       | Consistency | S      | Low    |
 
 S means at most one file or a mechanical change; M means several files with a bounded criterion; L requires a prior design decision.
 
@@ -321,15 +321,19 @@ Keep `--border` decorative, set functional `--input` to a value reaching 3:1 on 
 
 ## B-08 · Typography and spacing are ad hoc
 
-The mockups were transcribed pixel by pixel: 15 arbitrary font sizes, 17 arbitrary tracking values, and at least 10 pixel-based spacings coexist. Some roles differ by one or two pixels without a semantic distinction. `max-w-[1440px]` and `px-5 lg:px-16` are also repeated across several files.
+The mockups were transcribed pixel by pixel: 15 arbitrary font sizes, 17 arbitrary tracking values, and at least 10 pixel-based spacings coexist. Some roles differ by one or two pixels without a semantic distinction.
 
-First, introduce a `Container` component or `@layer components` class for `mx-auto max-w-[1440px] px-5 lg:px-16` and replace each literal occurrence. Second, after a design decision, introduce semantic typography tokens such as `--text-eyebrow`, `--tracking-eyebrow`, `--text-display`, and `--tracking-display`, including a deliberate decision on which values merge. The first change is mechanical; the second can affect every screen and falls outside a behavior-only refactor.
+**Resolved:** the repeated container literal is now the `--container-page: 1440px` token (`src/app/globals.css`), consumed as `max-w-page` in place of the 8 hand-written `max-w-[1440px]` occurrences.
+
+The typography scale remains open: normalizing the admin/store eyebrow labels (sizes 9–11px, several distinct tracking values) changes rendered pixels, so it is outside a no-behavior-change refactor and needs an explicit visual decision. After that decision, introduce semantic typography tokens such as `--text-eyebrow`, `--tracking-eyebrow`, `--text-display`, and `--tracking-display`, including a deliberate decision on which values merge.
 
 ## B-09 · Nearly identical radii have inconsistent spelling
 
 The code uses `rounded` (4 px), `rounded-lg` (the same 4 px), `rounded-sm` (2.4 px), `rounded-[3px]`, and `rounded-[2px]`. The last three are visually indistinguishable in the small chips, badges, and characteristic steps where they are used; class names do not reveal whether a base radius is intentional.
 
-Replace `rounded-[3px]` and `rounded-[2px]` with `rounded-sm`, then choose one base spelling: `rounded-lg` to align with shadcn or bare `rounded` for brevity. Document the choice here; leave `--radius` and its scale intact. The largest visual shift is one radius pixel on 20 px controls.
+**Resolved:** `rounded-[3px]` in `src/components/store/product-card.tsx` and `rounded-[2px]` in `src/components/store/product/characteristic-bars.tsx` are now `rounded-md` and `rounded-sm`, respectively.
+
+`rounded` and `rounded-lg` resolving to the same 4 px value remains an open, unaddressed spelling inconsistency: it has no visual effect, so it was left alone.
 
 ---
 

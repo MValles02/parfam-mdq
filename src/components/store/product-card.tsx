@@ -26,7 +26,7 @@ export function ProductCard({
     >
       <div className="relative h-[180px] border-b bg-background sm:h-[260px]">
         {product.badge ? (
-          <span className="absolute top-3 left-3 z-10 rounded-[3px] bg-primary px-2.5 py-1.5 text-[9px] leading-none font-bold tracking-[0.16em] text-primary-foreground">
+          <span className="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1.5 text-[9px] leading-none font-bold tracking-[0.16em] text-primary-foreground">
             {product.badge}
           </span>
         ) : null}
@@ -72,7 +72,7 @@ export function ProductCard({
             {product.sizes.map((size) => (
               <span
                 key={size}
-                className="rounded-[3px] border px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground"
+                className="rounded-md border px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground"
               >
                 {size}
               </span>

@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Carrito" };
  */
 export default function Page() {
   return (
-    <div className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-16">
+    <div className="mx-auto max-w-page px-5 py-10 sm:px-8 lg:px-16">
       <p className="mb-6 text-xs text-muted-foreground">
         <Link href="/" className="hover:text-foreground">
           Inicio

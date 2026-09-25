@@ -247,12 +247,14 @@ export function ProductForm({
       if (!result.ok) {
         // Server field errors belong beside the corresponding control rather
         // than in a generic message at the top.
-        for (const [field, messages] of Object.entries(result.errores ?? {})) {
+        for (const [field, messages] of Object.entries(
+          result.fieldErrors ?? {},
+        )) {
           setError(field as keyof ProductFormInput, {
             message: messages[0],
           });
         }
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
 
@@ -264,7 +266,7 @@ export function ProductForm({
       // Navigation remounts the form with persisted IDs for newly created
       // variants and images, preventing duplicate rows on the next save.
       if (product) router.refresh();
-      else router.replace(`/admin/productos/${result.datos.id}`);
+      else router.replace(`/admin/productos/${result.data.id}`);
     })();
   }
 
@@ -335,9 +337,9 @@ export function ProductForm({
                   search={async (query) => {
                     const result = await searchBrandsAction(query);
                     return result.ok
-                      ? result.datos.map((brand) => ({
+                      ? result.data.map((brand) => ({
                           id: brand.id,
-                          label: brand.nombre,
+                          label: brand.name,
                         }))
                       : [];
                   }}
@@ -479,21 +481,21 @@ export function ProductForm({
                         search={async (query) => {
                           const result = await searchPerfumersAction(query);
                           return result.ok
-                            ? result.datos.map((perfumer) => ({
+                            ? result.data.map((perfumer) => ({
                                 id: perfumer.id,
-                                label: perfumer.nombre,
+                                label: perfumer.name,
                               }))
                             : [];
                         }}
                         onCreate={async (name) => {
                           const result = await createPerfumerAction(name);
                           if (!result.ok) {
-                            toast.error(result.mensaje);
+                            toast.error(result.message);
                             return null;
                           }
                           return {
-                            id: result.datos.id,
-                            label: result.datos.nombre,
+                            id: result.data.id,
+                            label: result.data.name,
                           };
                         }}
                         onSelect={(option) => {

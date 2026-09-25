@@ -94,7 +94,7 @@ export async function searchReferencesAction(
 ): Promise<ActionResult<ReferenceSearchResult[]>> {
   await requireAdmin();
   const q = z.string().max(120).catch("").parse(query);
-  return { ok: true, datos: await searchReferences(q) };
+  return { ok: true, data: await searchReferences(q) };
 }
 
 export async function adoptReferenceAction(
@@ -106,7 +106,7 @@ export async function adoptReferenceAction(
     return actionFailure(
       "Esa fragancia ya no está en el catálogo de referencia.",
     );
-  return { ok: true, datos: ref };
+  return { ok: true, data: ref };
 }
 
 // ---------------------------------------------------------------------------
@@ -115,7 +115,9 @@ export async function adoptReferenceAction(
 
 export async function searchNotesAction(
   query: string,
-): Promise<ActionResult<{ id: string; nombre: string; traducida: boolean }[]>> {
+): Promise<
+  ActionResult<{ id: string; name: string; isTranslated: boolean }[]>
+> {
   await requireAdmin();
   const q = query.trim();
   const notes = await prisma.note.findMany({
@@ -135,17 +137,17 @@ export async function searchNotesAction(
   });
   return {
     ok: true,
-    datos: notes.map((note) => ({
+    data: notes.map((note) => ({
       id: note.id,
-      nombre: note.nameEs ?? note.nameEn,
-      traducida: note.nameEs !== null,
+      name: note.nameEs ?? note.nameEn,
+      isTranslated: note.nameEs !== null,
     })),
   };
 }
 
 export async function createNoteAction(
   name: string,
-): Promise<ActionResult<{ id: string; nombre: string; traducida: boolean }>> {
+): Promise<ActionResult<{ id: string; name: string; isTranslated: boolean }>> {
   await requireAdmin();
   const parsedName = z.string().trim().min(2).max(80).safeParse(name);
   if (!parsedName.success)
@@ -165,17 +167,17 @@ export async function createNoteAction(
   });
   return {
     ok: true,
-    datos: {
+    data: {
       id: note.id,
-      nombre: note.nameEs ?? note.nameEn,
-      traducida: note.nameEs !== null,
+      name: note.nameEs ?? note.nameEn,
+      isTranslated: note.nameEs !== null,
     },
   };
 }
 
 export async function searchPerfumersAction(
   query: string,
-): Promise<ActionResult<{ id: string; nombre: string }[]>> {
+): Promise<ActionResult<{ id: string; name: string }[]>> {
   await requireAdmin();
   const q = query.trim();
   const perfumers = await prisma.perfumer.findMany({
@@ -188,16 +190,16 @@ export async function searchPerfumersAction(
   const data = perfumers
     .map((perfumer) => ({
       id: perfumer.id,
-      nombre: formatProperName(perfumer.name),
+      name: formatProperName(perfumer.name),
     }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es-AR"))
+    .sort((a, b) => a.name.localeCompare(b.name, "es-AR"))
     .slice(0, 20);
-  return { ok: true, datos: data };
+  return { ok: true, data };
 }
 
 export async function createPerfumerAction(
   name: string,
-): Promise<ActionResult<{ id: string; nombre: string }>> {
+): Promise<ActionResult<{ id: string; name: string }>> {
   await requireAdmin();
   const parsedName = z.string().trim().min(2).max(120).safeParse(name);
   if (!parsedName.success)
@@ -213,12 +215,12 @@ export async function createPerfumerAction(
     update: {},
     select: { id: true, name: true },
   });
-  return { ok: true, datos: { id: perfumer.id, nombre: perfumer.name } };
+  return { ok: true, data: { id: perfumer.id, name: perfumer.name } };
 }
 
 export async function searchBrandsAction(
   query: string,
-): Promise<ActionResult<{ id: string; nombre: string }[]>> {
+): Promise<ActionResult<{ id: string; name: string }[]>> {
   await requireAdmin();
   const q = query.trim();
   const brands = await prisma.brand.findMany({
@@ -229,7 +231,7 @@ export async function searchBrandsAction(
   });
   return {
     ok: true,
-    datos: brands.map((brand) => ({ id: brand.id, nombre: brand.name })),
+    data: brands.map((brand) => ({ id: brand.id, name: brand.name })),
   };
 }
 
@@ -491,7 +493,7 @@ export async function saveProduct(
   revalidatePath("/admin/productos");
   revalidatePath(`/admin/productos/${result.product.id}`);
   revalidateStore(result.product.slug, result.product.brand.slug);
-  return { ok: true, datos: result.product };
+  return { ok: true, data: result.product };
 }
 
 // ---------------------------------------------------------------------------
@@ -631,7 +633,7 @@ export async function duplicateProduct(
   });
 
   revalidatePath("/admin/productos");
-  return { ok: true, datos: copy };
+  return { ok: true, data: copy };
 }
 
 export async function deleteProduct(id: string): Promise<ActionResult> {

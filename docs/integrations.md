@@ -7,10 +7,18 @@ URLs, public URL construction, key validation, and deletion. Upload actions
 allow only approved MIME types and enforce the configured size limit before a
 URL is signed.
 
-Product image keys use the persisted `productos/` prefix. Development seed
-images use `productos/dev/`. These prefixes are storage contracts and are not
-translated. Database rows store a key, then public views derive the URL from
+Product image keys use `products/`; development seed images use
+`products/dev/`. The fresh prelaunch database has no rows with old
+`productos/` keys. Any deployed database still storing those keys must be
+reset or migrated before this version is deployed. Existing R2 objects under
+that old prefix can be deleted after confirming no deployed instance still
+uses them. Database rows store a key, then public views derive the URL from
 `R2_PUBLIC_URL`.
+
+`R2_BUCKET` currently names a bucket linked to the public image host. Its
+Spanish resource name can stay because it is an external infrastructure
+identifier. Renaming it requires creating a new bucket, configuring public
+access and the hostname, then updating `R2_BUCKET` and `R2_PUBLIC_URL` together.
 
 Required values are documented in `.env.example`:
 

@@ -43,7 +43,7 @@ Cloudflare R2. The repository is a single application, not a monorepo.
 | Change                              | Primary location                                                               |
 | ----------------------------------- | ------------------------------------------------------------------------------ |
 | Catalog query or filter             | `src/lib/store/{filters,queries}.ts`                                           |
-| Cart state or migration             | `src/lib/cart.ts`                                                              |
+| Cart state                          | `src/lib/cart.ts`                                                              |
 | Checkout validation and persistence | `src/app/(store)/checkout/actions.ts`                                          |
 | WhatsApp order message              | `src/lib/store/order-message.ts`                                               |
 | Product editing and publication     | `src/lib/validations/product.ts`, `src/app/admin/(panel)/productos/actions.ts` |

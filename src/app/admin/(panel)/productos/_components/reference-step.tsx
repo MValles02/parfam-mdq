@@ -65,8 +65,8 @@ export function ReferenceStep({
       if (version !== requestVersion.current) return;
       setIsSearching(false);
       setSearchedQuery(text.trim());
-      setResults(result.ok ? result.datos : []);
-      if (!result.ok) toast.error(result.mensaje);
+      setResults(result.ok ? result.data : []);
+      if (!result.ok) toast.error(result.message);
     }, 250);
   }
 
@@ -74,14 +74,14 @@ export function ReferenceStep({
     startAdoption(async () => {
       const result = await adoptReferenceAction(id);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
-      onAdopt(result.datos);
+      onAdopt(result.data);
       setQuery("");
       setResults([]);
       setSearchedQuery("");
-      toast.success(`Precargamos la ficha desde «${result.datos.name}».`);
+      toast.success(`Precargamos la ficha desde «${result.data.name}».`);
     });
   }
 

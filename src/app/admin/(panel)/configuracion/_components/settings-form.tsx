@@ -51,12 +51,14 @@ export function SettingsForm({ settings }: { settings: EditableSettings }) {
     startSaving(async () => {
       const result = await saveSettings(values);
       if (!result.ok) {
-        for (const [field, messages] of Object.entries(result.errores ?? {})) {
+        for (const [field, messages] of Object.entries(
+          result.fieldErrors ?? {},
+        )) {
           setError(field as keyof SettingsFormInput, {
             message: messages[0],
           });
         }
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       toast.success("Configuración guardada.");

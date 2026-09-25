@@ -87,19 +87,19 @@ export function PyramidEditor({
                 search={async (query) => {
                   const result = await searchNotesAction(query);
                   if (!result.ok) return [];
-                  return result.datos.map((note) => ({
+                  return result.data.map((note) => ({
                     id: note.id,
-                    label: note.nombre,
-                    detail: note.traducida ? undefined : "en inglés",
+                    label: note.name,
+                    detail: note.isTranslated ? undefined : "en inglés",
                   }));
                 }}
                 onCreate={async (name) => {
                   const result = await createNoteAction(name);
                   if (!result.ok) {
-                    toast.error(result.mensaje);
+                    toast.error(result.message);
                     return null;
                   }
-                  return { id: result.datos.id, label: result.datos.nombre };
+                  return { id: result.data.id, label: result.data.name };
                 }}
                 onSelect={(option) => addNote(level, option)}
               >

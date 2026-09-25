@@ -35,7 +35,8 @@ Catalog URLs retain these Spanish keys: `q`, `genero`, `presentacion`,
 `src/lib/store/filters.ts` maps them to English `CatalogFilters` fields.
 
 Admin list URLs retain `q`, `estado`, and `pagina` where applicable.
-Login retains `volverA`. Do not rename these without a compatibility layer.
+Login links now emit `returnTo`; the login page and action still accept
+`volverA` from old bookmarks and open forms.
 
 ## Metadata routes
 

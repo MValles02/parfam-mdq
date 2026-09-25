@@ -48,7 +48,7 @@ export function StatusChip({
     startTransition(async () => {
       const result = await changeProductStatus(id, !isPublished);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       router.refresh();
@@ -89,11 +89,11 @@ export function ActionMenu({ id, name }: { id: string; name: string }) {
     startDuplicating(async () => {
       const result = await duplicateProduct(id);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       toast.success("Producto duplicado.");
-      router.push(`/admin/productos/${result.datos.id}`);
+      router.push(`/admin/productos/${result.data.id}`);
     });
   }
 
@@ -101,7 +101,7 @@ export function ActionMenu({ id, name }: { id: string; name: string }) {
     startDeleting(async () => {
       const result = await deleteProduct(id);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       setIsDeleteConfirmationOpen(false);

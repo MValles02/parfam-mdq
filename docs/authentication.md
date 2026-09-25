@@ -30,8 +30,8 @@ Login applies the shared in-memory rate limiter before credentials are checked.
 ## Route protection
 
 `src/proxy.ts` matches `/admin/:path*`. An unauthenticated request is sent to
-`/admin/login?volverA=…`; the Spanish `volverA` key is an existing URL
-contract. The admin layout calls `auth()` again and redirects when no user is
+`/admin/login?returnTo=…`. Old `volverA` links remain accepted. The admin
+layout calls `auth()` again and redirects when no user is
 present. The proxy is only an optimistic navigation guard.
 
 Every admin Server Action starts with `requireAdmin()` from

@@ -20,7 +20,7 @@ export function OrderNotes({
     startTransition(async () => {
       const result = await saveOrderNotes(id, notes);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       toast.success("Notas guardadas.");

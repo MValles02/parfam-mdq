@@ -304,7 +304,7 @@ model ProductPerfumer {
 model ProductImage {
   id         String  @id @default(cuid())
   productId  String
-  /// Cloudflare R2 object key ("productos/2026/09/uuid.jpg"), never a
+  /// Cloudflare R2 object key ("products/2026/09/uuid.jpg"), never a
   /// Fragrantica image. Storing a key instead of an absolute URL makes the
   /// public host (R2_PUBLIC_URL) configurable without rewriting existing rows.
   storageKey String

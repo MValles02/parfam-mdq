@@ -119,6 +119,7 @@ pnpm db:import-fragrantica   # reference catalog (accepts --limit N)
 ## Before declaring work complete
 
 `pnpm typecheck`, `pnpm lint`, and `pnpm test` (Vitest) must pass cleanly. The
-current test coverage covers the importer parsers and cart migration. Playwright
+current test coverage covers importer parsers, checkout validation, and R2
+key validation. Playwright
 and other end-to-end tooling are not installed. CI builds and publishes but does
 not run these checks.

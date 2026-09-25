@@ -13,4 +13,8 @@ Store product-image objects in Cloudflare R2 through presigned browser uploads, 
 
 ## Rules
 
-The server generates UUID keys under productos/; the database stores a storage key, never a public URL. Signed uploads whitelist JPEG, PNG, WebP, and AVIF and enforce the 8 MB limit. Any browser-supplied deletion key must pass isProductStorageKey. Orphan cleanup is best effort because a committed database change must not be rolled back after an object-delete failure.
+The server generates UUID keys under `products/`; the database stores a storage
+key, never a public URL. Signed uploads whitelist JPEG, PNG, WebP, and AVIF and
+enforce the 8 MB limit. Any browser-supplied deletion key must pass
+`isProductStorageKey`. Orphan cleanup is best effort because a committed
+database change must not be rolled back after an object-delete failure.

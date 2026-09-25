@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   validateCartAction,
-  type CartInvalidReason,
   type CartValidationResponseItem,
 } from "@/app/(store)/carrito/actions";
 import { useCart, useHydrated } from "@/lib/cart";
@@ -26,34 +25,10 @@ export type PriceChange = {
   currentPriceArs: string;
 };
 
-type CartValidationResult =
-  | {
-      ok: true;
-      variantId: string;
-      qty: number;
-      productId: string;
-      productName: string;
-      brandName: string;
-      variantLabel: string;
-      priceArs: string;
-    }
-  | {
-      ok: false;
-      variantId: string;
-      qty: number;
-      reason: InvalidReason;
-    };
-
 const INVALID_REASON_MESSAGES: Record<InvalidReason, string> = {
   inactive: "ya no está disponible",
   deleted: "ya no existe",
   unpublished: "ya no está a la venta",
-};
-
-const INVALID_REASON_BY_RAW_REASON: Record<CartInvalidReason, InvalidReason> = {
-  inactiva: "inactive",
-  eliminada: "deleted",
-  despublicado: "unpublished",
 };
 
 /**
@@ -64,7 +39,7 @@ const INVALID_REASON_BY_RAW_REASON: Record<CartInvalidReason, InvalidReason> = {
  */
 let inFlightValidation: {
   signature: string;
-  request: Promise<CartValidationResult[]>;
+  request: Promise<CartValidationResponseItem[]>;
   hasApplied: boolean;
 } | null = null;
 
@@ -73,30 +48,6 @@ function getCartSignature(items: { variantId: string; qty: number }[]): string {
     .map((i) => `${i.variantId}:${i.qty}`)
     .sort()
     .join(",");
-}
-
-function mapValidationResult(
-  item: CartValidationResponseItem,
-): CartValidationResult {
-  if (!item.ok) {
-    return {
-      ok: false,
-      variantId: item.variantId,
-      qty: item.qty,
-      reason: INVALID_REASON_BY_RAW_REASON[item.razon],
-    };
-  }
-
-  return {
-    ok: true,
-    variantId: item.variantId,
-    qty: item.qty,
-    productId: item.productId,
-    productName: item.productName,
-    brandName: item.brandName,
-    variantLabel: item.variantLabel,
-    priceArs: item.precioArs,
-  };
 }
 
 export function useCartReconciliation() {
@@ -121,7 +72,7 @@ export function useCartReconciliation() {
         signature,
         request: validateCartAction(
           items.map((i) => ({ variantId: i.variantId, qty: i.qty })),
-        ).then((response) => response.map(mapValidationResult)),
+        ),
         hasApplied: false,
       };
     }

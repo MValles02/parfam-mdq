@@ -37,7 +37,7 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
   return (
     <form action={formAction} className="flex flex-col gap-5">
       {returnTo ? (
-        <input type="hidden" name="volverA" value={returnTo} />
+        <input type="hidden" name="returnTo" value={returnTo} />
       ) : null}
 
       <div className="flex flex-col gap-2">

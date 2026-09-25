@@ -39,7 +39,7 @@ export default async function Page(props: PageProps<"/marca/[slug]">) {
   // does not duplicate it in another h1.
   return (
     <>
-      <div className="mx-auto max-w-[1440px] px-5 lg:px-16">
+      <div className="mx-auto max-w-page px-5 lg:px-16">
         <p className="pt-5 text-xs text-muted-foreground">
           <Link href="/" className="hover:text-foreground">
             Inicio

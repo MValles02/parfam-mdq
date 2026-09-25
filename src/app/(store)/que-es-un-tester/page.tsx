@@ -40,7 +40,7 @@ const VARIANT_KINDS = [
   },
 ];
 
-export default function QueEsUnTesterPage() {
+export default function WhatIsATesterPage() {
   return (
     <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
       <script

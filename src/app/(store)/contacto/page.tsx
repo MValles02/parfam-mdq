@@ -30,7 +30,7 @@ const breadcrumbs = [
   { name: PAGE_TITLE, path: PAGE_PATH },
 ];
 
-export default async function ContactoPage() {
+export default async function ContactPage() {
   const config = await getSiteSettings();
 
   const organizationJsonLd = {

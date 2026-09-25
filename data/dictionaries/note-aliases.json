@@ -1,5 +1,5 @@
 {
-  "_comment": "El dataset trae errores de tipeo que crean notas duplicadas (p. ej. 'sandalowood' junto a 'sandalwood'). El importador normaliza la clave de la izquierda a la de la derecha antes de crear/buscar el Note, sumando su uso al slug canonico. Lista curada a mano a partir del top 500; se puede ampliar si aparecen mas casos al importar el dataset completo.",
+  "_comment": "The source dataset contains misspellings that would create duplicate notes (for example, 'sandalowood' alongside 'sandalwood'). Before creating or finding a Note, the importer maps each left-hand key to the canonical value on the right and adds its usage to that slug. This list was curated from the 500 most common notes and can grow when the full dataset reveals more cases.",
   "sandalowood": "sandalwood",
   "sandal": "sandalwood",
   "myrhh": "myrrh",

@@ -85,7 +85,7 @@ const FAQS = [
   },
 ];
 
-export default async function ComoPurchasePage() {
+export default async function HowToBuyPage() {
   const config = await getSiteSettings();
 
   return (

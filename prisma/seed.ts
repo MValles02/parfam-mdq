@@ -8,6 +8,7 @@
  * exist, and SiteSetting uses an empty upsert update so it preserves admin
  * changes from the panel.
  */
+import "dotenv/config";
 import { hash } from "@node-rs/argon2";
 import { prisma } from "@/lib/db";
 import { siteDefaults } from "@/lib/site";

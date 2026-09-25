@@ -41,6 +41,14 @@ Next standalone server. This makes each container responsible for compatible
 schema setup. Migration files are immutable history and must already be present
 in the image.
 
+The prelaunch migration history was reset to the single
+`20260921225316_initial_schema` migration. Any database that still contains
+the earlier tables or `_prisma_migrations` records must be recreated before
+deploying this version; `migrate deploy` cannot apply a fresh initial migration
+over existing tables. Recreate only this application's database or schema, not
+the shared PostgreSQL server. Then run the administrator/settings seed and any
+desired reference-data import.
+
 The health endpoint is `GET /api/health`. It performs a database probe and
 returns a non-success status when PostgreSQL is unavailable; Docker and Dokploy
 use it to decide whether the release is healthy.

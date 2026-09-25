@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
-// Prisma 7 saco la URL de conexion del schema.prisma: Migrate y el resto de
-// los comandos de la CLI la toman de aca. El cliente en runtime (src/lib/db.ts)
-// arma su propio driver adapter con la misma variable de entorno.
+// Prisma 7 reads the connection URL for Migrate and other CLI commands from
+// this config rather than schema.prisma. The runtime client in src/lib/db.ts
+// creates its driver adapter from the same environment variable.
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

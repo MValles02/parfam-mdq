@@ -59,7 +59,7 @@ export function Header() {
           {cartAccessibleLabel}
         </span>
         {/* Desktop */}
-        <div className="mx-auto hidden max-w-[1440px] items-center justify-between px-16 py-6 lg:flex">
+        <div className="mx-auto hidden max-w-page items-center justify-between px-16 py-6 lg:flex">
           <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
             <Logo size="header" />
           </Link>

@@ -131,7 +131,7 @@ export function SettingsForm({ settings }: { settings: EditableSettings }) {
       </section>
 
       <section className="flex flex-col gap-5">
-        <h2 className="text-sm font-bold tracking-[-0.01em]">Marca</h2>
+        <h2 className="text-sm font-bold tracking-[-0.01em]">Redes sociales</h2>
 
         <Field
           label="Instagram"

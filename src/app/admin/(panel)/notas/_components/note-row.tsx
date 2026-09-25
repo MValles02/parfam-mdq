@@ -36,7 +36,7 @@ export function NoteRow({
     startSaving(async () => {
       const result = await translateNote(id, cleanedValue);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       toast.success(`"${nameEn}" traducida.`);
@@ -48,7 +48,7 @@ export function NoteRow({
     startClearing(async () => {
       const result = await clearNoteTranslation(id);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       setValue("");

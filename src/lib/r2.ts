@@ -94,7 +94,7 @@ export function getPublicUrl(key: string): string | null {
 }
 
 /** Prefix for every object uploaded from the admin panel. */
-const PRODUCT_STORAGE_PREFIX = "productos/";
+export const PRODUCT_STORAGE_PREFIX = "products/";
 
 /**
  * Keys arrive as client data through the form. This prevents a request from

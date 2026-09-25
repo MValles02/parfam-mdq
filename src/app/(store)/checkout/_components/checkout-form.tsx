@@ -51,7 +51,7 @@ export function CheckoutForm({
   const { register, handleSubmit, formState, setError } =
     useForm<CheckoutCustomerInput>({
       resolver: standardSchemaResolver(checkoutCustomerSchema),
-      defaultValues: { nombre: "", telefono: "" },
+      defaultValues: { customerName: "", customerPhone: "" },
       mode: "onSubmit",
     });
 
@@ -86,21 +86,17 @@ export function CheckoutForm({
       (values) => {
         startSubmitting(async () => {
           const result = await createOrder({
-            nombre: values.nombre,
-            telefono: `${PHONE_PREFIX} ${values.telefono}`,
+            customerName: values.customerName,
+            customerPhone: `${PHONE_PREFIX} ${values.customerPhone}`,
             items: items.map((i) => ({
               variantId: i.variantId,
               qty: i.qty,
             })),
-            empresa: honeypotRef.current?.value ?? "",
+            company: honeypotRef.current?.value ?? "",
           });
 
           if (!result.ok) {
-            const {
-              mensaje: message,
-              errores: errors,
-              invalidos: invalidItems,
-            } = result;
+            const { message, fieldErrors, invalidItems } = result;
             popup?.close();
             if (invalidItems) {
               for (const invalidItem of invalidItems) {
@@ -110,8 +106,8 @@ export function CheckoutForm({
             // Field errors such as "no parece un número argentino válido" use
             // server-side phone validation; this form only renders them. See
             // the comment in `checkoutCustomerSchema`.
-            for (const [field, messages] of Object.entries(errors ?? {})) {
-              if (field === "nombre" || field === "telefono") {
+            for (const [field, messages] of Object.entries(fieldErrors ?? {})) {
+              if (field === "customerName" || field === "customerPhone") {
                 setError(field, { message: messages[0] });
               }
             }
@@ -119,7 +115,7 @@ export function CheckoutForm({
             return;
           }
 
-          const { numero: orderNumber, link } = result;
+          const { orderNumber, link } = result;
           if (popup) {
             popup.location.href = link;
           }
@@ -191,26 +187,32 @@ export function CheckoutForm({
           className="flex flex-col gap-5"
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="checkout-nombre" className="text-xs uppercase">
+            <Label
+              htmlFor="checkout-customer-name"
+              className="text-xs uppercase"
+            >
               Tu nombre
             </Label>
             <Input
-              id="checkout-nombre"
+              id="checkout-customer-name"
               placeholder="Nombre y apellido"
               autoComplete="name"
               className="h-auto py-4 text-base"
-              aria-invalid={!!formState.errors.nombre}
-              {...register("nombre")}
+              aria-invalid={!!formState.errors.customerName}
+              {...register("customerName")}
             />
-            {formState.errors.nombre ? (
+            {formState.errors.customerName ? (
               <p className="text-xs text-destructive">
-                {formState.errors.nombre.message}
+                {formState.errors.customerName.message}
               </p>
             ) : null}
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="checkout-telefono" className="text-xs uppercase">
+            <Label
+              htmlFor="checkout-customer-phone"
+              className="text-xs uppercase"
+            >
               Tu teléfono
             </Label>
             <div className="flex items-stretch overflow-hidden rounded-lg border border-input">
@@ -218,17 +220,17 @@ export function CheckoutForm({
                 {PHONE_PREFIX}
               </span>
               <Input
-                id="checkout-telefono"
+                id="checkout-customer-phone"
                 placeholder="223 616 3910"
                 autoComplete="tel-national"
                 inputMode="tel"
                 className="h-auto border-0 py-4 text-base"
-                aria-invalid={!!formState.errors.telefono}
-                {...register("telefono")}
+                aria-invalid={!!formState.errors.customerPhone}
+                {...register("customerPhone")}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {formState.errors.telefono?.message ??
+              {formState.errors.customerPhone?.message ??
                 "Por si se corta el chat y tenemos que escribirte."}
             </p>
           </div>
@@ -241,10 +243,10 @@ export function CheckoutForm({
             aria-hidden="true"
             tabIndex={-1}
           >
-            <label htmlFor="checkout-empresa">Empresa</label>
+            <label htmlFor="checkout-company">Empresa</label>
             <input
-              id="checkout-empresa"
-              name="empresa"
+              id="checkout-company"
+              name="company"
               type="text"
               tabIndex={-1}
               autoComplete="off"

@@ -10,7 +10,7 @@ key generation, MIME checks, and deletion authorization on the server.
 1. `ImagePanel` sends the file name, MIME type, and byte count to
    `requestUploadUrl`.
 2. The action begins with `requireAdmin()`, validates the request, verifies
-   R2 configuration, and generates a UUID-based key under `productos/`.
+   R2 configuration, and generates a UUID-based key under `products/`.
 3. The browser uploads directly to the presigned URL with the allowed
    `Content-Type`.
 4. The form saves the returned storage key as a `ProductImage` row; the key,
@@ -33,9 +33,9 @@ key generation, MIME checks, and deletion authorization on the server.
 ## Constraints
 
 Allowed formats are JPEG, PNG, WebP, and AVIF; the maximum file size is 8 MB.
-The Spanish raw fields `nombre`, `tamanioBytes`, and `urlDeSubida` are
-action compatibility fields. The `productos/` prefix is external storage
-data and must not be renamed.
+The action uses `fileName`, `sizeBytes`, and `uploadUrl`. Its generated R2 keys
+start with `products/`. A database that still references old `productos/`
+objects must be reset or migrated before deployment.
 
 ## Related documentation
 

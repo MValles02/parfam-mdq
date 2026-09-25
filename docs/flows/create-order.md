@@ -6,7 +6,9 @@ Create an immutable `Order` snapshot, assign its sequential `PM-0042`-style numb
 
 ## Entry point
 
-`/checkout` renders `CheckoutForm`. The Spanish button and validation text are customer-facing content. The public action preserves its Spanish wire fields: `nombre`, `telefono`, `items`, and honeypot `empresa`.
+`/checkout` renders `CheckoutForm`. The Spanish button and validation text are
+customer-facing content. The action receives `customerName`, `customerPhone`,
+`items`, and the hidden `company` honeypot.
 
 ## Flow
 
@@ -15,7 +17,7 @@ Create an immutable `Order` snapshot, assign its sequential `PM-0042`-style numb
 3. `createOrder` checks the honeypot, applies `rateLimit`, validates the request, and reloads every `ProductVariant` from PostgreSQL.
 4. The action rejects deleted, inactive, or unpublished items. Client prices are input only: persisted prices always use `ProductVariant.priceArs`.
 5. A transaction obtains `Order_number_seq`, creates `Order` and `OrderItem` rows, and calculates totals with `Prisma.Decimal`.
-6. `buildOrderMessage` expands the configured template and `buildWhatsAppLink` produces the `wa.me` URL. The result preserves the raw `numero`, `link`, `mensaje`, `errores`, and `invalidos` contract fields.
+6. `buildOrderMessage` expands the configured template and `buildWhatsAppLink` produces the `wa.me` URL. The action returns `orderNumber` and `link` on success, or `message`, `fieldErrors`, and `invalidItems` on failure.
 7. The thank-you page clears the cart after navigation. It can offer a manual WhatsApp link if the browser blocked the popup.
 
 ## Invariants

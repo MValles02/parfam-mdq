@@ -40,33 +40,6 @@ type CartState = {
   clear: () => void;
 };
 
-type LegacyCartItem = Omit<CartItem, "image"> & {
-  imagen?: string | null;
-};
-
-type PersistedCartState = {
-  items?: LegacyCartItem[];
-};
-
-/** Preserves existing persisted carts while replacing the v1 image key. */
-export function migrateCartState(
-  persistedState: unknown,
-  version: number,
-): CartState {
-  if (version >= 2) return persistedState as CartState;
-
-  const state = persistedState as PersistedCartState;
-
-  return {
-    ...state,
-    items:
-      state.items?.map(({ imagen, ...item }) => ({
-        ...item,
-        image: imagen ?? null,
-      })) ?? [],
-  } as CartState;
-}
-
 export const useCart = create<CartState>()(
   persist(
     (set) => ({
@@ -111,9 +84,7 @@ export const useCart = create<CartState>()(
       clear: () => set({ items: [] }),
     }),
     {
-      name: "parfam-carrito",
-      version: 2,
-      migrate: migrateCartState,
+      name: "parfam-cart",
     },
   ),
 );

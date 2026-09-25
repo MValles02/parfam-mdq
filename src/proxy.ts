@@ -28,7 +28,7 @@ export default auth((req) => {
   if (!isLoggedIn) {
     const loginUrl = new URL("/admin/login", req.nextUrl);
     // Preserve the requested destination after a successful sign-in.
-    loginUrl.searchParams.set("volverA", pathname + search);
+    loginUrl.searchParams.set("returnTo", pathname + search);
     return NextResponse.redirect(loginUrl);
   }
 

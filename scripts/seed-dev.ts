@@ -3,18 +3,19 @@
  * database. It provides realistic data for testing the admin panel and store;
  * one stays DRAFT to verify that drafts cannot be accessed from the store.
  *
- *   pnpm exec dotenv -e .env -- pnpm exec tsx scripts/seed-dev.ts
- *   pnpm exec dotenv -e .env -- pnpm exec tsx scripts/seed-dev.ts --clean
+ *   pnpm db:seed-dev
+ *   pnpm db:seed-dev -- --clean
  *
  * Idempotent: each development product is keyed by fragranceRefId instead of
  * the mutable slug. It deletes the matching existing product and its
- * "productos/dev/" R2 objects before creation, preventing duplicates. `--clean`
- * only deletes data. The legacy `--limpiar` option remains compatible.
+ * "products/dev/" R2 objects before creation, preventing duplicates. `--clean`
+ * only deletes data.
  *
  * Notes, accords, and perfumers are copied exactly as the admin adoption flow
  * does. Descriptions are written in Spanish because Fragrantica text is never
  * published.
  */
+import "dotenv/config";
 import { parseArgs } from "node:util";
 import { deflateSync } from "node:zlib";
 import type {
@@ -27,15 +28,20 @@ import type {
 } from "@/generated/prisma/enums";
 import { findAvailableSlug, toSlug } from "@/lib/admin/slug";
 import { prisma } from "@/lib/db";
-import { deleteR2Object, getUploadUrl, isR2Configured } from "@/lib/r2";
+import {
+  deleteR2Object,
+  getUploadUrl,
+  isR2Configured,
+  PRODUCT_STORAGE_PREFIX,
+} from "@/lib/r2";
 
 const { values } = parseArgs({
   options: {
     clean: { type: "boolean", default: false },
-    limpiar: { type: "boolean", default: false },
   },
 });
-const cleanMode = values.clean === true || values.limpiar === true;
+const cleanMode = values.clean === true;
+const DEV_PRODUCT_STORAGE_PREFIX = `${PRODUCT_STORAGE_PREFIX}dev/`;
 
 function fmt(n: number): string {
   return n.toLocaleString("es-AR");
@@ -529,7 +535,7 @@ async function findReference(name: string, brand: string) {
 
 /**
  * Deletes existing development products for this reference, including their
- * "productos/dev/" R2 objects. Keys outside that prefix are real panel uploads
+ * "products/dev/" R2 objects. Keys outside that prefix are real panel uploads
  * and must remain untouched.
  */
 async function deleteDevelopmentProduct(
@@ -547,7 +553,7 @@ async function deleteDevelopmentProduct(
   if (isR2Configured()) {
     for (const product of existingProducts) {
       for (const image of product.images) {
-        if (!image.storageKey.startsWith("productos/dev/")) continue;
+        if (!image.storageKey.startsWith(DEV_PRODUCT_STORAGE_PREFIX)) continue;
         try {
           await deleteR2Object(image.storageKey);
           deletedImages++;
@@ -618,7 +624,7 @@ async function createProduct(
         `${reference.name} de ${reference.brand.name}, frasco sobre fondo neutro`,
       ];
       for (let i = 0; i < 3; i++) {
-        const key = `productos/dev/${baseSlug}-${i}.png`;
+        const key = `${DEV_PRODUCT_STORAGE_PREFIX}${baseSlug}-${i}.png`;
         const png = generateBottleImage(productIndex, i);
         await uploadImage(key, png);
         images.push({ storageKey: key, alt: alts[i]!, isPrimary: i === 0 });

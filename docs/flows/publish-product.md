@@ -41,10 +41,9 @@ The panel uses the preserved routes `/admin/productos/nuevo` and
 ## Contracts and safety
 
 Every mutating action begins with `requireAdmin()`. UI messages and field
-labels remain Spanish. The response envelope fields `datos`, `mensaje`, and
-`errores`, plus upload fields `nombre`, `tamanioBytes`, and
-`urlDeSubida`, are established action-boundary contracts. R2 product objects
-keep the `productos/` prefix.
+labels remain Spanish. The action envelope uses `data`, `message`, and
+`fieldErrors`; uploads use `fileName`, `sizeBytes`, and `uploadUrl`. R2 product
+objects use the `products/` prefix.
 
 ## Related documentation
 

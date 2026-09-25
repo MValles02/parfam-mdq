@@ -38,7 +38,7 @@ export async function authenticate(
   const ipAddress =
     headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     headerList.get("x-real-ip") ??
-    "desconocida";
+    "unknown";
   const rateLimitKey = `login:${ipAddress}:${parsed.data.email.toLowerCase()}`;
 
   const limit = rateLimit(rateLimitKey, {
@@ -52,8 +52,8 @@ export async function authenticate(
     };
   }
 
-  // `volverA` is the established login form and URL query boundary key.
-  const rawReturnTo = formData.get("volverA");
+  // Accept a submitted legacy form from a tab opened before this deployment.
+  const rawReturnTo = formData.get("returnTo") ?? formData.get("volverA");
   const returnTo =
     typeof rawReturnTo === "string" && rawReturnTo.startsWith("/admin")
       ? rawReturnTo

@@ -26,4 +26,5 @@ Create, edit, duplicate, delete, and publish store products while validating all
 
 Actions start with requireAdmin(). Product, note, accord, perfumer, variant, and storage-key IDs are verified server-side. ARS prices are stored as Prisma Decimal values. Publishing revalidates catalog, product, brand, and sitemap cache data.
 
-The route, URL values, raw action envelope (datos, mensaje, errores), and Spanish panel copy remain compatibility or customer-facing data.
+The route and URL values remain compatibility data, and panel copy remains
+Spanish. Action results use English `data`, `message`, and `fieldErrors` keys.

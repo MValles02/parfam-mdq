@@ -131,31 +131,27 @@ export function ImagePanel(props: {
 
       try {
         const request = await requestUploadUrl({
-          nombre: file.name,
+          fileName: file.name,
           contentType: file.type,
-          tamanioBytes: file.size,
+          sizeBytes: file.size,
         });
         if (!request.ok) {
-          toast.error(request.mensaje);
+          toast.error(request.message);
           return;
         }
 
-        await uploadWithProgress(
-          request.datos.urlDeSubida,
-          file,
-          (progress) => {
-            setUploads((previousUploads) =>
-              previousUploads.map((upload) =>
-                upload.id === localId ? { ...upload, progress } : upload,
-              ),
-            );
-          },
-        );
+        await uploadWithProgress(request.data.uploadUrl, file, (progress) => {
+          setUploads((previousUploads) =>
+            previousUploads.map((upload) =>
+              upload.id === localId ? { ...upload, progress } : upload,
+            ),
+          );
+        });
 
         const currentImages = valueRef.current;
         const newImage: ProductImageItem = {
           id: null,
-          storageKey: request.datos.storageKey,
+          storageKey: request.data.storageKey,
           alt: null,
           isPrimary: currentImages.length === 0,
         };
@@ -223,7 +219,7 @@ export function ImagePanel(props: {
     if (image.id === null) {
       const result = await deleteUploadedImage(image.storageKey);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
       }
     }
 

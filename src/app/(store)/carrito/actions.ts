@@ -4,7 +4,6 @@ import { z } from "zod";
 import {
   validateCartItems,
   type CartValidationItem,
-  type InvalidReason,
 } from "@/lib/store/server-cart";
 
 /**
@@ -26,60 +25,12 @@ const cartInputSchema = z
   )
   .max(50);
 
-/** Spanish fields and values are the cart validation response contract. */
-export type CartInvalidReason = "inactiva" | "eliminada" | "despublicado";
-
-export type CartValidationResponseItem = {
-  variantId: string;
-  qty: number;
-} & (
-  | {
-      ok: true;
-      productId: string;
-      productName: string;
-      brandName: string;
-      variantLabel: string;
-      precioArs: string;
-    }
-  | { ok: false; razon: CartInvalidReason }
-);
-
-const RAW_INVALID_REASON: Record<InvalidReason, CartInvalidReason> = {
-  inactive: "inactiva",
-  deleted: "eliminada",
-  unpublished: "despublicado",
-};
-
-function toCartValidationResponse(
-  item: CartValidationItem,
-): CartValidationResponseItem {
-  if (!item.ok) {
-    return {
-      ok: false,
-      variantId: item.variantId,
-      qty: item.qty,
-      razon: RAW_INVALID_REASON[item.reason],
-    };
-  }
-
-  return {
-    ok: true,
-    variantId: item.variantId,
-    qty: item.qty,
-    productId: item.productId,
-    productName: item.productName,
-    brandName: item.brandName,
-    variantLabel: item.variantLabel,
-    precioArs: item.priceArs,
-  };
-}
+export type CartValidationResponseItem = CartValidationItem;
 
 export async function validateCartAction(
   items: unknown,
 ): Promise<CartValidationResponseItem[]> {
   const parsedInput = cartInputSchema.safeParse(items);
   if (!parsedInput.success) return [];
-  return (await validateCartItems(parsedInput.data)).map(
-    toCartValidationResponse,
-  );
+  return validateCartItems(parsedInput.data);
 }

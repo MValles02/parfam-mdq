@@ -43,7 +43,7 @@ export function StatusSelector({
     startTransition(async () => {
       const result = await changeOrderStatus(id, nextStatus);
       if (!result.ok) {
-        toast.error(result.mensaje);
+        toast.error(result.message);
         return;
       }
       toast.success("Estado actualizado.");

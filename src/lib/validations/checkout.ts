@@ -32,12 +32,12 @@ export const phoneSchema = z
   .transform((v) => parsePhoneNumberWithError(v, "AR").number);
 
 export const checkoutRequestSchema = z.object({
-  nombre: z
+  customerName: z
     .string()
     .trim()
     .min(2, "Poné tu nombre completo.")
     .max(120, "Nombre muy largo."),
-  telefono: phoneSchema,
+  customerPhone: phoneSchema,
   items: z.array(checkoutItemSchema).min(1, "Tu carrito está vacío.").max(50),
 });
 
@@ -52,7 +52,7 @@ export const checkoutRequestSchema = z.object({
  * not belong to this form schema.
  */
 export const checkoutCustomerSchema = z.object({
-  nombre: checkoutRequestSchema.shape.nombre,
-  telefono: z.string().trim().min(6, "Ese teléfono no parece completo."),
+  customerName: checkoutRequestSchema.shape.customerName,
+  customerPhone: z.string().trim().min(6, "Ese teléfono no parece completo."),
 });
 export type CheckoutCustomerInput = z.input<typeof checkoutCustomerSchema>;

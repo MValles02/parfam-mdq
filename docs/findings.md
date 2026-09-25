@@ -24,7 +24,7 @@ describe operational constraints rather than customer-facing behavior.
 | Rate limiting      | `src/lib/rate-limit.ts` is in-memory and process-local.              | Move counters to shared storage before horizontal scaling.                  |
 | Catalog sorting    | Catalog query behavior is sufficient for the current product volume. | Move expensive ordering/filtering fully to SQL if data volume requires it.  |
 | Background cleanup | R2 cleanup is best effort after database writes.                     | Add reconciliation tooling if orphaned object cost becomes material.        |
-| Test coverage      | Unit tests cover parser and cart migration behavior.                 | Add focused integration/e2e coverage when workflows become more complex.    |
+| Test coverage      | Unit tests cover importer parsers, checkout fields, and R2 keys.     | Add focused integration/e2e coverage when workflows become more complex.    |
 | CI validation      | CI builds and publishes.                                             | Run typecheck, lint, and tests in CI when the release pipeline is expanded. |
 
 ## Presentation-only price arithmetic

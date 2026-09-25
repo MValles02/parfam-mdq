@@ -9,6 +9,7 @@ import {
   getUploadUrl,
   isProductStorageKey,
   isR2Configured,
+  PRODUCT_STORAGE_PREFIX,
 } from "@/lib/r2";
 
 /**
@@ -25,12 +26,12 @@ const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
 const EIGHT_MB = 8 * 1024 * 1024;
 
 const uploadRequestSchema = z.object({
-  nombre: z.string().trim().min(1).max(200),
+  fileName: z.string().trim().min(1).max(200),
   contentType: z.enum(
     Object.keys(EXTENSION_BY_CONTENT_TYPE) as [string, ...string[]],
     "Ese formato de imagen no está permitido.",
   ),
-  tamanioBytes: z
+  sizeBytes: z
     .number()
     .int()
     .positive()
@@ -38,10 +39,10 @@ const uploadRequestSchema = z.object({
 });
 
 export async function requestUploadUrl(input: {
-  nombre: string;
+  fileName: string;
   contentType: string;
-  tamanioBytes: number;
-}): Promise<ActionResult<{ urlDeSubida: string; storageKey: string }>> {
+  sizeBytes: number;
+}): Promise<ActionResult<{ uploadUrl: string; storageKey: string }>> {
   await requireAdmin();
 
   const parsedInput = uploadRequestSchema.safeParse(input);
@@ -65,13 +66,13 @@ export async function requestUploadUrl(input: {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
-  const storageKey = `productos/${year}/${month}/${randomUUID()}.${extension}`;
+  const storageKey = `${PRODUCT_STORAGE_PREFIX}${year}/${month}/${randomUUID()}.${extension}`;
 
   const uploadUrl = await getUploadUrl({ key: storageKey, contentType });
 
   // Return the key, rather than a public URL. The admin panel builds previews
   // from its server-provided host, and only the key is persisted.
-  return { ok: true, datos: { urlDeSubida: uploadUrl, storageKey } };
+  return { ok: true, data: { uploadUrl, storageKey } };
 }
 
 /**

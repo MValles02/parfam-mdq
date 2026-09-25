@@ -15,13 +15,12 @@ boundary.
 
 ## Cart
 
-`src/lib/cart.ts` provides the persisted Zustand store. The localStorage key
-is `parfam-carrito`, which must not be renamed. State is versioned; the v2
-migration converts legacy item fields into the English internal item model.
+`src/lib/cart.ts` provides the persisted Zustand store under the `parfam-cart`
+localStorage key. The prelaunch reset discarded carts under the previous key.
 
 The cart reconciles through `validateCartAction` before checkout. The server
-reads current variants and returns Spanish raw reason values only at the action
-boundary. The store updates price, label, availability, or removes invalid
+reads current variants and returns English reason values. The store updates
+price, label, availability, or removes invalid
 items without trusting persisted browser values.
 
 ## Checkout

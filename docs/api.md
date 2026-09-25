@@ -6,10 +6,10 @@ argument as untrusted input.
 
 ## Route Handlers
 
-| Method       | Route                     | Implementation                          | Contract                                                                             |
-| ------------ | ------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------ |
-| `GET`        | `/api/health`             | `src/app/api/health/route.ts`           | Executes `SELECT 1`; retains `{ estado, base }` Spanish response keys for operators. |
-| `GET`/`POST` | `/api/auth/[...nextauth]` | Auth.js handlers from `src/lib/auth.ts` | Auth.js protocol endpoint.                                                           |
+| Method       | Route                     | Implementation                          | Contract                                             |
+| ------------ | ------------------------- | --------------------------------------- | ---------------------------------------------------- |
+| `GET`        | `/api/health`             | `src/app/api/health/route.ts`           | Executes `SELECT 1`; returns `{ status, database }`. |
+| `GET`/`POST` | `/api/auth/[...nextauth]` | Auth.js handlers from `src/lib/auth.ts` | Auth.js protocol endpoint.                           |
 
 `/api/health` is dynamic, returns `Cache-Control: no-store`, and is used by
 Docker/Dokploy health checks.
@@ -21,9 +21,9 @@ Docker/Dokploy health checks.
 | `validateCartAction` | `src/app/(store)/carrito/actions.ts`  | Rechecks cart variants and returns current availability, labels, and price.               |
 | `createOrder`        | `src/app/(store)/checkout/actions.ts` | Validates checkout, creates `Order` and `OrderItem` records, and returns a WhatsApp link. |
 
-`createOrder` deliberately preserves its Spanish request/result wire fields:
-`nombre`, `telefono`, `empresa`, `numero`, `mensaje`, `errores`,
-`invalidos`, and `razon`. It maps them to English local values immediately.
+`createOrder` accepts `customerName`, `customerPhone`, `items`, and the hidden
+`company` honeypot. It returns `orderNumber` and `link` on success, or a Spanish
+customer message plus English `fieldErrors` and `invalidItems` keys on failure.
 A client price is never used to persist an order.
 
 ## Admin actions
@@ -40,8 +40,8 @@ Admin action files are under `src/app/admin/`. Each begins with
 | Settings           | `configuracion/actions.ts`                           | `saveSettings`.                                                                                                                                                                                   |
 | Session            | `(panel)/actions.ts`, `login/actions.ts`             | `signOutAdmin` and `authenticate`.                                                                                                                                                                |
 
-The common admin envelope is `ActionResult<T>`, while its raw fields remain
-`datos`, `mensaje`, and `errores` so existing client calls are compatible.
+The common admin envelope is `ActionResult<T>` with `data`, `message`, and
+`fieldErrors` fields. Message values displayed to administrators remain Spanish.
 
 ## Checkout sequence
 
@@ -52,12 +52,12 @@ sequenceDiagram
   participant Action as createOrder
   participant DB as PostgreSQL
   Customer->>Form: Submit
-  Form->>Action: Spanish wire payload
+  Form->>Action: English request fields
   Action->>Action: Honeypot, rate limit, Zod validation
   Action->>DB: Read requested variants
   Action->>Action: Reject inactive, deleted, unpublished variants
   Action->>DB: Transaction: sequence, Order, OrderItem snapshots
-  Action-->>Form: Spanish result envelope and wa.me link
+  Action-->>Form: Result and wa.me link
 ```
 
 The transaction obtains `Order_number_seq`, totals with `Prisma.Decimal`,
@@ -66,7 +66,7 @@ reported so the client can remove them from the persisted cart.
 
 ## Contract rules
 
-Do not silently rename public URL segments, query keys, Server Action payloads,
-database fields, enum values, localStorage keys, R2 prefixes, environment
-variables, or WhatsApp template placeholders. Introduce a mapper or explicit
-migration when one must change.
+Public URL segments and query keys, database fields and enum values, R2 keys,
+browser storage, environment values, and WhatsApp template placeholders are
+contracts. Check their consumers and provide compatibility or a deliberate
+data reset before changing them.

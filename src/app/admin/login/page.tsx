@@ -9,9 +9,13 @@ export const metadata: Metadata = {
 
 export default async function LoginPage(props: PageProps<"/admin/login">) {
   const searchParams = await props.searchParams;
-  // `volverA` is the established query parameter accepted by the login route.
+  // Accept older bookmarked login links while newly generated links use returnTo.
   const returnTo =
-    typeof searchParams.volverA === "string" ? searchParams.volverA : undefined;
+    typeof searchParams.returnTo === "string"
+      ? searchParams.returnTo
+      : typeof searchParams.volverA === "string"
+        ? searchParams.volverA
+        : undefined;
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16">

@@ -1,6 +1,6 @@
-# Postgres para desarrollo local. En produccion la base la provee Dokploy.
-#   pnpm db:up    levanta
-#   pnpm db:down  apaga
+# PostgreSQL for local development. Dokploy provides the production database.
+#   pnpm db:up    starts it
+#   pnpm db:down  stops it
 services:
   postgres:
     image: postgres:17-alpine

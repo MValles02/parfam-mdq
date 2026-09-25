@@ -38,7 +38,25 @@ rather than wholesale deleted because order items can reference them.
 
 ## Migrations and seeds
 
-Applied migrations are historical artifacts: never edit them, including their
-comments. Create a new migration for a schema change. `prisma/seed.ts` creates
-the administrator and singleton settings row. `scripts/seed-dev.ts` provides
-development data and requires configured R2 access.
+The migration history starts with `20260921225316_initial_schema`. This single
+English baseline creates the current Prisma models and the PostgreSQL objects
+that Prisma cannot express: the `pg_trgm` and `unaccent` extensions,
+`parfam_normalize`, specialized search indexes, and `Order_number_seq`.
+It applies only to a fresh database. Once applied, treat it as a historical
+artifact: never edit it, including its comments. Create a new migration for
+later schema changes.
+
+For the disposable local database, `pnpm db:down` alone retains the Docker
+volume and therefore retains the old tables. Recreate it before applying this
+baseline:
+
+```bash
+docker compose -f docker-compose.dev.yml down --volumes
+pnpm db:up
+pnpm db:migrate
+pnpm db:seed
+```
+
+`prisma/seed.ts` creates the administrator and singleton settings row.
+`scripts/seed-dev.ts` provides development data and requires configured R2
+access.

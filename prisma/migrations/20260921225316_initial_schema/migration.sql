@@ -1,3 +1,27 @@
+-- Initial schema for a fresh Parfam MDQ database. The tables and ordinary
+-- indexes come from schema.prisma; the extensions, normalization function,
+-- specialized indexes, and order-number sequence are maintained here because
+-- Prisma cannot express them in the schema.
+
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
+-- Reference search uses accent-insensitive trigram matching. The function
+-- names its dictionary explicitly so PostgreSQL can treat it as immutable
+-- and use it in expression indexes.
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+
+CREATE OR REPLACE FUNCTION parfam_normalize(text)
+  RETURNS text
+  LANGUAGE sql
+  IMMUTABLE
+  PARALLEL SAFE
+  STRICT
+AS $$
+  SELECT lower(public.unaccent('public.unaccent'::regdictionary, $1))
+$$;
+
 -- CreateEnum
 CREATE TYPE "Gender" AS ENUM ('WOMEN', 'MEN', 'UNISEX');
 
@@ -85,6 +109,7 @@ CREATE TABLE "FragranceRef" (
     "descriptionEn" TEXT,
     "hasPyramid" BOOLEAN NOT NULL DEFAULT false,
     "originCountry" TEXT,
+    "searchText" TEXT NOT NULL DEFAULT '',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -140,7 +165,6 @@ CREATE TABLE "Product" (
     "intensity" INTEGER,
     "status" "ProductStatus" NOT NULL DEFAULT 'DRAFT',
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
-    "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "seoTitle" TEXT,
     "seoDescription" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -183,7 +207,7 @@ CREATE TABLE "ProductPerfumer" (
 CREATE TABLE "ProductImage" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
-    "url" TEXT NOT NULL,
+    "storageKey" TEXT NOT NULL,
     "alt" TEXT,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "isPrimary" BOOLEAN NOT NULL DEFAULT false,
@@ -239,13 +263,8 @@ CREATE TABLE "SiteSetting" (
     "id" TEXT NOT NULL DEFAULT 'singleton',
     "whatsappNumber" TEXT NOT NULL,
     "whatsappMessageTemplate" TEXT NOT NULL,
-    "brandName" TEXT NOT NULL,
-    "brandTagline" TEXT NOT NULL,
-    "logoUrl" TEXT,
-    "heroImageUrl" TEXT,
     "instagramHandle" TEXT,
     "shippingInfo" TEXT,
-    "announcementBar" TEXT,
     "seoDefaultTitle" TEXT,
     "seoDefaultDescription" TEXT,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -424,3 +443,21 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- These indexes are required by the reference search and untranslated-note
+-- queries. The importer populates FragranceRef.searchText on every new row.
+CREATE INDEX "FragranceRef_search_trgm_idx"
+  ON "FragranceRef"
+  USING gin (parfam_normalize("searchText") gin_trgm_ops);
+
+CREATE INDEX "Brand_name_trgm_idx"
+  ON "Brand"
+  USING gin (parfam_normalize("name") gin_trgm_ops);
+
+CREATE INDEX "Note_untranslated_idx"
+  ON "Note" ("usageCount" DESC)
+  WHERE "nameEs" IS NULL;
+
+-- nextval() remains unique across concurrent checkouts and does not reuse a
+-- number after a transaction rolls back.
+CREATE SEQUENCE "Order_number_seq" START WITH 1;

@@ -1,7 +1,7 @@
 /**
  * Imports the reference catalog from data/fragrantica/*.csv into Postgres.
  *
- *   pnpm db:import-fragrantica                  # dataset completo
+ *   pnpm db:import-fragrantica                  # full dataset
  *   pnpm db:import-fragrantica -- --limit 500    # quick check
  *   pnpm db:import-fragrantica -- --data-dir data/fragrantica/samples
  *
@@ -10,6 +10,7 @@
  * for source format and parsing caveats, and prisma/schema.prisma for the
  * written model.
  */
+import "dotenv/config";
 import { parseArgs } from "node:util";
 import path from "node:path";
 import slugify from "slugify";
@@ -70,7 +71,7 @@ async function main() {
   // -------------------------------------------------------------------
   // Dimensions: Brand, Perfumer, Note, Accord
   // -------------------------------------------------------------------
-  const brandSlugs = new Map<string, string>(); // slug -> name (primera ocurrencia)
+  const brandSlugs = new Map<string, string>(); // slug -> name (first occurrence)
   const perfumerSlugs = new Map<string, string>();
   const noteSlugs = new Map<string, string>(); // slug -> canonical lowercase English name
 

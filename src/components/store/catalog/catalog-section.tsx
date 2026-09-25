@@ -41,7 +41,7 @@ export function CatalogSection({
   return (
     <section
       id="catalogo"
-      className="mx-auto max-w-[1440px] px-5 pt-10 pb-16 lg:px-16 lg:pb-24"
+      className="mx-auto max-w-page px-5 pt-10 pb-16 lg:px-16 lg:pb-24"
     >
       <div className="mb-8 flex flex-col gap-4 border-t border-border pt-8 lg:mb-10 lg:flex-row lg:items-end lg:justify-between lg:pt-10">
         <div className="flex flex-col gap-1.5">

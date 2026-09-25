@@ -25,7 +25,7 @@ export async function Footer() {
 
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto max-w-[1440px]">
+      <div className="mx-auto max-w-page">
         {/* Desktop */}
         <div className="hidden items-start justify-between px-16 py-12 lg:flex">
           <div className="flex flex-col gap-2.5">

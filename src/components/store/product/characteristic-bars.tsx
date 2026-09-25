@@ -39,7 +39,7 @@ function CharacteristicBar({
           <span
             key={step}
             className={cn(
-              "h-2 flex-1 rounded-[2px]",
+              "h-2 flex-1 rounded-sm",
               step <= boundedValue ? "bg-primary" : "bg-border",
             )}
           />

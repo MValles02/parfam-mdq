@@ -14,7 +14,7 @@ export default async function Page() {
   const config = await getSiteSettings();
 
   return (
-    <div className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-16 lg:py-14">
+    <div className="mx-auto max-w-page px-5 py-10 sm:px-8 lg:px-16 lg:py-14">
       <CheckoutForm shippingInfo={config.shippingInfo} />
     </div>
   );

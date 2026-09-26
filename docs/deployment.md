@@ -49,24 +49,150 @@ which adds several `NOT NULL` columns without a default
 `migrate deploy` fails when it applies that second migration to a database
 that already holds `FragranceRef`/`Note`/`FragranceRefAccord` rows from an
 earlier reference import, because Postgres cannot backfill a `NOT NULL`
-column with no default for existing rows. Production held no real customer
-data when this migration shipped, so its release resets only the
-application's database instead of writing a backfill migration; see
-"Reference dataset v2 release runbook" below for the exact steps. Recreate
-only this application's database or schema, never the shared PostgreSQL
-server.
+column with no default for existing rows. Production's reference tables were
+empty when this migration shipped, so its release applied the migration
+in place instead of resetting the database; see "Updating the reference
+dataset in production" below for the exact steps actually used, and "Full
+reset runbook" below that for the case where a future migration cannot apply
+over already-populated reference tables. A reset recreates only this
+application's database or schema, never the shared PostgreSQL server.
 
 The health endpoint is `GET /api/health`. It performs a database probe and
 returns a non-success status when PostgreSQL is unavailable; Docker and Dokploy
 use it to decide whether the release is healthy.
 
-## Reference dataset v2 release runbook
+## Updating the reference dataset in production (in-place, used for the v2 release)
 
-This is the runbook that was used to ship `20260925201541_reference_dataset_v2`
-to production by resetting the application database. Keep it as the template
-for any future migration that cannot apply over existing reference rows.
-Steps that touch the shared database or R2 are destructive and are run
-manually by whoever operates the release, never by an agent.
+Use this procedure when the pending migration applies cleanly over the
+current production data — for example because the reference tables
+(`FragranceRef`, `Note`, `Accord`, and related tables) are still empty, or the
+migration itself supplies a safe default/backfill for any new `NOT NULL`
+column. It updates the running database in place, without dropping it. This
+is the actual procedure used to ship `20260925201541_reference_dataset_v2` on
+2026-09-26: production's reference tables were empty, so the full reset in
+"Full reset runbook" below (written for the case where migrating over
+existing rows would fail) was not needed.
+
+Production Postgres runs as its own Dokploy service — container name prefixed
+`parfammdq-database-oqwwzm`, database and user both `parfam` — on the
+attachable overlay network `dokploy-network`, with no port published to the
+host. Reach it with `docker exec` from the VPS, not a client connecting over a
+published port. Dokploy already takes a daily 03:00 backup of this database to
+a Cloudflare R2 destination named "Cloudflare Backups" (14 backups kept), so a
+manual dump before a release is an extra safety margin, not the only backup.
+
+0. **Preconditions.** The dataset file and translations are ready (see
+   `docs/modules/reference-data.md`), `pnpm db:check-translations` passes
+   locally, and the migration is committed on the PR that will be merged in
+   step 3.
+
+1. **Optional: take a manual backup before changing anything**, in addition to
+   Dokploy's automatic daily backup:
+
+   ```bash
+   docker exec <db-container> pg_dump -U parfam -d parfam -Fc \
+     > /home/<vps-user>/backups/parfam/parfam-$(date +%F).dump
+   pg_restore -l /home/<vps-user>/backups/parfam/parfam-$(date +%F).dump | head
+   ```
+
+2. **Optional: clear test orders and reset the order-number sequence**, if a
+   go-live needs order numbers to start clean. Checkout formats `PM-` plus a
+   zero-padded `nextval('"Order_number_seq"')`
+   (`src/app/(store)/checkout/actions.ts`) — only reset the sequence after
+   removing (or intentionally keeping) every existing order, or a future
+   order can collide with an old one's number:
+
+   ```bash
+   docker exec -i <db-container> psql -U parfam -d parfam \
+     -c 'DELETE FROM "Order" WHERE id = <order-id>;'
+   docker exec -i <db-container> psql -U parfam -d parfam \
+     -c 'SELECT setval('"'"'"Order_number_seq"'"'"', 1, false);'
+   ```
+
+3. **Merge the PR into `main`.** `.github/workflows/deploy.yml` builds and
+   deploys the image; `docker-entrypoint.sh` runs `prisma migrate deploy` on
+   startup and applies the pending migration automatically. This is safe
+   specifically because step 0 confirmed the migration applies over the
+   current data (see the section intro above) — do not merge first and check
+   this after.
+
+4. **Run the importer from the VPS, in a temporary container attached to
+   `dokploy-network`**, reusing the deployed app's own `DATABASE_URL` so
+   nothing hardcodes credentials on the command line:
+
+   ```bash
+   docker run -d --name parfam-import \
+     --network dokploy-network \
+     -e DATABASE_URL="$(docker exec <web-container> printenv DATABASE_URL)" \
+     -v <repo-path-on-vps>:/app -w /app \
+     node:24-bookworm-slim \
+     node node_modules/tsx/dist/cli.mjs scripts/import-references.ts --limit 1000
+   ```
+
+   Notes learned running this for real:
+
+   - `node_modules/.bin/tsx` is a shell shim, not a Node script — running it
+     as `node node_modules/.bin/tsx ...` fails. Invoke
+     `node_modules/tsx/dist/cli.mjs` with `node` instead, as above.
+   - The image must be glibc-based (`bookworm`, not `alpine`): the mounted
+     `<repo-path-on-vps>/node_modules` was installed on the host and includes
+     native binaries (e.g. `sharp`), which an Alpine (musl) container cannot
+     load.
+   - The script's `dotenv` call never overrides an already-set environment
+     variable, so the `-e DATABASE_URL=...` passed to `docker run` safely
+     wins over any `.env` file present in the mounted repo.
+   - Run a smoke test with `--limit 1000` first, as above. Once it succeeds,
+     rerun the same command without `--limit` for the full dataset — the
+     import is idempotent (see "Importer usage" in
+     `docs/modules/reference-data.md`), so re-running the smoke-tested batch
+     again does no harm.
+   - Track the container and clean it up when done:
+
+     ```bash
+     docker wait parfam-import
+     docker logs parfam-import
+     docker rm parfam-import
+     ```
+
+   The v2 release's full run (140,228 records) took about 597 seconds (~10
+   minutes) and reported 8,287 brands, 3,083 perfumers, 2,581 notes, 92
+   accords, and 2 out-of-range years — matching the counts in
+   `docs/modules/reference-data.md`.
+
+5. **Post-import checks.** Run the same queries as step 8 of the full reset
+   runbook below, through `docker exec <db-container> psql -U parfam -d parfam
+-c '...'` instead of a tunneled `psql "$APP_URL"`.
+
+6. **Verify health from inside the container, not with a bare `curl` from
+   outside.** Cloudflare answers an external `curl` request to `/api/health`
+   with a bot challenge (`cf-mitigated: challenge`, HTTP 403) instead of
+   reaching the app, so check from inside the web container, or use a real
+   browser:
+
+   ```bash
+   docker exec <web-container> node -e \
+     "fetch('http://127.0.0.1:3000/api/health').then(async r => console.log(r.status, await r.text()))"
+   ```
+
+### Release log
+
+- **2026-09-26** — Shipped `20260925201541_reference_dataset_v2` in place
+  (reference tables were empty, so the full reset runbook below was not
+  needed): imported 140,228 references / 8,287 brands / 3,083 perfumers /
+  2,581 notes / 92 accords (2 out-of-range years); AVIF generation confirmed
+  working in production; the R2 cleanup step was skipped because the bucket
+  is shared with local development (see the open finding in
+  `docs/findings.md`).
+
+## Full reset runbook (when a migration cannot apply over existing reference rows)
+
+This is the runbook for the case the section above assumes did not apply this
+time: a migration that adds a `NOT NULL` column without a default over
+`FragranceRef`/`Note`/`FragranceRefAccord` rows that already exist (`migrate
+deploy` cannot backfill those from Postgres alone). Keep it as the template
+for a future migration in that situation. Steps that touch the shared
+database or R2 are destructive and are run manually by whoever operates the
+release, never by an agent.
 
 The database must be ready **before** anything reaches `main`: `.github/workflows/deploy.yml`
 builds and deploys on every push to `main` that touches a non-`.md` file, and
@@ -246,10 +372,9 @@ comes only after the import and its checks succeed.
       yet — re-run step 11's listing if that happens).
     - The home page hero loads.
     - Requesting a `/_next/image?...` URL with header `Accept: image/avif`
-      returns `content-type: image/avif`. If it instead returns `image/webp`
-      or a JPEG, log it under "AVIF generation in the Alpine production
-      image" in `docs/findings.md` — that row already flags this as
-      unverified.
+      returns `content-type: image/avif` (confirmed working in production as
+      of the v2 release). If it instead returns `image/webp` or a JPEG, open
+      a finding in `docs/findings.md` describing the regression.
 
     If verification fails, go to step 12 (rollback) instead of continuing.
 
@@ -261,6 +386,16 @@ comes only after the import and its checks succeed.
     it) already wrote new keys there. Scope is still limited to the
     `products/` prefix (see `PRODUCT_STORAGE_PREFIX` in `src/lib/r2.ts`) —
     nothing else lives in the bucket.
+
+    > **Warning: local development and production currently configure the
+    > same R2 bucket** (see the open finding in `docs/findings.md`). The
+    > `referenced-keys.txt` query below must run against **every** database
+    > that points at this bucket — union the `storageKey` values from
+    > production **and** from any local/dev database — not just `$APP_URL`,
+    > or a key that only a developer's database references still looks
+    > unreferenced from production's point of view and gets deleted. If a
+    > dev-only bucket or key prefix (see the finding's recommendation) is not
+    > in place yet, skip this step instead of guessing at the union.
 
     ```bash
     export R2_BUCKET="<r2-bucket-name>"

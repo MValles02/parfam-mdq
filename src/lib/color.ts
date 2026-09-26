@@ -1,8 +1,8 @@
 /**
  * Legible colors for accord chips.
  *
- * The 93 accords each have their own database color (`Accord.color`, from
- * data/dictionaries/accords.es.json). It is the only site color that does
+ * The 92 accords each have their own database color (`Accord.color`, from
+ * prisma/reference/accords.es.json). It is the only site color that does
  * not come from a globals.css token because it is data rather than a theme
  * decision. Its foreground cannot use a token either: it must contrast with
  * that hex value, which can fall anywhere on the color ramp.

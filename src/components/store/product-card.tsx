@@ -24,7 +24,7 @@ export function ProductCard({
       href={`/producto/${product.slug}`}
       className="group flex flex-col overflow-hidden rounded border bg-card transition-colors hover:border-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
-      <div className="relative h-[180px] border-b bg-background sm:h-[260px]">
+      <div className="relative aspect-[3/4] border-b bg-background">
         {product.badge ? (
           <span className="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1.5 text-[9px] leading-none font-bold tracking-[0.16em] text-primary-foreground">
             {product.badge}
@@ -33,7 +33,8 @@ export function ProductCard({
         <ProductImage
           image={product.image}
           priority={priority}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+          fit="cover"
+          sizes="(min-width: 1024px) 25vw, 50vw"
         />
       </div>
 

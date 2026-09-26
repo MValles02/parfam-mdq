@@ -18,3 +18,18 @@ key, never a public URL. Signed uploads whitelist JPEG, PNG, WebP, and AVIF and
 enforce the 8 MB limit. Any browser-supplied deletion key must pass
 `isProductStorageKey`. Orphan cleanup is best effort because a committed
 database change must not be rolled back after an object-delete failure.
+
+`importReferencePicture` (also in `image-actions.ts`) is a separate path: it
+fetches one reference fragrance's bottle photo server-side and copies it into
+R2, rather than accepting a browser-presigned upload. It only runs when the
+administrator explicitly asks for it after adoption, never automatically, and
+never hotlinks the third-party host (see `docs/integrations.md`).
+
+Before that upload, `src/lib/image-trim.ts` uses `sharp` to trim the wide
+white margins around the downloaded bottle photo, adds back a small uniform
+white pad, and re-encodes as JPEG (mozjpeg, quality ~90) so the store's white
+background still composites correctly. Trimming is best effort: it falls
+back to the original, already-validated bytes whenever the crop found
+nothing to trim, shrank the image below a usable size, or the input didn't
+decode at all. This module has no Prisma dependency and must never be
+imported by a Client Component.

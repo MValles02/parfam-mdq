@@ -89,13 +89,23 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
 
 ## Data
 
-`data/fragrantica/` holds the 69,948 reference-fragrance CSV records; see its
-README for the format and parser traps. `data/dictionaries/` holds Spanish note
-and accord translations missing from the dataset.
+`new-database/perfumes.jsonl` (140,228 reference-fragrance records, ~556 MB,
+gitignored, local only) is the reference dataset; see
+`docs/modules/reference-data.md` for its shape and the import workflow. It is
+imported from the developer machine —
+production is reached through an SSH tunnel to the Dokploy PostgreSQL — with
+`pnpm db:import-references`. Every note display name (2,581) and accord (92,
+with a `#RRGGBB` color) is translated in `prisma/reference/notes.es.json` and
+`prisma/reference/accords.es.json`; `pnpm db:check-translations` verifies
+coverage, and the importer refuses to write if any translation is missing.
 
-Fragrantica images and descriptions are **never public**. They are internal
-panel reference material. Photos are stored in R2 and customer copy is written
-in Spanish by an administrator.
+The Fragrantica reference description is in English and **never public**; it
+is internal panel reference material. A reference picture may be published,
+but only as a single copy: when an administrator adopts a reference, the
+server downloads it from fimgs.net into R2 (`importReferencePicture` in
+`src/app/admin/(panel)/productos/image-actions.ts`). The store never
+hotlinks fimgs.net, and images are never bulk-downloaded. Public store copy
+is written in Spanish by an administrator and does not name Fragrantica.
 
 Applied migrations are historical artifacts: **do not edit them**, including
 their comments. Create a new migration for a schema change.
@@ -112,14 +122,21 @@ pnpm db:up        # local PostgreSQL (Docker Compose, port 5433)
 pnpm db:down
 pnpm db:migrate   # prisma migrate dev
 pnpm db:seed      # admin user + singleton SiteSetting row
-pnpm db:seed-dev  # example products (requires configured R2)
-pnpm db:import-fragrantica   # reference catalog (accepts --limit N)
+pnpm db:import-references    # reference catalog (script: scripts/import-references.ts;
+                              # accepts file PATH, limit N, batch-size N, translations-dir DIR —
+                              # pnpm forwards `--` literally here, so pass flags without it)
+pnpm db:check-translations    # verifies note/accord translation coverage
 ```
+
+To reach `pnpm dev` from another machine, open an SSH tunnel
+(`ssh -N -L 3100:localhost:3100 user@host`) and browse `http://localhost:3100`;
+the dev server blocks non-localhost origins otherwise.
 
 ## Before declaring work complete
 
 `pnpm typecheck`, `pnpm lint`, and `pnpm test` (Vitest) must pass cleanly. The
-current test coverage covers importer parsers, checkout validation, and R2
-key validation. Playwright
+current test coverage covers reference record parsing, translation files,
+importer helpers, reference percentages, image type detection, R2 key
+validation, similar-products scoring, and checkout validation. Playwright
 and other end-to-end tooling are not installed. CI builds and publishes but does
 not run these checks.

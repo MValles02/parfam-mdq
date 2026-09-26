@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -17,19 +17,18 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Concentration,
-  Gender,
-  Occasion,
-  ProductStatus,
-  Season,
-} from "@/generated/prisma/enums";
+import { Concentration, Gender, ProductStatus } from "@/generated/prisma/enums";
 import {
   CONCENTRATION_LABELS as concentrationLabels,
-  SEASON_LABELS as seasonLabels,
+  DAYPART_KEYS as daypartKeys,
+  DAYPART_LABELS as daypartLabels,
   GENDER_LABELS as genderLabels,
-  OCCASION_LABELS as occasionLabels,
+  LONGEVITY_LABELS as longevityLabels,
+  SEASON_KEYS as seasonKeys,
+  SEASON_LABELS as seasonLabels,
+  SILLAGE_LABELS as sillageLabels,
+  type DaypartKey,
+  type SeasonKey,
 } from "@/lib/catalog";
 import type { EditableProduct } from "@/lib/admin/products";
 import type { AdoptableReference } from "@/lib/admin/references";
@@ -45,6 +44,7 @@ import {
   createPerfumerAction,
   saveProduct,
 } from "../actions";
+import { deleteUploadedImage, importReferencePicture } from "../image-actions";
 import { CharacteristicBar } from "./characteristic-bar";
 import { Field, Step } from "./field";
 import { RemoteCombobox } from "./remote-combobox";
@@ -52,7 +52,65 @@ import { PyramidEditor, type SelectedNote } from "./pyramid-editor";
 import { VariantEditor } from "./variant-editor";
 import { ImagePanel, type ProductImageItem } from "./image-panel";
 import { ReferenceStep } from "./reference-step";
-import { AccordSelector, type Accord } from "./accord-selector";
+import {
+  AccordSelector,
+  type Accord,
+  type SelectedAccord,
+} from "./accord-selector";
+
+/** Maps each `SeasonKey` (used for shared labels) to its form field. */
+const SEASON_FIELD_NAMES: Record<
+  SeasonKey,
+  "seasonSpring" | "seasonSummer" | "seasonFall" | "seasonWinter"
+> = {
+  spring: "seasonSpring",
+  summer: "seasonSummer",
+  fall: "seasonFall",
+  winter: "seasonWinter",
+};
+
+/** Maps each `DaypartKey` (used for shared labels) to its form field. */
+const DAYPART_FIELD_NAMES: Record<DaypartKey, "daypartDay" | "daypartNight"> = {
+  day: "daypartDay",
+  night: "daypartNight",
+};
+
+/** Static reminder of the Spanish scale so the administrator does not need to
+ * memorize what a given longevity or sillage number means. */
+const LONGEVITY_HINT = Object.entries(longevityLabels)
+  .map(([step, label]) => `${step} ${label}`)
+  .join(" · ");
+const SILLAGE_HINT = Object.entries(sillageLabels)
+  .map(([step, label]) => `${step} ${label}`)
+  .join(" · ");
+
+/** Digits-only 0..100 percentage input, used for the season and daypart split. */
+function PercentageInput({
+  id,
+  value,
+  onChange,
+}: {
+  id?: string;
+  value: number | null | undefined;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <div className="flex items-center rounded-md border bg-background pr-2.5">
+      <Input
+        id={id}
+        inputMode="numeric"
+        value={value ?? ""}
+        placeholder="0"
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, "").slice(0, 3);
+          onChange(digits === "" ? null : Math.min(100, Number(digits)));
+        }}
+        className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+      />
+      <span className="shrink-0 text-xs text-muted-foreground">%</span>
+    </div>
+  );
+}
 
 /** Note and perfumer names are display-only. The form stores IDs, while this
  * separate map avoids duplicating labels in submitted form state. */
@@ -70,18 +128,23 @@ function getInitialValues(product: EditableProduct | null): ProductFormInput {
       gender: null,
       concentration: null,
       year: null,
-      seasons: [],
-      occasions: [],
+      collection: null,
       longevity: null,
       sillage: null,
       intensity: null,
+      seasonSpring: null,
+      seasonSummer: null,
+      seasonFall: null,
+      seasonWinter: null,
+      daypartDay: null,
+      daypartNight: null,
       status: ProductStatus.DRAFT,
       isFeatured: false,
       slug: null,
       seoTitle: null,
       seoDescription: null,
       notes: [],
-      accordIds: [],
+      accords: [],
       perfumerIds: [],
       variants: [],
       images: [],
@@ -97,11 +160,16 @@ function getInitialValues(product: EditableProduct | null): ProductFormInput {
     gender: product.gender,
     concentration: product.concentration,
     year: product.year,
-    seasons: product.seasons,
-    occasions: product.occasions,
+    collection: product.collection,
     longevity: product.longevity,
     sillage: product.sillage,
     intensity: product.intensity,
+    seasonSpring: product.seasonSpring,
+    seasonSummer: product.seasonSummer,
+    seasonFall: product.seasonFall,
+    seasonWinter: product.seasonWinter,
+    daypartDay: product.daypartDay,
+    daypartNight: product.daypartNight,
     status: product.status,
     isFeatured: product.isFeatured,
     slug: product.slug,
@@ -110,8 +178,12 @@ function getInitialValues(product: EditableProduct | null): ProductFormInput {
     notes: product.notes.map((note) => ({
       noteId: note.note.id,
       position: note.position,
+      weight: note.weight,
     })),
-    accordIds: product.accords.map((accord) => accord.accord.id),
+    accords: product.accords.map((accord) => ({
+      accordId: accord.accord.id,
+      strength: accord.strength,
+    })),
     perfumerIds: product.perfumers.map((entry) => entry.perfumer.id),
     variants: product.variants.map((variant) => ({
       id: variant.id,
@@ -159,25 +231,45 @@ export function ProductForm({
   const [adoptedReference, setAdoptedReference] = useState<{
     id: string;
     name: string;
-    url: string | null;
+    referenceUrl: string | null;
   } | null>(
     product?.fragranceRefId && product.fragranceRef
       ? {
           id: product.fragranceRefId,
           name: product.fragranceRef.name,
-          url: product.fragranceRef.url,
+          referenceUrl: product.fragranceRef.referenceUrl,
         }
       : null,
   );
   /** The reference's English copy helps writing but is never published. */
   const [referenceText, setReferenceText] = useState<string | null>(null);
+  const [isImportingReferencePicture, setIsImportingReferencePicture] =
+    useState(false);
+  // Identifies the current picture import call. Incremented on every new
+  // adoption and on every unlink, so a response belongs to the admin's latest
+  // action only if it still holds the token it was issued; any earlier
+  // adoption's response (or one abandoned by an unlink) is discarded instead
+  // of appended to the wrong product.
+  const pictureImportToken = useRef(0);
+  // Storage key of the picture copied in for whichever reference is
+  // currently adopted, if that import has already resolved. Lets unlinking
+  // or adopting a different reference remove that one picture instead of
+  // leaving it (or, on a second adoption, both pictures) in the images list.
+  const currentReferencePictureKey = useRef<string | null>(null);
+  // Keys the product already had in R2 when this form loaded. A picture
+  // tracked above that is one of these was saved in an earlier session, so it
+  // must be left for the admin to remove by hand rather than deleted here.
+  const [savedStorageKeys] = useState(
+    () => new Set(product?.images.map((image) => image.storageKey) ?? []),
+  );
 
   const form = useForm<ProductFormInput, unknown, ProductFormValues>({
     resolver: standardSchemaResolver(productSchema),
     defaultValues: getInitialValues(product),
     mode: "onSubmit",
   });
-  const { control, formState, handleSubmit, setValue, setError } = form;
+  const { control, formState, handleSubmit, setValue, setError, getValues } =
+    form;
 
   // `useWatch` avoids React Compiler's incompatible-library bailout caused by
   // `form.watch`, whose returned function cannot be memoized.
@@ -186,33 +278,91 @@ export function ProductForm({
   const variants = useWatch({ control, name: "variants" }) ?? [];
   const activeVariants = variants.filter((variant) => variant.isActive).length;
 
+  // Single source of truth for adding an image: it reads the form's current
+  // `images` value and writes the appended result in the same synchronous
+  // step, so the manual-upload flow (`ImagePanel`'s `onUploadComplete`) and
+  // the reference-picture import below cannot read each other's stale value
+  // and either drop an image or mark two of them primary.
+  function appendImage(storageKey: string) {
+    const currentImages = getValues("images") ?? [];
+    setValue("images", [
+      ...currentImages,
+      {
+        id: null,
+        storageKey,
+        alt: null,
+        isPrimary: currentImages.length === 0,
+      },
+    ]);
+  }
+
+  // Drops the picture tracked in `currentReferencePictureKey`, if it was
+  // never saved: removes it from the form's images (reassigning primary when
+  // it was the primary image) and deletes the R2 object. A picture that was
+  // already part of the product when the form loaded is left alone instead,
+  // since the admin may still want it.
+  function releaseCurrentReferencePicture() {
+    const key = currentReferencePictureKey.current;
+    currentReferencePictureKey.current = null;
+    if (!key || savedStorageKeys.has(key)) return;
+
+    const currentImages = getValues("images") ?? [];
+    const index = currentImages.findIndex((image) => image.storageKey === key);
+    if (index === -1) return;
+
+    const remainingImages = currentImages.filter((_, i) => i !== index);
+    if (currentImages[index]!.isPrimary && remainingImages.length > 0) {
+      remainingImages[0] = { ...remainingImages[0]!, isPrimary: true };
+    }
+    setValue("images", remainingImages);
+    void deleteUploadedImage(key).catch(() => {});
+  }
+
   function adoptReference(reference: AdoptableReference) {
+    // Release whatever picture the previously adopted reference (if any)
+    // copied in, so adopting a second reference does not append its picture
+    // next to the first one.
+    releaseCurrentReferencePicture();
+
     // Prepopulate every field known to the dataset, while keeping the product
     // editable so future reimports cannot overwrite it.
     setAdoptedReference({
       id: reference.id,
       name: reference.name,
-      url: reference.url,
+      referenceUrl: reference.referenceUrl,
     });
     setReferenceText(reference.descriptionEn);
     setIsManual(true);
     setValue("fragranceRefId", reference.id);
-    setValue("sourceUrl", reference.url);
+    setValue("sourceUrl", reference.referenceUrl);
     setValue("name", reference.name, { shouldValidate: true });
     setValue("brandId", reference.brand.id);
     setValue("brandName", reference.brand.name, { shouldValidate: true });
     setValue("year", reference.year);
     setValue("gender", reference.gender);
+    setValue("collection", reference.collection);
+    setValue("longevity", reference.longevity);
+    setValue("sillage", reference.sillage);
+    setValue("seasonSpring", reference.seasonSpring);
+    setValue("seasonSummer", reference.seasonSummer);
+    setValue("seasonFall", reference.seasonFall);
+    setValue("seasonWinter", reference.seasonWinter);
+    setValue("daypartDay", reference.daypartDay);
+    setValue("daypartNight", reference.daypartNight);
     setValue(
       "notes",
       reference.notes.map((note) => ({
         noteId: note.noteId,
         position: note.position,
+        weight: note.weight,
       })),
     );
     setValue(
-      "accordIds",
-      reference.accords.map((accord) => accord.accordId),
+      "accords",
+      reference.accords.map((accord) => ({
+        accordId: accord.accordId,
+        strength: accord.strength,
+      })),
     );
     setValue(
       "perfumerIds",
@@ -225,12 +375,68 @@ export function ProductForm({
         nextNames[perfumer.perfumerId] = perfumer.name;
       return nextNames;
     });
+
+    // Copy the reference's picture into R2 exactly once per adoption. The
+    // form keeps working meanwhile; a failure keeps the adoption and just
+    // leaves the photo for the admin to upload by hand.
+    const importToken = ++pictureImportToken.current;
+    setIsImportingReferencePicture(true);
+    void importReferencePicture(reference.id)
+      .then((result) => {
+        if (pictureImportToken.current !== importToken) {
+          // A later unlink or adoption already moved past this import; its
+          // upload would otherwise stay orphaned in R2.
+          if (result.ok)
+            void deleteUploadedImage(result.data.storageKey).catch(() => {});
+          return;
+        }
+        setIsImportingReferencePicture(false);
+        if (!result.ok) {
+          toast.error(
+            "No pudimos traer la foto de referencia; podés subirla a mano.",
+          );
+          return;
+        }
+        appendImage(result.data.storageKey);
+        currentReferencePictureKey.current = result.data.storageKey;
+      })
+      .catch(() => {
+        if (pictureImportToken.current !== importToken) return;
+        setIsImportingReferencePicture(false);
+        toast.error(
+          "No pudimos traer la foto de referencia; podés subirla a mano.",
+        );
+      });
   }
 
   function unlinkReference() {
+    // Invalidate any picture import still in flight: its result would belong
+    // to the reference the admin just unlinked, not to the current adoption.
+    pictureImportToken.current += 1;
+    setIsImportingReferencePicture(false);
+    releaseCurrentReferencePicture();
     setAdoptedReference(null);
     setReferenceText(null);
     setValue("fragranceRefId", null);
+
+    // These values only exist because a reference was adopted (see
+    // `docs/modules/admin-references.md`'s community-derived fields). Once
+    // unlinked, `communityVotes` will be saved as null, and the store shows
+    // community data whenever it is null — so leaving these behind would
+    // publish community numbers for a product with no linked reference,
+    // including one below the vote threshold that hides them.
+    setValue("longevity", null);
+    setValue("sillage", null);
+    setValue("seasonSpring", null);
+    setValue("seasonSummer", null);
+    setValue("seasonFall", null);
+    setValue("seasonWinter", null);
+    setValue("daypartDay", null);
+    setValue("daypartNight", null);
+
+    toast.info(
+      "Desvinculamos la referencia y limpiamos los datos de la comunidad.",
+    );
   }
 
   function submit(status: ProductStatus) {
@@ -567,6 +773,7 @@ export function ProductForm({
                     value={(field.value ?? []).map((n) => ({
                       noteId: n.noteId,
                       position: n.position,
+                      weight: n.weight ?? 0,
                       name: names[n.noteId] ?? "—",
                     }))}
                     onChange={(notes: SelectedNote[]) => {
@@ -580,6 +787,7 @@ export function ProductForm({
                         notes.map((note) => ({
                           noteId: note.noteId,
                           position: note.position,
+                          weight: note.weight,
                         })),
                       );
                     }}
@@ -592,11 +800,11 @@ export function ProductForm({
               <Field label="Acordes" isAutofilled={Boolean(adoptedReference)}>
                 <Controller
                   control={control}
-                  name="accordIds"
+                  name="accords"
                   render={({ field }) => (
                     <AccordSelector
                       accords={accords}
-                      value={field.value ?? []}
+                      value={(field.value ?? []) as SelectedAccord[]}
                       onChange={field.onChange}
                     />
                   )}
@@ -604,74 +812,160 @@ export function ProductForm({
               </Field>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <Field label="Estaciones">
-                <Controller
-                  control={control}
-                  name="seasons"
-                  render={({ field }) => (
-                    <ToggleGroup
-                      type="multiple"
-                      variant="outline"
-                      value={field.value ?? []}
-                      onValueChange={field.onChange}
-                      className="justify-start"
-                    >
-                      {Object.values(Season).map((s) => (
-                        <ToggleGroupItem key={s} value={s} className="px-3">
-                          {seasonLabels[s]}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
-                  )}
-                />
-              </Field>
+            <div className="mt-5 flex flex-col gap-4">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
+                  Perfil
+                </span>
+                {product?.communityVotes ? (
+                  <span className="text-xs text-muted-foreground">
+                    Votos de la comunidad: {product.communityVotes}
+                  </span>
+                ) : null}
+              </div>
 
-              <Field label="Ocasiones">
-                <Controller
-                  control={control}
-                  name="occasions"
-                  render={({ field }) => (
-                    <ToggleGroup
-                      type="multiple"
-                      variant="outline"
-                      value={field.value ?? []}
-                      onValueChange={field.onChange}
-                      className="justify-start"
+              <div className="grid gap-4 md:grid-cols-4">
+                {seasonKeys.map((key) => {
+                  const fieldName = SEASON_FIELD_NAMES[key];
+                  return (
+                    <Field
+                      key={key}
+                      label={seasonLabels[key]}
+                      htmlFor={fieldName}
                     >
-                      {Object.values(Occasion).map((o) => (
-                        <ToggleGroupItem key={o} value={o} className="px-3">
-                          {occasionLabels[o]}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
-                  )}
-                />
-              </Field>
-            </div>
+                      <Controller
+                        control={control}
+                        name={fieldName}
+                        render={({ field }) => (
+                          <PercentageInput
+                            id={fieldName}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </Field>
+                  );
+                })}
+              </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {(
-                [
-                  ["longevity", "Duración"],
-                  ["sillage", "Estela"],
-                  ["intensity", "Intensidad"],
-                ] as const
-              ).map(([fieldName, label]) => (
-                <Field key={fieldName} label={label}>
+              <div className="grid gap-4 md:grid-cols-2">
+                {daypartKeys.map((key) => {
+                  const fieldName = DAYPART_FIELD_NAMES[key];
+                  return (
+                    <Field
+                      key={key}
+                      label={daypartLabels[key]}
+                      htmlFor={fieldName}
+                    >
+                      <Controller
+                        control={control}
+                        name={fieldName}
+                        render={({ field }) => (
+                          <PercentageInput
+                            id={fieldName}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </Field>
+                  );
+                })}
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <Field
+                  label="Colección"
+                  htmlFor="collection"
+                  isAutofilled={Boolean(adoptedReference)}
+                  error={errors.collection?.message}
+                >
                   <Controller
                     control={control}
-                    name={fieldName}
+                    name="collection"
                     render={({ field }) => (
-                      <CharacteristicBar
-                        label={label}
-                        value={field.value}
-                        onChange={field.onChange}
+                      <Input
+                        {...field}
+                        id="collection"
+                        value={field.value ?? ""}
+                        className="bg-background"
+                        placeholder="Sauvage"
                       />
                     )}
                   />
                 </Field>
-              ))}
+
+                <Field
+                  label="Duración (longevidad)"
+                  htmlFor="longevity"
+                  isAutofilled={Boolean(adoptedReference)}
+                  error={errors.longevity?.message}
+                  hint={LONGEVITY_HINT}
+                >
+                  <Controller
+                    control={control}
+                    name="longevity"
+                    render={({ field }) => (
+                      <Input
+                        id="longevity"
+                        type="number"
+                        step={0.01}
+                        min={1}
+                        max={5}
+                        className="bg-background"
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          field.onChange(v === "" ? null : Number(v));
+                        }}
+                      />
+                    )}
+                  />
+                </Field>
+
+                <Field
+                  label="Estela (sillage)"
+                  htmlFor="sillage"
+                  isAutofilled={Boolean(adoptedReference)}
+                  error={errors.sillage?.message}
+                  hint={SILLAGE_HINT}
+                >
+                  <Controller
+                    control={control}
+                    name="sillage"
+                    render={({ field }) => (
+                      <Input
+                        id="sillage"
+                        type="number"
+                        step={0.01}
+                        min={1}
+                        max={4}
+                        className="bg-background"
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          field.onChange(v === "" ? null : Number(v));
+                        }}
+                      />
+                    )}
+                  />
+                </Field>
+              </div>
+
+              <Field label="Intensidad">
+                <Controller
+                  control={control}
+                  name="intensity"
+                  render={({ field }) => (
+                    <CharacteristicBar
+                      label="Intensidad"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </Field>
             </div>
           </Step>
 
@@ -702,6 +996,8 @@ export function ProductForm({
                   publicBaseUrl={publicBaseUrl}
                   value={(field.value ?? []) as ProductImageItem[]}
                   onChange={field.onChange}
+                  onUploadComplete={appendImage}
+                  isImportingReferencePicture={isImportingReferencePicture}
                 />
               )}
             />
@@ -814,9 +1110,15 @@ export function ProductForm({
                   ? "Todavía no cargaste presentaciones."
                   : `${activeVariants} de ${variants.length} ${variants.length === 1 ? "presentación se va" : "presentaciones se van"} a ver en la tienda`}
               </span>
-              {adoptedReference?.url ? (
+              {isImportingReferencePicture ? (
+                <span className="flex items-center gap-1.5 text-xs">
+                  <Loader2 className="size-3 animate-spin" />
+                  Trayendo la foto de referencia…
+                </span>
+              ) : null}
+              {adoptedReference?.referenceUrl ? (
                 <a
-                  href={adoptedReference.url}
+                  href={adoptedReference.referenceUrl}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="flex items-center gap-1 text-xs hover:text-foreground"
@@ -855,7 +1157,7 @@ export function ProductForm({
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSaving}
+                disabled={isSaving || isImportingReferencePicture}
                 onClick={() => submit(ProductStatus.DRAFT)}
               >
                 {isSaving ? (
@@ -867,7 +1169,7 @@ export function ProductForm({
               </Button>
               <Button
                 type="button"
-                disabled={isSaving}
+                disabled={isSaving || isImportingReferencePicture}
                 onClick={() => submit(ProductStatus.PUBLISHED)}
               >
                 {isSaving ? (

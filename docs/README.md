@@ -7,14 +7,14 @@ pre-filled `wa.me` link. Payment and delivery are agreed in chat.
 
 The application has three data layers:
 
-| Layer      | Contents                          | Writer                          | Publicly visible |
-| ---------- | --------------------------------- | ------------------------------- | ---------------- |
-| Reference  | Fragrantica CSV data              | `scripts/import-fragrantica.ts` | No               |
-| Store      | Products, variants, images, notes | Admin panel                     | Yes              |
-| Operations | Orders, settings, administrator   | Checkout and admin panel        | Partly           |
+| Layer      | Contents                          | Writer                         | Publicly visible |
+| ---------- | --------------------------------- | ------------------------------ | ---------------- |
+| Reference  | Fragrance reference dataset       | `scripts/import-references.ts` | No               |
+| Store      | Products, variants, images, notes | Admin panel                    | Yes              |
+| Operations | Orders, settings, administrator   | Checkout and admin panel       | Partly           |
 
-Fragrantica descriptions and images are reference-only. Customer copy is
-Spanish and product photos are stored in Cloudflare R2.
+Reference descriptions and images are panel-only. Customer copy is Spanish
+and product photos are stored in Cloudflare R2.
 
 ## Stack
 
@@ -78,8 +78,8 @@ pnpm format
 pnpm db:up
 pnpm db:migrate
 pnpm db:seed
-pnpm db:seed-dev
-pnpm db:import-fragrantica -- --limit 100
+pnpm db:import-references --limit 100
+pnpm db:check-translations
 ```
 
 When documentation conflicts with the code, the code is authoritative. Update

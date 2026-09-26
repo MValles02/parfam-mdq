@@ -1,8 +1,12 @@
 import type { NotePosition } from "@/generated/prisma/enums";
 import { PYRAMID_LEVEL_LABELS } from "@/lib/catalog";
 
+/**
+ * A null level means the product's notes have no top/middle/base tiers; they
+ * render as a single flat list instead of being dropped.
+ */
 type PyramidLevel = {
-  level: NotePosition;
+  level: NotePosition | null;
   notes: { slug: string; name: string }[];
 };
 
@@ -33,15 +37,20 @@ export function Pyramid({ levels }: { levels: PyramidLevel[] }) {
 
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
         {levels.map((level) => (
-          <div key={level.level} className="rounded border bg-card p-6">
+          <div
+            key={level.level ?? "flat"}
+            className="rounded border bg-card p-6"
+          >
             <div className="flex items-center gap-3">
               <span className="text-[11px] font-bold tracking-[0.16em] text-muted-foreground uppercase">
-                {PYRAMID_LEVEL_LABELS[level.level]}
+                {level.level ? PYRAMID_LEVEL_LABELS[level.level] : "Notas"}
               </span>
               <span className="h-px flex-1 bg-border" />
-              <span className="text-[11px] text-muted-foreground">
-                {WHEN_PERCEIVED_LABELS[level.level]}
-              </span>
+              {level.level ? (
+                <span className="text-[11px] text-muted-foreground">
+                  {WHEN_PERCEIVED_LABELS[level.level]}
+                </span>
+              ) : null}
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">

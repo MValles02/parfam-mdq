@@ -1,7 +1,7 @@
 // Parfam MDQ schema.
 //
 // Three layers:
-//   1. Reference — seeded by scripts/import-fragrantica.ts and read-only in the app.
+//   1. Reference — seeded from new-database/perfumes.jsonl and read-only in the app.
 //   2. Store — managed by the administrator (`Product` and its relations).
 //   3. Operations — orders, site settings, and users.
 
@@ -41,20 +41,6 @@ enum Concentration {
   EXTRAIT
 }
 
-enum Season {
-  SUMMER
-  FALL
-  WINTER
-  SPRING
-}
-
-enum Occasion {
-  DAY
-  NIGHT
-  CASUAL
-  FORMAL
-}
-
 enum VariantKind {
   FULL_BOTTLE
   TESTER
@@ -78,7 +64,7 @@ enum UserRole {
 }
 
 // ---------------------------------------------------------------------------
-// Layer 1 — Reference data seeded from data/fragrantica/*.csv
+// Layer 1 — Reference data seeded from new-database/perfumes.jsonl
 // ---------------------------------------------------------------------------
 
 /// Perfume brand or house. The importer creates it from the brand URL segment.
@@ -109,14 +95,20 @@ model Perfumer {
   @@index([name])
 }
 
-/// Olfactory note or ingredient. `nameEs` comes from
-/// data/dictionaries/notes.es.json. It remains null until the administrator
-/// translates it through /admin/notas, when UI falls back to English.
+/// Olfactory note or ingredient. `slug` is derived from the lowercased
+/// dataset display name (`nameEn`); `nameEs` is the Spanish translation
+/// supplied before import (see prisma/reference/) and is required, so the
+/// importer refuses any note without one. `family` groups related display
+/// names under the dataset's own family slug (e.g. several bergamot
+/// varieties share the family "Bergamot") and drives the store's note filter.
 model Note {
   id         String   @id @default(cuid())
   slug       String   @unique
   nameEn     String
-  nameEs     String?
+  nameEs     String
+  /// Dataset family slug; notes created manually in the admin panel reuse
+  /// their own slug here since they have no dataset family.
+  family     String
   usageCount Int      @default(0)
   createdAt  DateTime @default(now())
 
@@ -124,10 +116,12 @@ model Note {
   products      ProductNote[]
 
   @@index([nameEn])
+  @@index([family])
 }
 
-/// Olfactory accord. `color` comes from data/dictionaries/accords.es.json,
-/// an in-house palette that does not copy third-party data.
+/// Olfactory accord. `nameEs` and `color` come from
+/// prisma/reference/accords.es.json, an in-house palette and translation
+/// pair that does not copy third-party data.
 model Accord {
   id        String   @id @default(cuid())
   slug      String   @unique
@@ -140,32 +134,47 @@ model Accord {
   products      ProductAccord[]
 }
 
-/// A fragrance in the reference catalog (69,948 expected rows). The store
-/// never displays it directly: an administrator adopts it into an editable
-/// `Product` copy.
+/// A fragrance in the reference catalog. The store never displays it
+/// directly: an administrator adopts it into an editable `Product` copy.
 model FragranceRef {
-  id            String   @id @default(cuid())
-  /// Original dataset PID, joining fra_cleaned and fra_perfumes.
-  pid           Int      @unique
-  url           String
+  id            String    @id @default(cuid())
+  /// Dataset record id.
+  pid           Int       @unique
+  /// Raw "Brand/Name" dataset slug. Not unique: two different records can
+  /// share it (e.g. a flanker with an identical title under the same
+  /// brand), so the dataset disambiguates with `pid`, not this slug.
+  slug          String
   brandId       String
   name          String
   year          Int?
   gender        Gender?
-  /// Internal score used to rank administrator search results; never public.
-  ratingValue   Decimal? @db.Decimal(3, 2)
-  ratingCount   Int?
-  /// Internal English text from Fragrantica, used only as an admin reference.
+  collection    String?
+  /// Internal English text from the dataset, used only as an admin reference.
   descriptionEn String?
-  hasPyramid    Boolean  @default(false)
-  originCountry String?
+  /// Community-voted average longevity, 1..5; null when nobody has voted.
+  longevity     Decimal?  @db.Decimal(3, 2)
+  /// Community-voted average sillage, 1..4; null when nobody has voted.
+  sillage       Decimal?  @db.Decimal(3, 2)
+  /// Season vote counts; each is null when the whole tally is unset (see
+  /// scripts/lib/reference-parse.ts normalizeSeasonVotes).
+  seasonSpringVotes Int?
+  seasonSummerVotes Int?
+  seasonFallVotes   Int?
+  seasonWinterVotes Int?
+  /// Daypart vote counts; null when the whole tally is unset.
+  daypartDayVotes   Int?
+  daypartNightVotes Int?
+  /// Dataset `people` total; internal only, never shown to customers.
+  communityVotes    Int?
+  /// Dataset `popularity.magnitude`; internal, ranks admin search results.
+  popularity        Int?
+  scrapedAt         DateTime?
   /// Denormalized "<name> <brand>" text, normalized and indexed with GIN trgm.
   /// Without it, the admin search cannot use an index because an OR across
-  /// FragranceRef and Brand requires a sequential scan of 70k rows. Written by
-  /// scripts/import-fragrantica.ts.
-  searchText    String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  /// FragranceRef and Brand requires a sequential scan of the whole table.
+  searchText    String    @default("")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   brand     Brand                  @relation(fields: [brandId], references: [id])
   notes     FragranceRefNote[]
@@ -178,11 +187,15 @@ model FragranceRef {
 }
 
 model FragranceRefNote {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   fragranceRefId String
   noteId         String
-  position       NotePosition
-  sortOrder      Int          @default(0)
+  /// Null for a flat note list without top/middle/base tiers.
+  position       NotePosition?
+  /// 0..100, normalized so the perfume's strongest note is 100. All notes
+  /// at 0 means nobody has voted on this perfume's ingredients yet.
+  weight         Int           @default(0)
+  sortOrder      Int           @default(0)
 
   fragranceRef FragranceRef @relation(fields: [fragranceRefId], references: [id], onDelete: Cascade)
   note         Note         @relation(fields: [noteId], references: [id])
@@ -195,8 +208,10 @@ model FragranceRefAccord {
   id             String @id @default(cuid())
   fragranceRefId String
   accordId       String
-  /// Dataset occurrence order (1 is most relevant); no real percentage exists.
-  rank           Int
+  /// 0..100 dataset accord strength.
+  strength       Int
+  /// Dataset occurrence order.
+  sortOrder      Int    @default(0)
 
   fragranceRef FragranceRef @relation(fields: [fragranceRefId], references: [id], onDelete: Cascade)
   accord       Accord       @relation(fields: [accordId], references: [id])
@@ -235,11 +250,24 @@ model Product {
   gender         Gender?
   concentration  Concentration?
   year           Int?
-  seasons        Season[]
-  occasions      Occasion[]
-  /// Character bars from 1 to 5, set by the administrator instead of public votes.
-  longevity      Int?
-  sillage        Int?
+  collection     String?
+  /// Copied from the adopted FragranceRef (or set by the administrator for a
+  /// manually created product); 1..5, shown to customers as a character bar.
+  longevity      Decimal?       @db.Decimal(3, 2)
+  /// Copied from the adopted FragranceRef, or set by the administrator; 1..4.
+  sillage        Decimal?       @db.Decimal(3, 2)
+  /// 0..100 season percentages shown to customers; copied at adoption time
+  /// or set by the administrator for a manually created product.
+  seasonSpring   Int?
+  seasonSummer   Int?
+  seasonFall     Int?
+  seasonWinter   Int?
+  /// 0..100 daypart percentages shown to customers.
+  daypartDay     Int?
+  daypartNight   Int?
+  /// Copied at adoption from FragranceRef.communityVotes; null for a
+  /// manually created product with no reference to copy from.
+  communityVotes Int?
   intensity      Int?
   status         ProductStatus  @default(DRAFT)
   isFeatured     Boolean        @default(false)
@@ -263,11 +291,15 @@ model Product {
 }
 
 model ProductNote {
-  id        String       @id @default(cuid())
+  id        String        @id @default(cuid())
   productId String
   noteId    String
-  position  NotePosition
-  sortOrder Int          @default(0)
+  /// Null for a flat note list without top/middle/base tiers.
+  position  NotePosition?
+  /// 0..100, copied from the adopted FragranceRefNote or set by the
+  /// administrator; used by the store's "similar perfumes" query.
+  weight    Int           @default(0)
+  sortOrder Int           @default(0)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   note    Note    @relation(fields: [noteId], references: [id])
@@ -280,6 +312,9 @@ model ProductAccord {
   id        String @id @default(cuid())
   productId String
   accordId  String
+  /// 0..100, copied from the adopted FragranceRefAccord or set by the
+  /// administrator; used by the store's "similar perfumes" query.
+  strength  Int    @default(0)
   sortOrder Int    @default(0)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -304,9 +339,12 @@ model ProductPerfumer {
 model ProductImage {
   id         String  @id @default(cuid())
   productId  String
-  /// Cloudflare R2 object key ("products/2026/09/uuid.jpg"), never a
-  /// Fragrantica image. Storing a key instead of an absolute URL makes the
-  /// public host (R2_PUBLIC_URL) configurable without rewriting existing rows.
+  /// Cloudflare R2 object key ("products/2026/09/uuid.jpg"). Either a manual
+  /// upload or a single copy of the adopted reference's picture made at
+  /// adoption time (see `importReferencePicture` in
+  /// `src/app/admin/(panel)/productos/image-actions.ts`); never a hotlink to
+  /// fimgs.net. Storing a key instead of an absolute URL makes the public
+  /// host (R2_PUBLIC_URL) configurable without rewriting existing rows.
   storageKey String
   alt        String?
   sortOrder  Int     @default(0)

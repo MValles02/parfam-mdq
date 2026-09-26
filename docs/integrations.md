@@ -28,6 +28,40 @@ Required values are documented in `.env.example`:
 - `R2_BUCKET`
 - `R2_PUBLIC_URL`
 
+## Reference picture import (fimgs.net)
+
+`importReferencePicture`
+(`src/app/admin/(panel)/productos/image-actions.ts`) copies a single bottle
+photo from Fragrantica's image host into R2 the first time an administrator
+asks for it while adopting a reference. The client only supplies a
+`FragranceRef` id; the download URL is always built server-side from that
+row's `pid` as `https://fimgs.net/mdimg/perfume/375x500.{pid}.jpg` — never
+from client-supplied input, and never as a stored hotlink (`ProductImage`
+only ever holds an R2 key, see `docs/persistence.md`). This is a one-time
+copy per adoption, not a bulk importer: Fragrantica images stay internal
+reference material (see `AGENTS.md`) and this project never scrapes them in
+bulk.
+
+The fetch: a 10-second timeout, a redirect mode of `manual` (a redirect is
+treated as failure rather than followed), and an 8 MB cap enforced while
+streaming the response body (aborting the read as soon as the cap is
+crossed, so an oversized or `Content-Length`-less response cannot be
+buffered whole). The downloaded bytes are then magic-byte validated the same
+way a manual upload is (`detectImageContentType`, see `src/lib/image-type.ts`)
+— the response's declared `Content-Type` is never trusted for that decision.
+Before upload, `trimWhiteMargins` (`src/lib/image-trim.ts`) crops the wide
+white margins fimgs.net leaves around the bottle using `sharp`, adds back a
+small white pad, and re-encodes as JPEG; it falls back to the original,
+already-validated bytes whenever trimming doesn't clearly help, so it can
+never turn a valid download into an upload failure. Only then is the file
+uploaded to R2 via `putR2Object` under a fresh generated key, exactly like a
+manual image upload.
+
+`next.config.ts`'s `images.remotePatterns` is built only from
+`R2_PUBLIC_URL`; fimgs.net is never added to it, because the app never
+renders a fimgs.net URL directly — the copied file is always served back
+from R2 like any other product image.
+
 ## WhatsApp
 
 `src/lib/whatsapp.ts` validates the configured destination, builds `wa.me`

@@ -16,7 +16,7 @@ import {
 import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { formatProperName } from "@/lib/catalog";
 import { deleteR2Object, isR2Configured } from "@/lib/r2";
-import { TAG_SITEMAP_URLS } from "@/lib/store/queries";
+import { TAG_SIMILAR_PRODUCTS, TAG_SITEMAP_URLS } from "@/lib/store/queries";
 import { fieldErrors } from "@/lib/validations/errors";
 import {
   productSchema,
@@ -40,11 +40,21 @@ import {
  * needs `revalidateTag` instead of `revalidatePath` (F-04 in
  * `docs/findings.md`). The `"max"` profile permits a short stale response
  * while the sitemap is recomputed in the background.
+ *
+ * The "Se parece a" ranking (`src/lib/store/similarity.ts`) is precomputed
+ * the same way, over every published product's accords, notes, profile,
+ * collection, and perfumers, so any product change can shift another
+ * product's ranking, not just this one's. `TAG_SIMILAR_PRODUCTS` covers that
+ * with the same tagged `unstable_cache` and "max" profile; the individual
+ * `/producto/[slug]` revalidation above still only targets this product's own
+ * page, matching the sitemap's existing tradeoff of not walking every product
+ * that could reference this one.
  */
 function revalidateStore(slug?: string, brandSlug?: string) {
   revalidatePath("/");
   revalidatePath("/catalogo");
   revalidateTag(TAG_SITEMAP_URLS, "max");
+  revalidateTag(TAG_SIMILAR_PRODUCTS, "max");
   if (slug) revalidatePath(`/producto/${slug}`, "page");
   if (brandSlug) revalidatePath(`/marca/${brandSlug}`, "page");
 }
@@ -115,9 +125,7 @@ export async function adoptReferenceAction(
 
 export async function searchNotesAction(
   query: string,
-): Promise<
-  ActionResult<{ id: string; name: string; isTranslated: boolean }[]>
-> {
+): Promise<ActionResult<{ id: string; name: string }[]>> {
   await requireAdmin();
   const q = query.trim();
   const notes = await prisma.note.findMany({
@@ -133,21 +141,17 @@ export async function searchNotesAction(
     // among 1,882 rare ingredients.
     orderBy: [{ usageCount: "desc" }, { nameEn: "asc" }],
     take: 20,
-    select: { id: true, nameEn: true, nameEs: true },
+    select: { id: true, nameEs: true },
   });
   return {
     ok: true,
-    data: notes.map((note) => ({
-      id: note.id,
-      name: note.nameEs ?? note.nameEn,
-      isTranslated: note.nameEs !== null,
-    })),
+    data: notes.map((note) => ({ id: note.id, name: note.nameEs })),
   };
 }
 
 export async function createNoteAction(
   name: string,
-): Promise<ActionResult<{ id: string; name: string; isTranslated: boolean }>> {
+): Promise<ActionResult<{ id: string; name: string }>> {
   await requireAdmin();
   const parsedName = z.string().trim().min(2).max(80).safeParse(name);
   if (!parsedName.success)
@@ -158,21 +162,15 @@ export async function createNoteAction(
   if (!slug) return actionFailure("Ese nombre no sirve como nota.");
 
   // Admin-created notes use Spanish. Keeping nameEn equal preserves the
-  // fallback without leaving the field empty.
+  // fallback without leaving the field empty, and family reuses the slug
+  // because a manually created note has no dataset family of its own.
   const note = await prisma.note.upsert({
     where: { slug },
-    create: { slug, nameEn: cleanName, nameEs: cleanName },
+    create: { slug, nameEn: cleanName, nameEs: cleanName, family: slug },
     update: {},
-    select: { id: true, nameEn: true, nameEs: true },
+    select: { id: true, nameEs: true },
   });
-  return {
-    ok: true,
-    data: {
-      id: note.id,
-      name: note.nameEs ?? note.nameEn,
-      isTranslated: note.nameEs !== null,
-    },
-  };
+  return { ok: true, data: { id: note.id, name: note.nameEs } };
 }
 
 export async function searchPerfumersAction(
@@ -180,13 +178,17 @@ export async function searchPerfumersAction(
 ): Promise<ActionResult<{ id: string; name: string }[]>> {
   await requireAdmin();
   const q = query.trim();
+  // Filter in the database now that the table holds about 3,000 rows: a full
+  // table scan followed by JS filtering would no longer be cheap.
   const perfumers = await prisma.perfumer.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : undefined,
+    orderBy: { name: "asc" },
+    take: 200,
     select: { id: true, name: true },
   });
   // Sort in JavaScript because imported `Perfumer.name` casing is inconsistent
   // (F-21 in docs/findings.md), which prevents PostgreSQL sorting from being
-  // truly alphabetical. The full table has about 1,400 rows.
+  // truly alphabetical.
   const data = perfumers
     .map((perfumer) => ({
       id: perfumer.id,
@@ -274,26 +276,48 @@ async function syncRelationships(
   await tx.productPerfumer.deleteMany({ where: { productId } });
 
   if (values.notes.length) {
-    // The order within each pyramid level follows the form order.
-    const sortOrders = new Map<string, number>();
-    const noteRows = values.notes.map((note) => {
-      const sortOrder = sortOrders.get(note.position) ?? 0;
-      sortOrders.set(note.position, sortOrder + 1);
-      return {
+    // Canonical order, shared with `getProductForEdit`
+    // (`src/lib/admin/products.ts`) and `getProductBySlug`
+    // (`src/lib/store/queries.ts`): within each pyramid level, or the flat
+    // list, strongest weight first. The map key is the position string
+    // ("TOP"/"MIDDLE"/"BASE") or "" for a flat list. Ties keep the form's
+    // original order, which `Array.prototype.sort` preserves because it is
+    // stable, so `sortOrder` becomes a meaningful tiebreak the next time
+    // these rows are read back.
+    const groups = new Map<
+      string,
+      { note: (typeof values.notes)[number]; formIndex: number }[]
+    >();
+    values.notes.forEach((note, formIndex) => {
+      const key = note.position ?? "";
+      const group = groups.get(key);
+      if (group) group.push({ note, formIndex });
+      else groups.set(key, [{ note, formIndex }]);
+    });
+
+    const noteRows = [...groups.values()].flatMap((group) => {
+      group.sort(
+        (a, b) => b.note.weight - a.note.weight || a.formIndex - b.formIndex,
+      );
+      return group.map(({ note }, sortOrder) => ({
         productId,
         noteId: note.noteId,
         position: note.position,
+        weight: note.weight,
         sortOrder,
-      };
+      }));
     });
     await tx.productNote.createMany({ data: noteRows, skipDuplicates: true });
   }
 
-  if (values.accordIds.length) {
+  if (values.accords.length) {
+    // sortOrder follows the form's array order, matching syncVariants and
+    // syncImages below.
     await tx.productAccord.createMany({
-      data: values.accordIds.map((accordId, sortOrder) => ({
+      data: values.accords.map((accord, sortOrder) => ({
         productId,
-        accordId,
+        accordId: accord.accordId,
+        strength: accord.strength,
         sortOrder,
       })),
       skipDuplicates: true,
@@ -419,26 +443,40 @@ export async function saveProduct(
 
   // Client IDs are data rather than authority. Existing rows must be verified
   // before `createMany` could produce an unreadable foreign-key error.
-  const [noteCount, accordCount, perfumerCount, referenceCount] =
+  const [noteCount, accordCount, perfumerCount, fragranceRef] =
     await Promise.all([
       prisma.note.count({
         where: { id: { in: values.notes.map((note) => note.noteId) } },
       }),
-      prisma.accord.count({ where: { id: { in: values.accordIds } } }),
+      prisma.accord.count({
+        where: { id: { in: values.accords.map((accord) => accord.accordId) } },
+      }),
       prisma.perfumer.count({ where: { id: { in: values.perfumerIds } } }),
       values.fragranceRefId
-        ? prisma.fragranceRef.count({ where: { id: values.fragranceRefId } })
-        : Promise.resolve(1),
+        ? prisma.fragranceRef.findUnique({
+            where: { id: values.fragranceRefId },
+            select: { communityVotes: true },
+          })
+        : Promise.resolve(null),
     ]);
   const uniqueNoteCount = new Set(values.notes.map((note) => note.noteId)).size;
   if (noteCount !== uniqueNoteCount)
     return actionFailure("Alguna de las notas ya no existe.");
-  if (accordCount !== new Set(values.accordIds).size)
+  if (
+    accordCount !==
+    new Set(values.accords.map((accord) => accord.accordId)).size
+  )
     return actionFailure("Alguno de los acordes ya no existe.");
   if (perfumerCount !== new Set(values.perfumerIds).size)
     return actionFailure("Alguno de los perfumistas ya no existe.");
-  if (referenceCount === 0)
+  if (values.fragranceRefId && !fragranceRef)
     return actionFailure("La fragancia de referencia ya no existe.");
+
+  // `communityVotes` is never client-submitted (see the removed field on
+  // `productSchema` in `src/lib/validations/product.ts`): it is copied here
+  // from `FragranceRef.communityVotes` for the adopted reference, or null
+  // when the product has none.
+  const communityVotes = fragranceRef ? fragranceRef.communityVotes : null;
 
   const result = await prisma.$transaction(async (tx) => {
     const brandId = await resolveBrand(tx, values);
@@ -457,11 +495,17 @@ export async function saveProduct(
       gender: values.gender,
       concentration: values.concentration,
       year: values.year,
-      seasons: values.seasons,
-      occasions: values.occasions,
+      collection: values.collection,
       longevity: values.longevity,
       sillage: values.sillage,
       intensity: values.intensity,
+      seasonSpring: values.seasonSpring,
+      seasonSummer: values.seasonSummer,
+      seasonFall: values.seasonFall,
+      seasonWinter: values.seasonWinter,
+      daypartDay: values.daypartDay,
+      daypartNight: values.daypartNight,
+      communityVotes,
       status: values.status,
       isFeatured: values.isFeatured,
       seoTitle: values.seoTitle,
@@ -571,11 +615,17 @@ export async function duplicateProduct(
         gender: original.gender,
         concentration: original.concentration,
         year: original.year,
-        seasons: original.seasons,
-        occasions: original.occasions,
+        collection: original.collection,
         longevity: original.longevity,
         sillage: original.sillage,
         intensity: original.intensity,
+        seasonSpring: original.seasonSpring,
+        seasonSummer: original.seasonSummer,
+        seasonFall: original.seasonFall,
+        seasonWinter: original.seasonWinter,
+        daypartDay: original.daypartDay,
+        daypartNight: original.daypartNight,
+        communityVotes: original.communityVotes,
         status: ProductStatus.DRAFT,
         isFeatured: false,
         seoTitle: original.seoTitle,
@@ -585,6 +635,7 @@ export async function duplicateProduct(
             data: original.notes.map((n) => ({
               noteId: n.noteId,
               position: n.position,
+              weight: n.weight,
               sortOrder: n.sortOrder,
             })),
           },
@@ -593,6 +644,7 @@ export async function duplicateProduct(
           createMany: {
             data: original.accords.map((a) => ({
               accordId: a.accordId,
+              strength: a.strength,
               sortOrder: a.sortOrder,
             })),
           },
@@ -633,6 +685,9 @@ export async function duplicateProduct(
   });
 
   revalidatePath("/admin/productos");
+  // The copy is a DRAFT with no public page yet, so only the sitemap and
+  // "Se parece a" caches need invalidating; no slug or brandSlug to pass.
+  revalidateStore();
   return { ok: true, data: copy };
 }
 

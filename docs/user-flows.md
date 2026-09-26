@@ -15,12 +15,13 @@ The detailed flows are organized by user intent.
 2. [Publish a product](flows/publish-product.md)
 3. [Upload a product image](flows/upload-image.md)
 4. [Manage an order](flows/manage-order.md)
-5. Translate notes, update brands, and edit site settings
+5. Update brands and edit site settings
 
 ## Operator
 
-1. Import Fragrantica reference data through `pnpm db:import-fragrantica`
-2. Seed the local environment through `pnpm db:seed` and `pnpm db:seed-dev`
+1. Import the reference catalog through `pnpm db:import-references`, after
+   checking translation coverage with `pnpm db:check-translations`
+2. Seed the local environment through `pnpm db:seed`
 3. Build and deploy through the workflow described in
    [deployment.md](deployment.md)
 

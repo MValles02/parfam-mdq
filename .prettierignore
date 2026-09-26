@@ -3,5 +3,5 @@ node_modules
 out
 build
 pnpm-lock.yaml
-data/fragrantica/*.csv
+/new-database/
 src/components/ui

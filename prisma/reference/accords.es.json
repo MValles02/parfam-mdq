@@ -1,0 +1,462 @@
+{
+  "alcohol": {
+    "en": "alcohol",
+    "es": "alcohólico",
+    "color": "#B9CCD5"
+  },
+  "aldehydic": {
+    "en": "aldehydic",
+    "es": "aldehídico",
+    "color": "#AFC2CF"
+  },
+  "almond": {
+    "en": "almond",
+    "es": "almendra",
+    "color": "#C0A47C"
+  },
+  "amber": {
+    "en": "amber",
+    "es": "ámbar",
+    "color": "#C47F31"
+  },
+  "animalic": {
+    "en": "animalic",
+    "es": "animal",
+    "color": "#594436"
+  },
+  "anis": {
+    "en": "anis",
+    "es": "anís",
+    "color": "#497961"
+  },
+  "aquatic": {
+    "en": "aquatic",
+    "es": "acuático",
+    "color": "#47A3C2"
+  },
+  "aromatic": {
+    "en": "aromatic",
+    "es": "aromático",
+    "color": "#6E8F56"
+  },
+  "asphault": {
+    "en": "asphault",
+    "es": "asfalto",
+    "color": "#333333"
+  },
+  "bacon": {
+    "en": "bacon",
+    "es": "panceta",
+    "color": "#BC604E"
+  },
+  "balsamic": {
+    "en": "balsamic",
+    "es": "balsámico",
+    "color": "#915930"
+  },
+  "bbq": {
+    "en": "bbq",
+    "es": "barbacoa",
+    "color": "#7A3D29"
+  },
+  "beeswax": {
+    "en": "beeswax",
+    "es": "cera de abeja",
+    "color": "#C8A041"
+  },
+  "bitter": {
+    "en": "bitter",
+    "es": "amargo",
+    "color": "#657949"
+  },
+  "brown-scotch-tape": {
+    "en": "brown scotch tape",
+    "es": "cinta de embalar marrón",
+    "color": "#975E35"
+  },
+  "cacao": {
+    "en": "cacao",
+    "es": "cacao",
+    "color": "#593726"
+  },
+  "camphor": {
+    "en": "camphor",
+    "es": "alcanforado",
+    "color": "#70A9A4"
+  },
+  "cannabis": {
+    "en": "cannabis",
+    "es": "cannabis",
+    "color": "#4D6E35"
+  },
+  "caramel": {
+    "en": "caramel",
+    "es": "caramelo",
+    "color": "#B27334"
+  },
+  "champagne": {
+    "en": "Champagne",
+    "es": "champagne",
+    "color": "#D8C897"
+  },
+  "cherry": {
+    "en": "cherry",
+    "es": "cereza",
+    "color": "#962C3D"
+  },
+  "chocolate": {
+    "en": "chocolate",
+    "es": "chocolate",
+    "color": "#51311F"
+  },
+  "cinnamon": {
+    "en": "cinnamon",
+    "es": "canela",
+    "color": "#9E532E"
+  },
+  "citrus": {
+    "en": "citrus",
+    "es": "cítrico",
+    "color": "#E0B329"
+  },
+  "clay": {
+    "en": "clay",
+    "es": "arcilla",
+    "color": "#A6623F"
+  },
+  "coca-cola": {
+    "en": "coca-cola",
+    "es": "coca-cola",
+    "color": "#3B2316"
+  },
+  "coconut": {
+    "en": "coconut",
+    "es": "coco",
+    "color": "#D9CEBF"
+  },
+  "coffee": {
+    "en": "coffee",
+    "es": "café",
+    "color": "#563A29"
+  },
+  "conifer": {
+    "en": "conifer",
+    "es": "conífera",
+    "color": "#325D40"
+  },
+  "earthy": {
+    "en": "earthy",
+    "es": "terroso",
+    "color": "#674D32"
+  },
+  "floral": {
+    "en": "floral",
+    "es": "floral",
+    "color": "#C46494"
+  },
+  "foresty": {
+    "en": "foresty",
+    "es": "boscoso",
+    "color": "#28532F"
+  },
+  "fresh": {
+    "en": "fresh",
+    "es": "fresco",
+    "color": "#70C2AD"
+  },
+  "fresh-spicy": {
+    "en": "fresh spicy",
+    "es": "especiado fresco",
+    "color": "#CC6633"
+  },
+  "fruity": {
+    "en": "fruity",
+    "es": "frutal",
+    "color": "#D17D61"
+  },
+  "gasoline": {
+    "en": "gasoline",
+    "es": "nafta",
+    "color": "#477585"
+  },
+  "gourmand": {
+    "en": "gourmand",
+    "es": "gourmand",
+    "color": "#A16836"
+  },
+  "green": {
+    "en": "green",
+    "es": "verde",
+    "color": "#3B7D36"
+  },
+  "herbal": {
+    "en": "herbal",
+    "es": "herbal",
+    "color": "#577E44"
+  },
+  "honey": {
+    "en": "honey",
+    "es": "miel",
+    "color": "#D29B2D"
+  },
+  "hot-iron": {
+    "en": "hot iron",
+    "es": "plancha caliente",
+    "color": "#7E4E44"
+  },
+  "industrial-glue": {
+    "en": "industrial glue",
+    "es": "pegamento industrial",
+    "color": "#B6B286"
+  },
+  "iris": {
+    "en": "iris",
+    "es": "iris",
+    "color": "#8C70A9"
+  },
+  "lactonic": {
+    "en": "lactonic",
+    "es": "lactónico",
+    "color": "#DFD8C3"
+  },
+  "lavender": {
+    "en": "lavender",
+    "es": "lavanda",
+    "color": "#8D7CC0"
+  },
+  "leather": {
+    "en": "leather",
+    "es": "cuero",
+    "color": "#724C31"
+  },
+  "marine": {
+    "en": "marine",
+    "es": "marino",
+    "color": "#2C6A96"
+  },
+  "meat": {
+    "en": "meat",
+    "es": "carne",
+    "color": "#6B332E"
+  },
+  "metallic": {
+    "en": "metallic",
+    "es": "metálico",
+    "color": "#8F99A3"
+  },
+  "milky": {
+    "en": "milky",
+    "es": "lechoso",
+    "color": "#E2DED4"
+  },
+  "mineral": {
+    "en": "mineral",
+    "es": "mineral",
+    "color": "#989081"
+  },
+  "mossy": {
+    "en": "mossy",
+    "es": "musgoso",
+    "color": "#5E743E"
+  },
+  "musky": {
+    "en": "musky",
+    "es": "almizclado",
+    "color": "#907A64"
+  },
+  "nutty": {
+    "en": "nutty",
+    "es": "anuezado",
+    "color": "#9B734B"
+  },
+  "oily": {
+    "en": "oily",
+    "es": "aceitoso",
+    "color": "#6E6E35"
+  },
+  "oud": {
+    "en": "oud",
+    "es": "oud",
+    "color": "#603624"
+  },
+  "ozonic": {
+    "en": "ozonic",
+    "es": "ozónico",
+    "color": "#81BCDA"
+  },
+  "paper": {
+    "en": "paper",
+    "es": "papel",
+    "color": "#D6D1C2"
+  },
+  "patchouli": {
+    "en": "patchouli",
+    "es": "pachulí",
+    "color": "#635036"
+  },
+  "pear": {
+    "en": "Pear",
+    "es": "pera",
+    "color": "#A6C059"
+  },
+  "plastic": {
+    "en": "plastic",
+    "es": "plástico",
+    "color": "#949EA8"
+  },
+  "powdery": {
+    "en": "powdery",
+    "es": "atalcado",
+    "color": "#C2ADB8"
+  },
+  "rose": {
+    "en": "rose",
+    "es": "rosa",
+    "color": "#C8416E"
+  },
+  "rubber": {
+    "en": "rubber",
+    "es": "goma",
+    "color": "#4F4740"
+  },
+  "rum": {
+    "en": "rum",
+    "es": "ron",
+    "color": "#8A5628"
+  },
+  "sake": {
+    "en": "sake",
+    "es": "sake",
+    "color": "#DBD4B3"
+  },
+  "salty": {
+    "en": "salty",
+    "es": "salado",
+    "color": "#A3B8C2"
+  },
+  "sand": {
+    "en": "sand",
+    "es": "arena",
+    "color": "#CEB68D"
+  },
+  "savory": {
+    "en": "savory",
+    "es": "sabroso",
+    "color": "#784F3A"
+  },
+  "smoky": {
+    "en": "smoky",
+    "es": "ahumado",
+    "color": "#695E59"
+  },
+  "soapy": {
+    "en": "soapy",
+    "es": "jabonoso",
+    "color": "#BCBFD2"
+  },
+  "soft-spicy": {
+    "en": "soft spicy",
+    "es": "especiado suave",
+    "color": "#C08459"
+  },
+  "sour": {
+    "en": "sour",
+    "es": "agrio",
+    "color": "#A6B946"
+  },
+  "spice": {
+    "en": "spice",
+    "es": "especias",
+    "color": "#A15636"
+  },
+  "sweet": {
+    "en": "sweet",
+    "es": "dulce",
+    "color": "#CE7E98"
+  },
+  "tennis-ball": {
+    "en": "tennis ball",
+    "es": "pelota de tenis",
+    "color": "#B7D22D"
+  },
+  "terpenic": {
+    "en": "terpenic",
+    "es": "terpénico",
+    "color": "#528547"
+  },
+  "tobacco": {
+    "en": "tobacco",
+    "es": "tabaco",
+    "color": "#916430"
+  },
+  "tropical": {
+    "en": "tropical",
+    "es": "tropical",
+    "color": "#D1A347"
+  },
+  "tuberose": {
+    "en": "tuberose",
+    "es": "nardo",
+    "color": "#D8B6BE"
+  },
+  "vanilla": {
+    "en": "vanilla",
+    "es": "vainilla",
+    "color": "#D2BA89"
+  },
+  "varnish": {
+    "en": "varnish",
+    "es": "barniz",
+    "color": "#9B733B"
+  },
+  "vinyl": {
+    "en": "vinyl",
+    "es": "vinilo",
+    "color": "#4D4D4D"
+  },
+  "violet": {
+    "en": "violet",
+    "es": "violeta",
+    "color": "#8053AC"
+  },
+  "vodka": {
+    "en": "vodka",
+    "es": "vodka",
+    "color": "#CCDAE0"
+  },
+  "warm-spicy": {
+    "en": "warm spicy",
+    "es": "especiado cálido",
+    "color": "#9E4A2E"
+  },
+  "wet-plaster": {
+    "en": "wet plaster",
+    "es": "yeso húmedo",
+    "color": "#BDBBB2"
+  },
+  "whiskey": {
+    "en": "whiskey",
+    "es": "whisky",
+    "color": "#B27D34"
+  },
+  "white-floral": {
+    "en": "white floral",
+    "es": "floral blanco",
+    "color": "#DDC6C9"
+  },
+  "wine": {
+    "en": "wine",
+    "es": "vino",
+    "color": "#6F2034"
+  },
+  "woody": {
+    "en": "woody",
+    "es": "amaderado",
+    "color": "#8D5E35"
+  },
+  "yellow-floral": {
+    "en": "yellow floral",
+    "es": "floral amarillo",
+    "color": "#CBAC4D"
+  }
+}

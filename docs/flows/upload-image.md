@@ -20,6 +20,10 @@ key generation, MIME checks, and deletion authorization on the server.
 6. After product persistence, `saveProduct` removes unreferenced keys on a
    best-effort basis. Shared keys from duplicate products remain until their
    final database reference disappears.
+7. `importReferencePicture` is a separate, panel-triggered path: it copies one
+   adopted reference's bottle photo from the third-party host into R2 and
+   appends it to the product's images. It never fires automatically on
+   adoption, and the form disables saving while the import is in flight.
 
 ## Main files
 

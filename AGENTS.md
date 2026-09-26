@@ -91,10 +91,11 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
 
 `new-database/perfumes.jsonl` (140,228 reference-fragrance records, ~556 MB,
 gitignored, local only) is the reference dataset; see
-`docs/modules/reference-data.md` for its shape and the import workflow. It is
-imported from the developer machine —
-production is reached through an SSH tunnel to the Dokploy PostgreSQL — with
-`pnpm db:import-references`. Every note display name (2,581) and accord (92,
+`docs/modules/reference-data.md` for its shape and the import workflow. Locally
+it is imported from the developer machine with `pnpm db:import-references`;
+production imports instead run from the VPS in a temporary container attached
+to the Dokploy network — see "Updating the reference dataset in production" in
+`docs/deployment.md`. Every note display name (2,581) and accord (92,
 with a `#RRGGBB` color) is translated in `prisma/reference/notes.es.json` and
 `prisma/reference/accords.es.json`; `pnpm db:check-translations` verifies
 coverage, and the importer refuses to write if any translation is missing.

@@ -173,10 +173,33 @@ The importer runs in two passes:
    exists.
 
 Each batch's transaction uses a 120-second timeout (30-second `maxWait`),
-sized for running the importer from a developer machine against the
-production database through an SSH tunnel (see `docs/deployment.md`), where
-added latency would otherwise blow past Prisma's 5-second default. A full run
-of the current 140,228-record dataset takes roughly 10 minutes locally.
+sized for running the importer against a remote database with added network
+latency — either the temporary container the in-place production procedure
+uses, or a developer machine tunneled to Postgres for the full-reset runbook
+(see "Updating the reference dataset in production" and "Full reset runbook"
+in `docs/deployment.md`) — where that added latency would otherwise blow past
+Prisma's 5-second default. A full run of the current 140,228-record dataset
+takes roughly 10 minutes (597 seconds measured against production).
+
+### Production import
+
+Production imports do not run from a developer machine. `docs/deployment.md`
+("Updating the reference dataset in production") runs the importer from the
+VPS, inside a temporary container attached to the Dokploy overlay network,
+reusing the deployed app's `DATABASE_URL`. Two things that command needs to
+get right:
+
+- `node_modules/.bin/tsx` is a shell shim, not a Node script, so invoking it
+  as `node node_modules/.bin/tsx ...` fails; the container instead runs
+  `node node_modules/tsx/dist/cli.mjs scripts/import-references.ts`.
+- The container image must be glibc-based (e.g. `node:24-bookworm-slim`), not
+  Alpine, because the mounted `node_modules` was installed on the host and
+  includes native binaries (`sharp`) built against glibc.
+
+The v2 release's full run against production reported 140,228 references,
+8,287 brands, 3,083 perfumers, 2,581 notes, 92 accords, and 2 out-of-range
+years — the same shape reported locally, confirming the container run
+imported the same dataset the local workflow above would have.
 
 ## Public vs. panel-only fields
 

@@ -19,6 +19,7 @@ function getReferenceMetadata(reference: ReferenceSearchResult) {
     reference.brandName,
     reference.year ?? null,
     reference.gender ? genderLabels[reference.gender] : null,
+    reference.collection ?? null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -31,7 +32,11 @@ export function ReferenceStep({
   onManualEntry,
   isManual,
 }: {
-  adoptedReference: { id: string; name: string; url: string | null } | null;
+  adoptedReference: {
+    id: string;
+    name: string;
+    referenceUrl: string | null;
+  } | null;
   onAdopt: (reference: AdoptableReference) => void;
   onUnlink: () => void;
   onManualEntry: () => void;
@@ -92,7 +97,7 @@ export function ReferenceStep({
     <Step
       number={1}
       title="Buscar en el catálogo de referencia"
-      description="69.946 fragancias. Al elegir una se precargan notas, acordes, año, perfumista y género."
+      description="Más de 140.000 fragancias. Al elegir una se precargan notas, acordes y perfil."
       actions={
         adoptedReference ? (
           <Button type="button" variant="ghost" size="sm" onClick={onUnlink}>
@@ -112,9 +117,9 @@ export function ReferenceStep({
               lo que haga falta.
             </p>
           </div>
-          {adoptedReference.url ? (
+          {adoptedReference.referenceUrl ? (
             <a
-              href={adoptedReference.url}
+              href={adoptedReference.referenceUrl}
               target="_blank"
               rel="noreferrer noopener"
               className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
@@ -170,16 +175,11 @@ export function ReferenceStep({
                         {getReferenceMetadata(result)}
                       </span>
                     </span>
-                    <span
-                      className={cn(
-                        "shrink-0 text-xs font-semibold",
-                        result.hasPyramid
-                          ? "text-success-foreground"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {result.hasPyramid ? "con pirámide" : "sin notas"}
-                    </span>
+                    {!result.hasNotes ? (
+                      <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                        Sin notas
+                      </span>
+                    ) : null}
                   </button>
                 </li>
               ))}

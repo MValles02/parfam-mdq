@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   DeleteObjectCommand,
   PutObjectCommand,
@@ -108,7 +109,43 @@ export function isProductStorageKey(key: string): boolean {
   );
 }
 
+/**
+ * Builds a fresh product image key, grouped by year/month so the bucket
+ * mirrors upload chronology instead of accumulating one flat directory. Used
+ * both for presigned manual uploads and for the single copy made when an
+ * admin adopts a reference picture, so every product image key follows the
+ * same shape and satisfies `isProductStorageKey`.
+ */
+export function createProductStorageKey(extension: string): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${PRODUCT_STORAGE_PREFIX}${year}/${month}/${randomUUID()}.${extension}`;
+}
+
 export async function deleteR2Object(key: string): Promise<void> {
   const { bucket } = getCredentials();
   await getClient().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+}
+
+/**
+ * Uploads a buffer directly from the server, unlike `getUploadUrl`, which
+ * hands the browser a signed URL for a direct-from-client PUT. This path
+ * exists for bytes the server itself already holds, such as a reference
+ * picture downloaded from Fragrantica.
+ */
+export async function putR2Object(options: {
+  key: string;
+  body: Uint8Array;
+  contentType: string;
+}): Promise<void> {
+  const { bucket } = getCredentials();
+  await getClient().send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: options.key,
+      Body: options.body,
+      ContentType: options.contentType,
+    }),
+  );
 }

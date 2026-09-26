@@ -2,9 +2,7 @@ import type {
   Concentration,
   Gender,
   NotePosition,
-  Occasion,
   ProductStatus,
-  Season,
   VariantKind,
 } from "@/generated/prisma/enums";
 
@@ -40,18 +38,27 @@ export const SHORT_CONCENTRATION_LABELS: Record<Concentration, string> = {
   EXTRAIT: "Extrait",
 };
 
-export const SEASON_LABELS: Record<Season, string> = {
-  SPRING: "Primavera",
-  SUMMER: "Verano",
-  FALL: "Otoño",
-  WINTER: "Invierno",
+/**
+ * Product and FragranceRef no longer store season/daypart as enums: each is a
+ * 0..100 percentage column (`seasonSpring`, `daypartDay`, ...). These keys
+ * name that fixed set of columns for iteration in shared UI and queries.
+ */
+export const SEASON_KEYS = ["spring", "summer", "fall", "winter"] as const;
+export type SeasonKey = (typeof SEASON_KEYS)[number];
+
+export const SEASON_LABELS: Record<SeasonKey, string> = {
+  spring: "Primavera",
+  summer: "Verano",
+  fall: "Otoño",
+  winter: "Invierno",
 };
 
-export const OCCASION_LABELS: Record<Occasion, string> = {
-  DAY: "Día",
-  NIGHT: "Noche",
-  CASUAL: "Casual",
-  FORMAL: "Formal",
+export const DAYPART_KEYS = ["day", "night"] as const;
+export type DaypartKey = (typeof DAYPART_KEYS)[number];
+
+export const DAYPART_LABELS: Record<DaypartKey, string> = {
+  day: "Día",
+  night: "Noche",
 };
 
 export const VARIANT_KIND_LABELS: Record<VariantKind, string> = {
@@ -73,6 +80,23 @@ export const PYRAMID_LEVEL_LABELS: Record<NotePosition, string> = {
 
 /** The three levels in fragrance evaporation order. */
 export const PYRAMID_LEVELS: NotePosition[] = ["TOP", "MIDDLE", "BASE"];
+
+/** Spanish labels for the rounded 1..5 `longevity` characteristic bar. */
+export const LONGEVITY_LABELS: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: "Muy débil",
+  2: "Débil",
+  3: "Moderada",
+  4: "Duradera",
+  5: "Eterna",
+};
+
+/** Spanish labels for the rounded 1..4 `sillage` characteristic bar. */
+export const SILLAGE_LABELS: Record<1 | 2 | 3 | 4, string> = {
+  1: "Íntima",
+  2: "Moderada",
+  3: "Fuerte",
+  4: "Enorme",
+};
 
 /**
  * Variant label as the customer sees it ("Decant 10 ml").

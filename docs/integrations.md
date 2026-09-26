@@ -49,8 +49,13 @@ crossed, so an oversized or `Content-Length`-less response cannot be
 buffered whole). The downloaded bytes are then magic-byte validated the same
 way a manual upload is (`detectImageContentType`, see `src/lib/image-type.ts`)
 — the response's declared `Content-Type` is never trusted for that decision.
-Only on success is the file uploaded to R2 via `putR2Object` under a fresh
-generated key, exactly like a manual image upload.
+Before upload, `trimWhiteMargins` (`src/lib/image-trim.ts`) crops the wide
+white margins fimgs.net leaves around the bottle using `sharp`, adds back a
+small white pad, and re-encodes as JPEG; it falls back to the original,
+already-validated bytes whenever trimming doesn't clearly help, so it can
+never turn a valid download into an upload failure. Only then is the file
+uploaded to R2 via `putR2Object` under a fresh generated key, exactly like a
+manual image upload.
 
 `next.config.ts`'s `images.remotePatterns` is built only from
 `R2_PUBLIC_URL`; fimgs.net is never added to it, because the app never

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
 import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { prisma } from "@/lib/db";
+import { trimWhiteMargins } from "@/lib/image-trim";
 import {
   detectImageContentType,
   EXTENSION_BY_CONTENT_TYPE,
@@ -288,12 +289,19 @@ export async function importReferencePicture(
     return actionFailure(downloaded.message);
   }
 
-  const extension = EXTENSION_BY_CONTENT_TYPE[downloaded.contentType]!;
+  // Fragrantica's photo has wide white margins around the bottle; trim them
+  // before upload so the product carousel shows a tighter crop. This is a
+  // best-effort step (see `trimWhiteMargins` in `src/lib/image-trim.ts`): it
+  // falls back to the original, already-validated bytes and content type
+  // whenever trimming doesn't help, so it can never turn a valid downloaded
+  // photo into an upload failure.
+  const { bytes, contentType } = await trimWhiteMargins(downloaded.bytes);
+  const extension = EXTENSION_BY_CONTENT_TYPE[contentType]!;
   const storageKey = createProductStorageKey(extension);
   await putR2Object({
     key: storageKey,
-    body: downloaded.bytes,
-    contentType: downloaded.contentType,
+    body: bytes,
+    contentType,
   });
 
   return { ok: true, data: { storageKey } };

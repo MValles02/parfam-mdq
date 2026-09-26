@@ -22,8 +22,8 @@ routes remain `/producto/[slug]` and `/marca/[slug]`.
    `precio`, `orden`, and `pagina`.
 5. `getProductBySlug` returns `null` for missing, draft, or unsellable
    products, so the route returns a 404 even for a known draft slug.
-6. Product detail queries use `getRelatedProducts`; brand pages use
-   `getBrandBySlug`.
+6. Product detail queries use `getSimilarProducts` for the "Se parece a"
+   section; brand pages use `getBrandBySlug`.
 
 ## Main files
 

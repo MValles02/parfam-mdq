@@ -23,7 +23,7 @@ The route group name `(store)` does not appear in public URLs.
 | `/admin`                                                              | `admin/(panel)/page.tsx`       | Administrator only.                                 |
 | `/admin/productos`, `/admin/productos/nuevo`, `/admin/productos/[id]` | product pages                  | Administrator only.                                 |
 | `/admin/pedidos`, `/admin/pedidos/[id]`                               | order pages                    | Administrator only.                                 |
-| `/admin/marcas`, `/admin/notas`, `/admin/configuracion`               | supporting panel pages         | Administrator only.                                 |
+| `/admin/marcas`, `/admin/configuracion`                               | supporting panel pages         | Administrator only.                                 |
 
 The proxy and panel layout both protect the panel. Every action has its own
 server authorization check; see [authentication.md](authentication.md).

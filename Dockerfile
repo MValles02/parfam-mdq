@@ -72,8 +72,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # The repository has no public/ directory: src/app/icon.tsx generates the
-# favicon, fonts live in src/assets/, and photos come from R2. Standalone serves
-# public/ if it exists, but runner COPY fails otherwise, so ensure it exists.
+# favicon, fonts and static images live in src/assets/ (images via next/image
+# static imports), and photos come from R2. Standalone serves public/ if it
+# exists, but runner COPY fails otherwise, so ensure it exists.
 RUN mkdir -p public
 
 RUN DATABASE_URL="$DATABASE_URL_BUILD" AUTH_SECRET="$AUTH_SECRET_PLACEHOLDER_BUILD" pnpm build

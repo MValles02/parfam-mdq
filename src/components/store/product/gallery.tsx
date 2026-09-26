@@ -20,7 +20,7 @@ type ProductImageData = { id: string; url: string; alt: string };
 export function Gallery({ images }: { images: ProductImageData[] }) {
   if (images.length === 0) {
     return (
-      <div className="relative aspect-square w-full overflow-hidden rounded border bg-card">
+      <div className="relative isolate aspect-square w-full overflow-hidden rounded bg-background">
         <ProductImage
           image={null}
           sizes="(min-width: 1024px) 620px, 100vw"
@@ -39,7 +39,7 @@ export function Gallery({ images }: { images: ProductImageData[] }) {
         <CarouselContent className="ml-0">
           {images.map((image, index) => (
             <CarouselItem key={image.id} className="pl-0">
-              <div className="relative aspect-square w-full overflow-hidden rounded border bg-card">
+              <div className="relative isolate aspect-square w-full overflow-hidden rounded bg-background">
                 <ProductImage
                   image={image}
                   sizes="(min-width: 1024px) 620px, 100vw"
@@ -77,10 +77,10 @@ function Thumbnails({ images }: { images: ProductImageData[] }) {
             aria-current={isActive}
             onClick={() => api?.scrollTo(index)}
             className={cn(
-              "relative aspect-square overflow-hidden rounded border bg-card transition-colors",
+              "relative isolate aspect-square overflow-hidden rounded border bg-background transition-colors",
               isActive
                 ? "border-foreground ring-1 ring-foreground"
-                : "border-input",
+                : "border-transparent",
               FOCUS_VISIBLE,
             )}
           >

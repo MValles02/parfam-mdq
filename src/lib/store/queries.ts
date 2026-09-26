@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
 import type {
@@ -14,6 +15,10 @@ import {
   formatProperName,
 } from "@/lib/catalog";
 import { PRICE_RANGE_LIMITS, type CatalogFilters } from "@/lib/store/filters";
+import {
+  rankSimilarProducts,
+  type SimilarityCandidate,
+} from "@/lib/store/similarity";
 
 /**
  * Public store queries return only published products and active variants.
@@ -24,6 +29,17 @@ import { PRICE_RANGE_LIMITS, type CatalogFilters } from "@/lib/store/filters";
 const PRODUCTS_PER_PAGE = 12;
 const NEW_RELEASE_YEARS = 3;
 const SPANISH_COLLATOR = new Intl.Collator("es-AR", { sensitivity: "base" });
+
+/**
+ * `Product.communityVotes` (copied at adoption from `FragranceRef`, see
+ * `prisma/schema.prisma`) is an internal number, never sent to the client.
+ * Below this many voters, longevity, sillage, season, and daypart averages
+ * are too noisy to publish, so `getProductBySlug` nulls them instead of
+ * returning the stored value. `communityVotes === null` (a manually created
+ * product with no reference to copy from) always shows its data because
+ * there is no sample size to distrust.
+ */
+const MIN_COMMUNITY_VOTES = 20;
 
 type CardBadge = "NUEVO" | "DECANT" | "TESTER" | null;
 
@@ -317,11 +333,19 @@ export async function getProductBySlug(slug: string) {
       gender: true,
       concentration: true,
       year: true,
-      seasons: true,
-      occasions: true,
+      collection: true,
       longevity: true,
       sillage: true,
       intensity: true,
+      seasonSpring: true,
+      seasonSummer: true,
+      seasonFall: true,
+      seasonWinter: true,
+      daypartDay: true,
+      daypartNight: true,
+      // Read only to decide whether to hide the community fields above;
+      // never included in the return value below.
+      communityVotes: true,
       seoTitle: true,
       seoDescription: true,
       updatedAt: true,
@@ -336,15 +360,27 @@ export async function getProductBySlug(slug: string) {
         select: { id: true, kind: true, sizeMl: true, priceArs: true },
       },
       notes: {
-        orderBy: { sortOrder: "asc" },
+        // Canonical order, shared with `getProductForEdit`
+        // (`src/lib/admin/products.ts`): within each pyramid level, or the
+        // flat list, strongest weight first, then `sortOrder` (written by
+        // `syncRelationships` in `src/app/admin/(panel)/productos/actions.ts`)
+        // as a tiebreak.
+        orderBy: [
+          { position: "asc" },
+          { weight: "desc" },
+          { sortOrder: "asc" },
+        ],
         select: {
           position: true,
+          weight: true,
           note: { select: { slug: true, nameEs: true, nameEn: true } },
         },
       },
+      // Strongest accord first, since customers scan the bars top to bottom.
       accords: {
-        orderBy: { sortOrder: "asc" },
+        orderBy: { strength: "desc" },
         select: {
+          strength: true,
           accord: { select: { slug: true, nameEs: true, color: true } },
         },
       },
@@ -353,7 +389,9 @@ export async function getProductBySlug(slug: string) {
   });
   if (!product) return null;
 
-  const pyramid = PYRAMID_LEVELS.map((level: NotePosition) => ({
+  // Notes with a null position have no top/middle/base tier; they render as
+  // a single flat list instead of being dropped.
+  const tieredLevels = PYRAMID_LEVELS.map((level: NotePosition) => ({
     level,
     notes: product.notes
       .filter((item) => item.position === level)
@@ -363,6 +401,29 @@ export async function getProductBySlug(slug: string) {
       })),
   })).filter((level) => level.notes.length > 0);
 
+  const flatNotes = product.notes
+    .filter((item) => item.position === null)
+    .map((item) => ({
+      slug: item.note.slug,
+      name: capitalize(item.note.nameEs ?? item.note.nameEn),
+    }));
+
+  const pyramid: {
+    level: NotePosition | null;
+    notes: { slug: string; name: string }[];
+  }[] =
+    flatNotes.length > 0
+      ? [...tieredLevels, { level: null, notes: flatNotes }]
+      : tieredLevels;
+
+  // A small community sample is noisier than useful, so the fields it backs
+  // (longevity, sillage, seasons, daypart) are hidden below that threshold. A
+  // manually created product (`communityVotes === null`) has no sample to
+  // distrust and always shows its data.
+  const hasReliableCommunityData =
+    product.communityVotes === null ||
+    product.communityVotes >= MIN_COMMUNITY_VOTES;
+
   return {
     id: product.id,
     slug: product.slug,
@@ -371,11 +432,28 @@ export async function getProductBySlug(slug: string) {
     gender: product.gender,
     concentration: product.concentration,
     year: product.year,
-    seasons: product.seasons,
-    occasions: product.occasions,
-    longevity: product.longevity,
-    sillage: product.sillage,
+    collection: product.collection,
+    longevity:
+      hasReliableCommunityData && product.longevity !== null
+        ? Number(product.longevity)
+        : null,
+    sillage:
+      hasReliableCommunityData && product.sillage !== null
+        ? Number(product.sillage)
+        : null,
+    // Admin-entered assessment, not community data, so it is never hidden by
+    // `hasReliableCommunityData` above.
     intensity: product.intensity,
+    seasons: {
+      spring: hasReliableCommunityData ? product.seasonSpring : null,
+      summer: hasReliableCommunityData ? product.seasonSummer : null,
+      fall: hasReliableCommunityData ? product.seasonFall : null,
+      winter: hasReliableCommunityData ? product.seasonWinter : null,
+    },
+    dayparts: {
+      day: hasReliableCommunityData ? product.daypartDay : null,
+      night: hasReliableCommunityData ? product.daypartNight : null,
+    },
     seoTitle: product.seoTitle,
     seoDescription: product.seoDescription,
     updatedAt: product.updatedAt,
@@ -400,10 +478,12 @@ export async function getProductBySlug(slug: string) {
       label: getVariantLabel(variant.kind, variant.sizeMl),
       price: variant.priceArs.toString(),
     })),
+    // Ordered strongest first by the `accords` query above.
     accords: product.accords.map((item) => ({
       slug: item.accord.slug,
       name: capitalize(item.accord.nameEs),
       color: item.accord.color,
+      strength: item.strength,
     })),
     pyramid,
   };
@@ -413,48 +493,113 @@ export type PublicProduct = NonNullable<
   Awaited<ReturnType<typeof getProductBySlug>>
 >;
 
-/** Lists related cards, preferring same-brand products before shared accords. */
-export async function getRelatedProducts(product: {
-  id: string;
-  brandSlug: string;
-  accords: { slug: string }[];
-}): Promise<ProductCardData[]> {
-  const baseWhere: Prisma.ProductWhereInput = {
-    status: ProductStatus.PUBLISHED,
-    id: { not: product.id },
-    variants: { some: { isActive: true } },
-  };
-  const relatedLimit = 4;
+/**
+ * Store actions invalidate this tag whenever a product's accords, notes,
+ * profile, collection, or perfumers change, since the precomputed ranking
+ * below covers every published product at once (see `revalidateStore` in
+ * `src/app/admin/(panel)/productos/actions.ts`).
+ */
+export const TAG_SIMILAR_PRODUCTS = "similar-products";
 
-  const sameBrand = await prisma.product.findMany({
-    where: { ...baseWhere, brand: { slug: product.brandSlug } },
-    select: CARD_SELECT,
-    take: relatedLimit,
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+/**
+ * Loads every eligible product (published, at least one active variant) with
+ * the relations `src/lib/store/similarity.ts` scores on, and ranks them
+ * against each other. This is the expensive, uncached step: it is only ever
+ * called through the `unstable_cache` wrapper below.
+ */
+async function computeSimilarProductIds(): Promise<Record<string, string[]>> {
+  const products = await prisma.product.findMany({
+    where: {
+      status: ProductStatus.PUBLISHED,
+      variants: { some: { isActive: true } },
+    },
+    select: {
+      id: true,
+      gender: true,
+      collection: true,
+      isFeatured: true,
+      createdAt: true,
+      seasonSpring: true,
+      seasonSummer: true,
+      seasonFall: true,
+      seasonWinter: true,
+      daypartDay: true,
+      daypartNight: true,
+      accords: { select: { accordId: true, strength: true } },
+      notes: { select: { weight: true, note: { select: { family: true } } } },
+      perfumers: { select: { perfumerId: true } },
+    },
   });
 
-  const remaining = relatedLimit - sameBrand.length;
-  const sharedAccords =
-    remaining > 0 && product.accords.length > 0
-      ? await prisma.product.findMany({
-          where: {
-            ...baseWhere,
-            id: { notIn: [product.id, ...sameBrand.map((item) => item.id)] },
-            accords: {
-              some: {
-                accord: {
-                  slug: { in: product.accords.map((accord) => accord.slug) },
-                },
-              },
-            },
-          },
-          select: CARD_SELECT,
-          take: remaining,
-          orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-        })
-      : [];
+  const candidates: SimilarityCandidate[] = products.map((product) => ({
+    id: product.id,
+    gender: product.gender,
+    accords: product.accords.map((accord) => ({
+      accordId: accord.accordId,
+      strength: accord.strength,
+    })),
+    notes: product.notes.map((note) => ({
+      family: note.note.family,
+      weight: note.weight,
+    })),
+    profile: {
+      seasonSpring: product.seasonSpring,
+      seasonSummer: product.seasonSummer,
+      seasonFall: product.seasonFall,
+      seasonWinter: product.seasonWinter,
+      daypartDay: product.daypartDay,
+      daypartNight: product.daypartNight,
+    },
+    collection: product.collection,
+    perfumerIds: product.perfumers.map((perfumer) => perfumer.perfumerId),
+    isFeatured: product.isFeatured,
+    createdAt: product.createdAt.getTime(),
+  }));
 
-  return [...sameBrand, ...sharedAccords].map(toProductCard);
+  return rankSimilarProducts(candidates);
+}
+
+const cachedSimilarProductIds = unstable_cache(
+  computeSimilarProductIds,
+  ["similar-products"],
+  { tags: [TAG_SIMILAR_PRODUCTS] },
+);
+
+/** Top 20 similar product IDs per product ID, ranked by `scoreSimilarity`. */
+export async function getSimilarProductIds(): Promise<
+  Record<string, string[]>
+> {
+  return cachedSimilarProductIds();
+}
+
+/**
+ * Fetches the "Se parece a" cards for one product, live (not through the
+ * cached ranking, which only stores IDs). The PUBLISHED/active-variant filter
+ * is re-applied here so a product that became a draft or lost its last active
+ * variant after the ranking was cached cannot still appear as a card.
+ */
+export async function getSimilarProducts(
+  productId: string,
+): Promise<ProductCardData[]> {
+  const similarIds = (await getSimilarProductIds())[productId] ?? [];
+  if (similarIds.length === 0) return [];
+
+  const products = await prisma.product.findMany({
+    where: {
+      id: { in: similarIds },
+      status: ProductStatus.PUBLISHED,
+      variants: { some: { isActive: true } },
+    },
+    select: CARD_SELECT,
+  });
+
+  const productsById = new Map(
+    products.map((product) => [product.id, product]),
+  );
+  return similarIds
+    .map((id) => productsById.get(id))
+    .filter((product): product is (typeof products)[number] => Boolean(product))
+    .map(toProductCard);
 }
 
 /** Returns a public brand header, or null when it has no published products. */

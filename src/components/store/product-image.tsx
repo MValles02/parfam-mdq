@@ -4,22 +4,28 @@ import { cn } from "@/lib/utils";
 
 /**
  * An R2-served product photo with a bottle silhouette fallback when no photo
- * is uploaded. Fragrantica images are never used because they are internal
- * panel references.
+ * is uploaded. Photos are either a manual admin upload or a single copy of
+ * the adopted Fragrantica reference picture made at adoption time; the
+ * Fragrantica dataset itself stays internal panel reference material and is
+ * never served to the store.
  *
- * It intentionally uses `object-contain` instead of `cover`: the bottle
- * photos are cropped against a cream background, and further cropping would
- * remove their caps.
+ * `fit="contain"` is the default: it preserves the full bottle, caps
+ * included, against the cream padding used by the detail gallery and
+ * thumbnails. Catalog cards pass `fit="cover"` so a 3:4 portrait photo fills
+ * its aspect-ratio box edge to edge instead of shrinking to a small centered
+ * rectangle.
  */
 export function ProductImage({
   image,
   sizes,
   priority = false,
+  fit = "contain",
   className,
 }: {
   image: { url: string; alt: string } | null;
   sizes: string;
   priority?: boolean;
+  fit?: "contain" | "cover";
   className?: string;
 }) {
   if (!image) {
@@ -37,7 +43,10 @@ export function ProductImage({
       fill
       sizes={sizes}
       priority={priority}
-      className={cn("object-contain p-4", className)}
+      className={cn(
+        fit === "cover" ? "object-cover" : "object-contain p-4",
+        className,
+      )}
     />
   );
 }

@@ -1,33 +1,21 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import type {
-  Concentration,
-  Gender,
-  Occasion,
-  Season,
-} from "@/generated/prisma/enums";
-import {
-  CONCENTRATION_LABELS,
-  SEASON_LABELS,
-  GENDER_LABELS,
-  OCCASION_LABELS,
-} from "@/lib/catalog";
+import type { Concentration, Gender } from "@/generated/prisma/enums";
+import { CONCENTRATION_LABELS, GENDER_LABELS } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
 type ProductDetails = {
   brandName: string;
   brandSlug: string;
+  collection: string | null;
   perfumers: string[];
   year: number | null;
   concentration: Concentration | null;
   gender: Gender | null;
-  seasons: Season[];
-  occasions: Occasion[];
 };
 
 /**
- * Omits missing data rows because products may not have perfumers, years, or
- * seasons.
+ * Omits missing data rows because products may not have perfumers or years.
  */
 export function TechnicalDetails(product: ProductDetails) {
   const rows: { label: string; value: ReactNode }[] = [
@@ -42,12 +30,18 @@ export function TechnicalDetails(product: ProductDetails) {
         </Link>
       ),
     },
+    ...(product.collection
+      ? [{ label: "Línea", value: product.collection }]
+      : []),
     ...(product.perfumers.length > 0
-      ? [{ label: "Perfumista", value: product.perfumers.join(", ") }]
+      ? [
+          {
+            label: product.perfumers.length > 1 ? "Perfumistas" : "Perfumista",
+            value: product.perfumers.join(", "),
+          },
+        ]
       : []),
-    ...(product.year
-      ? [{ label: "Año de lanzamiento", value: String(product.year) }]
-      : []),
+    ...(product.year ? [{ label: "Año", value: String(product.year) }] : []),
     ...(product.concentration
       ? [
           {
@@ -58,26 +52,6 @@ export function TechnicalDetails(product: ProductDetails) {
       : []),
     ...(product.gender
       ? [{ label: "Género", value: GENDER_LABELS[product.gender] }]
-      : []),
-    ...(product.seasons.length > 0
-      ? [
-          {
-            label: "Estaciones",
-            value: product.seasons
-              .map((season) => SEASON_LABELS[season])
-              .join(", "),
-          },
-        ]
-      : []),
-    ...(product.occasions.length > 0
-      ? [
-          {
-            label: "Ocasiones",
-            value: product.occasions
-              .map((occasion) => OCCASION_LABELS[occasion])
-              .join(", "),
-          },
-        ]
       : []),
   ];
 

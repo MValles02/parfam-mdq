@@ -9,8 +9,7 @@ import {
   productJsonLd,
   serializeJsonLd,
 } from "@/lib/seo";
-import { getProductBySlug, getRelatedProducts } from "@/lib/store/queries";
-import { AccordChip } from "@/components/store/accord-chip";
+import { getProductBySlug, getSimilarProducts } from "@/lib/store/queries";
 import { ProductCard } from "@/components/store/product-card";
 import { Separator } from "@/components/ui/separator";
 import { Gallery } from "@/components/store/product/gallery";
@@ -18,6 +17,9 @@ import { Purchase } from "@/components/store/product/purchase";
 import { Pyramid } from "@/components/store/product/pyramid";
 import { TechnicalDetails } from "@/components/store/product/technical-details";
 import { CharacteristicBars } from "@/components/store/product/characteristic-bars";
+import { AccordBars } from "@/components/store/product/accord-bars";
+import { VoteProfile } from "@/components/store/product/vote-profile";
+import { SimilarProducts } from "@/components/store/product/similar-products";
 
 /**
  * Product detail queries return null for drafts, so notFound safely rejects a
@@ -56,11 +58,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
   ]);
   if (!product) notFound();
 
-  const relatedProducts = await getRelatedProducts({
-    id: product.id,
-    brandSlug: product.brandSlug,
-    accords: product.accords,
-  });
+  const similarProducts = await getSimilarProducts(product.id);
 
   const metadataLine = [
     product.concentration ? CONCENTRATION_LABELS[product.concentration] : null,
@@ -134,17 +132,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
               </p>
             ) : null}
 
-            {product.accords.length > 0 ? (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {product.accords.map((accord) => (
-                  <AccordChip
-                    key={accord.slug}
-                    name={accord.name}
-                    color={accord.color}
-                  />
-                ))}
-              </div>
-            ) : null}
+            <AccordBars accords={product.accords} />
 
             {product.description ? (
               <p className="mt-6 max-w-prose text-base leading-relaxed">
@@ -191,12 +179,11 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
           <TechnicalDetails
             brandName={product.brandName}
             brandSlug={product.brandSlug}
+            collection={product.collection}
             perfumers={product.perfumers}
             year={product.year}
             concentration={product.concentration}
             gender={product.gender}
-            seasons={product.seasons}
-            occasions={product.occasions}
           />
           <CharacteristicBars
             longevity={product.longevity}
@@ -205,19 +192,21 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
           />
         </section>
 
-        {relatedProducts.length > 0 ? (
+        <VoteProfile seasons={product.seasons} dayparts={product.dayparts} />
+
+        {similarProducts.length > 0 ? (
           <section className="border-t py-11">
             <h2 className="text-[32px] font-extrabold tracking-[-0.025em]">
-              Te puede gustar
+              Se parece a
             </h2>
-            <div className="mt-7 grid grid-cols-2 gap-5 lg:grid-cols-4 lg:gap-7">
-              {relatedProducts.map((relatedProduct) => (
+            <SimilarProducts>
+              {similarProducts.map((similarProduct) => (
                 <ProductCard
-                  key={relatedProduct.slug}
-                  product={relatedProduct}
+                  key={similarProduct.slug}
+                  product={similarProduct}
                 />
               ))}
-            </div>
+            </SimilarProducts>
           </section>
         ) : null}
       </div>

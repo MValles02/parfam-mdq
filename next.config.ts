@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
       hostname,
       pathname: "/**",
     })),
+    formats: ["image/avif", "image/webp"],
   },
 };
 

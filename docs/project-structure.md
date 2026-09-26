@@ -22,12 +22,10 @@ src/
 prisma/
   schema.prisma              data model
   migrations/                immutable migration history
+  reference/                 note and accord translation dictionaries
 scripts/
-  import-fragrantica.ts      reference importer
-  seed-dev.ts                development catalog seed
-data/
-  fragrantica/               reference CSV input
-  dictionaries/              Spanish translation dictionaries
+  import-references.ts       reference importer
+  check-reference-translations.ts  translation coverage report
 docs/                         technical documentation
 ```
 

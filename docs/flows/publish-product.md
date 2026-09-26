@@ -14,7 +14,11 @@ The panel uses the preserved routes `/admin/productos/nuevo` and
 ## Flow
 
 1. The administrator can search reference fragrances with
-   `searchReferencesAction` and import one through `adoptReferenceAction`.
+   `searchReferencesAction` and import one through `adoptReferenceAction`,
+   which prefills the "Perfil" section (note/accord weights, longevity,
+   sillage, season/daypart percentages), collection, and perfumers; the
+   administrator can then also copy the reference's bottle photo into R2
+   with `importReferencePicture`, which disables saving until it finishes.
 2. `ProductForm` validates `productSchema` on the client, but
    `saveProduct` validates the same schema at the server boundary.
 3. The form accepts details, notes, accords, perfumers, characteristics, images,

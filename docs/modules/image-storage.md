@@ -18,3 +18,9 @@ key, never a public URL. Signed uploads whitelist JPEG, PNG, WebP, and AVIF and
 enforce the 8 MB limit. Any browser-supplied deletion key must pass
 `isProductStorageKey`. Orphan cleanup is best effort because a committed
 database change must not be rolled back after an object-delete failure.
+
+`importReferencePicture` (also in `image-actions.ts`) is a separate path: it
+fetches one reference fragrance's bottle photo server-side and copies it into
+R2, rather than accepting a browser-presigned upload. It only runs when the
+administrator explicitly asks for it after adoption, never automatically, and
+never hotlinks the third-party host (see `docs/integrations.md`).

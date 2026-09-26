@@ -45,9 +45,10 @@ thank-you page with the generated WhatsApp link.
 ## Admin updates and invalidation
 
 Product actions revalidate the store root, catalog, relevant product and brand
-pages, and the sitemap tag. Brand and note actions invalidate affected product
-routes. Settings actions invalidate the site-settings tag. The sitemap is
-dynamic but caches its database result with a tagged `unstable_cache`.
+pages, the sitemap tag, and the "Se parece a" similar-products tag. Brand
+actions invalidate affected product routes. Settings actions invalidate the
+site-settings tag. The sitemap and similar-products ranking are both dynamic
+but cache their database result with a tagged `unstable_cache`.
 
 Use `revalidatePath` for rendered routes and `revalidateTag` for tagged data
 cache entries. A modification that changes public data must invalidate every

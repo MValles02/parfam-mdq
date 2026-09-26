@@ -5,16 +5,42 @@ Prisma schema source: `prisma/schema.prisma`. PostgreSQL is accessed through
 
 ## Main models
 
-| Model                                       | Purpose                                                            |
-| ------------------------------------------- | ------------------------------------------------------------------ |
-| `User`                                      | Administrator credentials.                                         |
-| `SiteSetting`                               | Singleton store identity, contact, and WhatsApp template.          |
-| `Brand`, `Note`, `Accord`, `Perfumer`       | Product vocabulary and translations.                               |
-| `FragranceRef` and related reference models | Private Fragrantica import data.                                   |
-| `Product`                                   | Store product with publication status and optional reference link. |
-| `ProductVariant`                            | Sellable bottle, tester, or decant and its ARS price.              |
-| `ProductImage`                              | R2 storage key and display order.                                  |
-| `Order`, `OrderItem`                        | Checkout record and immutable commercial snapshot.                 |
+| Model                                       | Purpose                                                                                                                                        |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `User`                                      | Administrator credentials.                                                                                                                     |
+| `SiteSetting`                               | Singleton store identity, contact, and WhatsApp template.                                                                                      |
+| `Brand`, `Perfumer`                         | Shared product vocabulary.                                                                                                                     |
+| `Note`                                      | Olfactory note; `family` groups display names under the dataset's family slug, `nameEs` is required.                                           |
+| `Accord`                                    | Olfactory accord; `nameEs` and `color` come from `prisma/reference/accords.es.json`.                                                           |
+| `FragranceRef` and related reference models | Read-only reference catalog imported from a third-party dataset; panel-only, never queried by the store. See `docs/modules/reference-data.md`. |
+| `Product`                                   | Store product with publication status and optional reference link.                                                                             |
+| `ProductVariant`                            | Sellable bottle, tester, or decant and its ARS price.                                                                                          |
+| `ProductImage`                              | R2 storage key and display order.                                                                                                              |
+| `Order`, `OrderItem`                        | Checkout record and immutable commercial snapshot.                                                                                             |
+
+## Reference catalog fields
+
+`FragranceRef` (unique on `pid`, the dataset record id; `slug` is the
+dataset's own "Brand/Name" slug and is **not** unique) carries: `year`,
+`gender`, `collection`, `descriptionEn` (panel-only), `longevity` and
+`sillage` (`Decimal(3,2)`, `null` when nobody has voted),
+`seasonSpringVotes`/`seasonSummerVotes`/`seasonFallVotes`/`seasonWinterVotes`
+and `daypartDayVotes`/`daypartNightVotes` (each group `null` together when
+unset), `communityVotes` and `popularity` (both internal-only), `scrapedAt`,
+and the denormalized `searchText` used by admin search. `FragranceRefNote`
+adds `position` (nullable, for a flat note list) and `weight` (0..100) on top
+of the note relation; `FragranceRefAccord` adds `strength` (0..100) and
+`sortOrder` on top of the accord relation.
+
+`Product` mirrors the fields an administrator can copy from an adopted
+reference: `collection`, `longevity`/`sillage` (`Decimal(3,2)`),
+`seasonSpring`/`seasonSummer`/`seasonFall`/`seasonWinter` and
+`daypartDay`/`daypartNight` (0..100 percentages, not vote counts), and
+`communityVotes` (copied server-side at save time, never client-submitted).
+`ProductNote` and `ProductAccord` likewise carry `weight` and `strength`.
+The former `Occasion` and `Season` enums and the `Product.occasions`/
+`Product.seasons` columns they backed are gone; season data is now the
+percentage columns above.
 
 ## Price and order invariants
 
@@ -42,9 +68,27 @@ The migration history starts with `20260921225316_initial_schema`. This single
 English baseline creates the current Prisma models and the PostgreSQL objects
 that Prisma cannot express: the `pg_trgm` and `unaccent` extensions,
 `parfam_normalize`, specialized search indexes, and `Order_number_seq`.
-It applies only to a fresh database. Once applied, treat it as a historical
-artifact: never edit it, including its comments. Create a new migration for
-later schema changes.
+It applies only to a fresh database.
+
+`20260925201541_reference_dataset_v2` replaced the reference catalog's
+importer and dropped columns the previous importer produced that the current
+dataset either lacks or scopes differently: `FragranceRef.url`, a
+pyramid-presence flag, an origin-country column, a rating average and its
+vote count, and `FragranceRefAccord`'s old rank column — plus the
+`Occasion`/`Season` enums (with `Product.occasions`/`.seasons`). It added
+`FragranceRef.slug` (required,
+not unique), the vote-count and popularity columns described above,
+`FragranceRefAccord.strength`/`.sortOrder`, `FragranceRefNote.weight`,
+`Note.family` (required), and made `Note.nameEs` required. It also dropped
+`Note_untranslated_idx` — a partial index over untranslated notes that has
+nothing left to match now that `nameEs` is required — and added
+`Note_family_idx` to back the store's note-family filter. The
+`FragranceRef_search_trgm_idx` and `Brand_name_trgm_idx` GIN trigram indexes
+from the initial migration are unaffected and still back admin search (see
+`docs/modules/reference-data.md`).
+
+Once applied, treat every migration as a historical artifact: never edit it,
+including its comments. Create a new migration for later schema changes.
 
 For the disposable local database, `pnpm db:down` alone retains the Docker
 volume and therefore retains the old tables. Recreate it before applying this
@@ -57,6 +101,6 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-`prisma/seed.ts` creates the administrator and singleton settings row.
-`scripts/seed-dev.ts` provides development data and requires configured R2
-access.
+`prisma/seed.ts` creates the administrator and singleton settings row. Example
+products are created by adopting reference catalog entries from the panel
+(see `docs/modules/reference-data.md`), not by a seed script.

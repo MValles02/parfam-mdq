@@ -16,17 +16,17 @@ These Spanish terms are customer or domain terminology; internal models and impl
 
 ## Data model
 
-| Model                  | Responsibility                                       |
-| ---------------------- | ---------------------------------------------------- |
-| FragranceRef           | Internal imported reference fragrance; never public. |
-| Brand                  | Shared brand for references and store products.      |
-| Note, Accord, Perfumer | Shared controlled vocabularies.                      |
-| Product                | Administrator-authored sellable product.             |
-| ProductVariant         | Sellable presentation and ARS price.                 |
-| ProductImage           | R2 storage key plus display metadata.                |
-| Order, OrderItem       | Immutable checkout order and item snapshots.         |
-| SiteSetting            | Singleton editable site configuration.               |
-| User                   | The single administrator account.                    |
+| Model                  | Responsibility                                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| FragranceRef           | Internal imported reference fragrance, never public directly; its picture can be copied into a `Product`'s R2 images on adoption. |
+| Brand                  | Shared brand for references and store products.                                                                                   |
+| Note, Accord, Perfumer | Shared controlled vocabularies.                                                                                                   |
+| Product                | Administrator-authored sellable product.                                                                                          |
+| ProductVariant         | Sellable presentation and ARS price.                                                                                              |
+| ProductImage           | R2 storage key plus display metadata.                                                                                             |
+| Order, OrderItem       | Immutable checkout order and item snapshots.                                                                                      |
+| SiteSetting            | Singleton editable site configuration.                                                                                            |
+| User                   | The single administrator account.                                                                                                 |
 
 ## Naming and compatibility
 

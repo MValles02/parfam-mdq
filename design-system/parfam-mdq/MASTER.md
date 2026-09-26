@@ -94,7 +94,7 @@ The source comment explains why the design does not use mockup green `#1DA851`: 
 
 ### Color that deliberately is not a token
 
-`src/components/store/accord-chip.tsx` and `src/lib/color.ts` use the database value `Accord.color` from `data/dictionaries/accords.es.json`. Accord color is domain data, not theme choice, so it is inline. `getChipColor()` selects `#14120F` or `#F2EEE9` based on the stronger contrast and, when neither meets 4.5:1, shifts the background toward the opposite extreme in 2% increments. The current dictionary needs at most 8%. The colored dot in the olfactory family filter uses the same justified inline treatment.
+`src/components/store/product/accord-bars.tsx` and `src/lib/color.ts` use the database value `Accord.color` from `prisma/reference/accords.es.json`. Accord color is domain data, not theme choice, so it is inline. `getChipColor()` selects `#14120F` or `#F2EEE9` based on the stronger contrast and, when neither meets 4.5:1, shifts the background toward the opposite extreme in 2% increments. The current dictionary needs at most 8%. `AccordBars` only reads the returned `background` half for each bar's fill; it never paints the paired foreground as text on top of it, so that 4.5:1 guarantee is not exercised by the bar itself — the accord name and percentage render as ordinary text outside the colored fill. The colored dot in the olfactory family filter uses the same justified inline treatment.
 
 ## A.3 Typography
 
@@ -193,9 +193,9 @@ Hover changes the border, never shadow or scale. The heading level is a `heading
 
 `<button aria-pressed>` has active `border-primary bg-primary text-primary-foreground` and inactive `border-input bg-background hover:bg-muted` styles. `compact` changes the standard `h-[46px]` height to `h-9` in desktop controls.
 
-### Accord chip, cart badge, and filter containers
+### Accord bars, cart badge, and filter containers
 
-`accord-chip.tsx` uses `rounded-sm px-3 py-1.5 text-xs font-semibold` and inline color from `getChipColor()`. `CartBadge` has `chip` (desktop bar) and `button` (46 px square) variants; it is informational and the header owns the Sheet trigger.
+`accord-bars.tsx` stacks one `flex flex-col gap-1.5` row per accord inside a `flex flex-col gap-3` list: a `flex items-baseline justify-between` header pairs a `text-sm font-semibold` name with a `text-xs text-muted-foreground` percentage, above a `h-2 w-full overflow-hidden rounded-sm bg-border` track. Inside that track, a `h-full rounded-sm` fill gets an inline `width` equal to the accord's strength percentage and an inline `backgroundColor` from `getChipColor()`'s `background` value. The track carries `role="img"` and an `aria-label` stating the strength out of 100, since the fill's width and color are not otherwise exposed to assistive technology. `CartBadge` has `chip` (desktop bar) and `button` (46 px square) variants; it is informational and the header owns the Sheet trigger.
 
 The same `FilterControls` render on desktop and mobile. Only their containers differ: `filter-panel.tsx` uses a bordered box; `filter-drawer.tsx` uses a bottom `Sheet`, `rounded-t-xl`, and `max-h-[88vh]`. `useQueryStates` keeps state in the URL. The mobile trigger displays “Filtrar · N” and uses active chip styling when `N > 0`.
 
@@ -254,7 +254,7 @@ The site **does not charge**. The design expresses this through four choices.
 
 ## A.12 Existing accessibility
 
-- `getChipColor()` guarantees 4.5:1 accord-chip contrast with background correction.
+- `getChipColor()` guarantees 4.5:1 contrast between an accord color and its paired ink/cream foreground, with background correction toward the opposite endpoint when needed. `accord-bars.tsx` only takes the background half as a bar fill and never renders that foreground as text on top of it, so the guarantee is not exercised for the bars' own accessibility; the accord name and percentage are ordinary text outside the fill, and the fill's meaning is instead conveyed by the track's `role="img"` `aria-label`.
 - WhatsApp CTA contrast is calculated and documented in `globals.css:78-88`.
 - `headingLevel` on product cards, grids, and catalog sections preserves a valid heading outline.
 - `SheetTitle` is `sr-only` where the visual design has no heading.

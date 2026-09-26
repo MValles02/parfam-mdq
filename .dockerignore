@@ -18,10 +18,8 @@ test-results
 .env.*
 !.env.example
 
-# 38 MB de CSV de referencia. La importacion de las 69.946 fragancias corre
-# UNA vez contra la base de produccion desde un clon del repo en la VPS, no
-# desde el contenedor.
-data
+# Reference dataset: imported from a developer machine, never from the container.
+/new-database/
 
 # Material de trabajo que no participa del build.
 design

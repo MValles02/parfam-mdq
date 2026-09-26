@@ -9,10 +9,10 @@ export type ReferenceSearchResult = {
   brandName: string;
   year: number | null;
   gender: Gender | null;
-  hasPyramid: boolean;
+  collection: string | null;
+  hasNotes: boolean;
   /** Internal only: used for sorting and context in the admin panel. */
-  ratingValue: number | null;
-  ratingCount: number | null;
+  popularity: number | null;
 };
 
 /** Escapes LIKE wildcards so administrator input cannot broaden matching. The
@@ -26,8 +26,9 @@ function escapeLikePattern(term: string) {
 }
 
 /** A trigram index cannot resolve patterns shorter than three characters. They
- * fall back to a sequential scan of 70k rows: 244 ms for "le" versus 9 ms
- * for "noir". */
+ * fall back to a sequential scan of the ~140k-row reference catalog, which is
+ * markedly slower for a short term like "le" than for a longer one like
+ * "noir". */
 const MIN_INDEXABLE_LENGTH = 3;
 
 /** Splits the query into terms that must each occur in the search text. Terms
@@ -47,24 +48,30 @@ const RESULT_LIMIT = 12;
 /** Candidates reranked by relevance before limiting the response. */
 const CANDIDATE_LIMIT = 60;
 
-/** Raw ratings overvalue small samples, so results use the IMDb Top 250 style
- * Bayesian average: `(v * R + m * C) / (v + m)`. The 150 prior votes fall
- * between the 75th and 90th rating-count percentiles of the imported data. */
-const PRIOR_VOTES = 150;
-const AVERAGE_RATING = 3.977;
-
 /** Popularity alone cannot rank exact matches reliably. `pg_trgm` similarity
  * supplies the relevance signal. The score weights similarity and popularity
- * 75/25 after normalizing the Bayesian rating from [3, 5] to [0, 1]. */
+ * 75/25. */
 const SIMILARITY_WEIGHT = 0.75;
 const POPULARITY_WEIGHT = 0.25;
 
 /**
- * Fuzzy search across approximately 70k reference fragrances.
+ * `FragranceRef.popularity` is the dataset's raw `popularity.magnitude` and
+ * is effectively unbounded, so it is compressed with `ln(1 + popularity)`
+ * before mixing it with similarity (which is already 0..1). This ceiling is
+ * the popularity value that maps to a compressed score of 1. The imported
+ * catalog's observed maximum is about 144,000, so this ceiling sits well
+ * above it and no candidate saturates the scale.
+ */
+const POPULARITY_CEILING = 200_000;
+const POPULARITY_CEILING_LN = Math.log(1 + POPULARITY_CEILING);
+
+/**
+ * Fuzzy search across the ~140k-row reference catalog.
  *
  * It uses the persisted `parfam_normalize` function (unaccent + lower) with
- * the GIN trigram index on the denormalized `searchText` column. Bayesian
- * ranking is the best available proxy for the administrator's intended entry.
+ * the GIN trigram index on the denormalized `searchText` column. Candidates
+ * are first narrowed by popularity so `similarity()` only runs against a
+ * manageable set, then reranked by a similarity/popularity blend.
  */
 export async function searchReferences(
   query: string,
@@ -92,28 +99,24 @@ export async function searchReferences(
       brandName: string;
       year: number | null;
       gender: Gender | null;
-      hasPyramid: boolean;
-      ratingValue: Prisma.Decimal | null;
-      ratingCount: number | null;
+      collection: string | null;
+      popularity: number | null;
+      hasNotes: boolean;
     }[]
   >`
-    WITH bayes AS (
+    WITH candidates AS (
       SELECT f."id",
              f."name",
              f."year",
              f."gender",
-             f."hasPyramid",
-             f."ratingValue",
-             f."ratingCount",
+             f."collection",
+             f."popularity",
              f."brandId",
-             parfam_normalize(f."searchText") AS "normalizedSearchText",
-             (COALESCE(f."ratingCount", 0) * COALESCE(f."ratingValue", ${AVERAGE_RATING}::numeric)
-              + ${PRIOR_VOTES}::numeric * ${AVERAGE_RATING}::numeric)
-             / (COALESCE(f."ratingCount", 0) + ${PRIOR_VOTES}::numeric) AS "popularityScore"
+             parfam_normalize(f."searchText") AS "normalizedSearchText"
         FROM "FragranceRef" f
        WHERE ${conditions}
        -- Limit candidates before similarity() runs against a broad query.
-       ORDER BY "popularityScore" DESC
+       ORDER BY f."popularity" DESC NULLS LAST
        LIMIT ${CANDIDATE_LIMIT}
     )
     SELECT c."id",
@@ -121,54 +124,99 @@ export async function searchReferences(
            b."name" AS "brandName",
            c."year",
            c."gender",
-           c."hasPyramid",
-           c."ratingValue",
-           c."ratingCount"
-      FROM bayes c
+           c."collection",
+           c."popularity",
+           EXISTS (
+             SELECT 1 FROM "FragranceRefNote" n
+              WHERE n."fragranceRefId" = c."id"
+           ) AS "hasNotes"
+      FROM candidates c
       JOIN "Brand" b ON b."id" = c."brandId"
      ORDER BY similarity(c."normalizedSearchText", ${fullQuery}) * ${SIMILARITY_WEIGHT}
-              + (c."popularityScore" - 3) / 2 * ${POPULARITY_WEIGHT} DESC,
-              c."ratingCount" DESC NULLS LAST,
+              + LEAST(1, ln((1 + COALESCE(c."popularity", 0))::numeric) / ${POPULARITY_CEILING_LN}::numeric) * ${POPULARITY_WEIGHT} DESC,
+              c."popularity" DESC NULLS LAST,
               c."name" ASC
      LIMIT ${RESULT_LIMIT}
   `;
 
-  return rows.map((row) => ({
-    ...row,
-    ratingValue: row.ratingValue === null ? null : Number(row.ratingValue),
-  }));
+  return rows;
 }
 
 /**
- * Gets the reference fields used to prepopulate the adoption form. Notes use
- * Spanish translations with English fallbacks, and accords include chip colors.
+ * Converts a group of vote counts (e.g. the four season tallies) into
+ * rounded integer percentages that sum to 100, using the largest-remainder
+ * method so rounding each entry independently cannot drift the total away
+ * from 100. Returns an array of nulls when the whole group is unset: either
+ * every count is null, or they are all zero.
+ */
+export function toPercentages(votes: (number | null)[]): (number | null)[] {
+  const total = votes.reduce((sum: number, v) => sum + (v ?? 0), 0);
+  if (total === 0) return votes.map(() => null);
+
+  const shares = votes.map((v) => ((v ?? 0) / total) * 100);
+  const floors = shares.map(Math.floor);
+  const remainder = 100 - floors.reduce((sum, v) => sum + v, 0);
+
+  // Distribute the leftover percentage points to the entries whose
+  // fractional part was closest to rounding up.
+  const byFraction = shares
+    .map((share, index) => ({ index, fraction: share - Math.floor(share) }))
+    .sort((a, b) => b.fraction - a.fraction);
+
+  const result = [...floors];
+  for (let i = 0; i < remainder; i++) {
+    result[byFraction[i].index] += 1;
+  }
+  return result;
+}
+
+/**
+ * Gets the reference fields used to prepopulate the adoption form. Notes and
+ * accords use the required Spanish translation, and accords include chip
+ * colors.
  */
 export async function getReferenceForAdoption(id: string) {
   const reference = await prisma.fragranceRef.findUnique({
     where: { id },
     select: {
       id: true,
+      pid: true,
+      slug: true,
       name: true,
       year: true,
       gender: true,
-      url: true,
+      collection: true,
+      longevity: true,
+      sillage: true,
+      seasonSpringVotes: true,
+      seasonSummerVotes: true,
+      seasonFallVotes: true,
+      seasonWinterVotes: true,
+      daypartDayVotes: true,
+      daypartNightVotes: true,
+      communityVotes: true,
       descriptionEn: true,
       brand: { select: { id: true, name: true } },
       notes: {
-        orderBy: { sortOrder: "asc" },
+        // Postgres sorts a native enum by declaration order (TOP, MIDDLE,
+        // BASE) and, ascending, puts NULLs last by default, so this single
+        // `asc` clause yields TOP, MIDDLE, BASE, then the flat (null) notes.
+        orderBy: [
+          { position: "asc" },
+          { weight: "desc" },
+          { sortOrder: "asc" },
+        ],
         select: {
           position: true,
-          sortOrder: true,
-          note: { select: { id: true, nameEn: true, nameEs: true } },
+          weight: true,
+          note: { select: { id: true, nameEs: true } },
         },
       },
       accords: {
-        orderBy: { rank: "asc" },
+        orderBy: { strength: "desc" },
         select: {
-          rank: true,
-          accord: {
-            select: { id: true, nameEn: true, nameEs: true, color: true },
-          },
+          strength: true,
+          accord: { select: { id: true, nameEs: true, color: true } },
         },
       },
       perfumers: {
@@ -178,27 +226,51 @@ export async function getReferenceForAdoption(id: string) {
   });
   if (!reference) return null;
 
+  const [seasonSpring, seasonSummer, seasonFall, seasonWinter] = toPercentages([
+    reference.seasonSpringVotes,
+    reference.seasonSummerVotes,
+    reference.seasonFallVotes,
+    reference.seasonWinterVotes,
+  ]);
+  const [daypartDay, daypartNight] = toPercentages([
+    reference.daypartDayVotes,
+    reference.daypartNightVotes,
+  ]);
+
   return {
     id: reference.id,
     name: reference.name,
     year: reference.year,
     gender: reference.gender,
-    url: reference.url,
+    collection: reference.collection,
+    longevity:
+      reference.longevity === null ? null : Number(reference.longevity),
+    sillage: reference.sillage === null ? null : Number(reference.sillage),
+    seasonSpring,
+    seasonSummer,
+    seasonFall,
+    seasonWinter,
+    daypartDay,
+    daypartNight,
+    communityVotes: reference.communityVotes,
     // This internal Fragrantica copy helps administrators write descriptions
     // and is never published.
     descriptionEn: reference.descriptionEn,
+    // Panel-only deep link back to the source Fragrantica page; never shown
+    // to customers.
+    referenceUrl: `https://www.fragrantica.com/perfume/${reference.slug}-${reference.pid}.html`,
     brand: reference.brand,
     notes: reference.notes.map((note) => ({
       noteId: note.note.id,
-      name: note.note.nameEs ?? note.note.nameEn,
-      isTranslated: note.note.nameEs !== null,
+      name: note.note.nameEs,
       position: note.position,
-      sortOrder: note.sortOrder,
+      weight: note.weight,
     })),
     accords: reference.accords.map((accord) => ({
       accordId: accord.accord.id,
       name: accord.accord.nameEs,
       color: accord.accord.color,
+      strength: accord.strength,
     })),
     perfumers: reference.perfumers.map((perfumer) => ({
       perfumerId: perfumer.perfumer.id,

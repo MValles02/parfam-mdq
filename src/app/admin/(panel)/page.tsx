@@ -44,7 +44,7 @@ export default async function AdminHomePage() {
         description="Todo lo que se ve en la tienda se administra desde acá."
       />
 
-      <div className="grid gap-4 p-8 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 p-8 sm:grid-cols-2 xl:grid-cols-3">
         <Stat
           label="PRODUCTOS PUBLICADOS"
           value={stats.publishedProducts}
@@ -56,12 +56,6 @@ export default async function AdminHomePage() {
           value={stats.pendingOrders}
           hint="Esperando confirmación"
           href="/admin/pedidos"
-        />
-        <Stat
-          label="NOTAS SIN TRADUCIR"
-          value={stats.untranslatedNotes}
-          hint="Se muestran en inglés"
-          href="/admin/notas"
         />
         <Stat
           label="CATÁLOGO DE REFERENCIA"

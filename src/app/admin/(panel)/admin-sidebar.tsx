@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  Package,
-  ShoppingBag,
-  Languages,
-  Settings,
-  Tag,
-} from "lucide-react";
+import { Home, Package, ShoppingBag, Settings, Tag } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -28,7 +21,6 @@ const NAV = [
   { href: "/admin/productos", label: "Productos", icon: Package },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/marcas", label: "Marcas", icon: Tag },
-  { href: "/admin/notas", label: "Notas sin traducir", icon: Languages },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ] as const;
 

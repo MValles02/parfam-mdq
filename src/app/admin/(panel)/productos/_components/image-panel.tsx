@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useDropzone, type Accept, type FileRejection } from "react-dropzone";
 import {
   ArrowLeft,
@@ -87,6 +87,16 @@ function ImagePreview({ url, alt }: { url: string | undefined; alt: string }) {
 export function ImagePanel(props: {
   value: ProductImageItem[];
   onChange: (images: ProductImageItem[]) => void;
+  /**
+   * Appends one uploaded image, reading and writing the form's current
+   * `images` value at call time. This is the single place that decides
+   * whether the new image becomes primary, so it must also be the function
+   * the reference-picture import uses (see `ProductForm`) — otherwise a
+   * manual upload finishing around the same time as an import could read a
+   * stale image list and either drop one of the two images or mark both as
+   * primary.
+   */
+  onUploadComplete: (storageKey: string) => void;
   disabled?: boolean;
   /**
    * Public bucket host used for previews. It comes from the server because the
@@ -95,13 +105,17 @@ export function ImagePanel(props: {
   publicBaseUrl: string | null;
   /** When false, the upload area is disabled with a message. */
   isR2Configured?: boolean;
+  /** True while `importReferencePicture` runs after a reference adoption. */
+  isImportingReferencePicture?: boolean;
 }) {
   const {
     value,
     onChange,
+    onUploadComplete,
     disabled = false,
     publicBaseUrl,
     isR2Configured,
+    isImportingReferencePicture = false,
   } = props;
 
   const getPreviewUrl = (storageKey: string) =>
@@ -113,13 +127,6 @@ export function ImagePanel(props: {
   const [deletingStorageKeys, setDeletingStorageKeys] = useState<Set<string>>(
     new Set(),
   );
-
-  // This synchronous mirror lets concurrent uploads see the latest completed
-  // images when assigning the first primary image, avoiding stale prop races.
-  const valueRef = useRef(value);
-  useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
 
   const uploadFile = useCallback(
     async (file: File) => {
@@ -148,16 +155,7 @@ export function ImagePanel(props: {
           );
         });
 
-        const currentImages = valueRef.current;
-        const newImage: ProductImageItem = {
-          id: null,
-          storageKey: request.data.storageKey,
-          alt: null,
-          isPrimary: currentImages.length === 0,
-        };
-        const nextImages = [...currentImages, newImage];
-        valueRef.current = nextImages;
-        onChange(nextImages);
+        onUploadComplete(request.data.storageKey);
       } catch {
         toast.error(`No pudimos subir "${file.name}". Probá de nuevo.`);
       } finally {
@@ -166,7 +164,7 @@ export function ImagePanel(props: {
         );
       }
     },
-    [onChange],
+    [onUploadComplete],
   );
 
   const onDrop = useCallback(
@@ -266,6 +264,15 @@ export function ImagePanel(props: {
           <p className="text-xs text-muted-foreground">
             JPG, PNG, WEBP o AVIF · hasta 8 MB por foto
           </p>
+        </div>
+      )}
+
+      {isImportingReferencePicture && (
+        <div className="flex items-center gap-3 rounded border border-border bg-card px-3 py-2 text-xs">
+          <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+          <span className="flex-1 truncate">
+            Importando foto de referencia…
+          </span>
         </div>
       )}
 

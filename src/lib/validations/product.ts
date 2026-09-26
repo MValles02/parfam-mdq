@@ -3,9 +3,7 @@ import {
   Concentration,
   Gender,
   NotePosition,
-  Occasion,
   ProductStatus,
-  Season,
   VariantKind,
 } from "@/generated/prisma/enums";
 import { VARIANT_KIND_LABELS as variantKindLabels } from "@/lib/catalog";
@@ -52,6 +50,37 @@ const characteristicBar = z
   .default(null)
   .describe("Administrator-set 1-5 characteristic bar.");
 
+/**
+ * Longevity and sillage are community averages copied from `FragranceRef`
+ * (or set by hand for a manually created product), stored as
+ * `Decimal(3, 2)` so they keep two decimal places instead of Product's
+ * whole-number characteristic bars.
+ */
+const longevitySchema = z
+  .number()
+  .min(1, "La longevidad va de 1 a 5.")
+  .max(5, "La longevidad va de 1 a 5.")
+  .multipleOf(0.01, "Hasta dos decimales.")
+  .nullable()
+  .default(null);
+
+const sillageSchema = z
+  .number()
+  .min(1, "La estela va de 1 a 4.")
+  .max(4, "La estela va de 1 a 4.")
+  .multipleOf(0.01, "Hasta dos decimales.")
+  .nullable()
+  .default(null);
+
+/** 0..100 percentage shown to customers (season or daypart split). */
+const percentageSchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(100)
+  .nullable()
+  .default(null);
+
 const variantSchema = z.object({
   /** Present only while editing: identifies an existing database row. */
   id: z.string().nullable().default(null),
@@ -70,7 +99,14 @@ const variantSchema = z.object({
 
 const noteSchema = z.object({
   noteId: z.string().min(1),
-  position: z.enum(NotePosition),
+  /** Null for a flat note list without top/middle/base tiers. */
+  position: z.enum(NotePosition).nullable(),
+  weight: z.number().int().min(0).max(100).default(0),
+});
+
+const accordSchema = z.object({
+  accordId: z.string().min(1),
+  strength: z.number().int().min(0).max(100),
 });
 
 const imageSchema = z.object({
@@ -127,11 +163,17 @@ export const productSchema = z
       .nullable()
       .default(null),
 
-    seasons: z.array(z.enum(Season)).default([]),
-    occasions: z.array(z.enum(Occasion)).default([]),
-    longevity: characteristicBar,
-    sillage: characteristicBar,
+    collection: optionalText(120),
+    longevity: longevitySchema,
+    sillage: sillageSchema,
     intensity: characteristicBar,
+
+    seasonSpring: percentageSchema,
+    seasonSummer: percentageSchema,
+    seasonFall: percentageSchema,
+    seasonWinter: percentageSchema,
+    daypartDay: percentageSchema,
+    daypartNight: percentageSchema,
 
     status: z.enum(ProductStatus).default(ProductStatus.DRAFT),
     isFeatured: z.boolean().default(false),
@@ -152,12 +194,41 @@ export const productSchema = z
     seoDescription: optionalText(180),
 
     notes: z.array(noteSchema).max(60).default([]),
-    accordIds: z.array(z.string()).max(20).default([]),
+    accords: z.array(accordSchema).max(20).default([]),
     perfumerIds: z.array(z.string()).max(10).default([]),
     variants: z.array(variantSchema).max(20).default([]),
     images: z.array(imageSchema).max(12).default([]),
   })
   .superRefine((values, ctx) => {
+    // A pyramid is all-or-nothing: either every note carries a position
+    // (top/middle/base) or the perfume shows as a flat, unordered list.
+    // A mix would render some notes without a tier for no clear reason.
+    const notesWithPosition = values.notes.filter(
+      (note) => note.position !== null,
+    ).length;
+    if (notesWithPosition > 0 && notesWithPosition < values.notes.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["notes"],
+        message:
+          "Todas las notas necesitan una posición (salida, corazón, fondo) o ninguna.",
+      });
+    }
+
+    // Adding the same accord twice would double its weight in the "similar
+    // perfumes" query without the administrator noticing.
+    const seenAccords = new Set<string>();
+    values.accords.forEach((accord, index) => {
+      if (seenAccords.has(accord.accordId)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["accords", index, "accordId"],
+          message: "Ese acorde ya está cargado.",
+        });
+      }
+      seenAccords.add(accord.accordId);
+    });
+
     // Duplicate "Decant 10 ml" variants are indistinguishable to customers
     // and ambiguous in the WhatsApp order message.
     const seenVariants = new Set<string>();

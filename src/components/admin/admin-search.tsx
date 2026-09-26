@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 
 /**
  * URL-backed `q` input shared by panel listings. `resetPage` prevents a new
- * search from leaving the only paginated listing (`/admin/notas`) on a page
- * that no longer has results.
+ * search from leaving a paginated listing on a page that no longer has
+ * results.
  *
  * The boundary key `pagina` must always be declared in `useQueryStates`.
  * Omitting it from `setState` tells nuqs to leave it unchanged. Non-paginated

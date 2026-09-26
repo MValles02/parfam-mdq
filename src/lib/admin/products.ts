@@ -16,8 +16,9 @@ const STATUS_TO_WHERE: Record<ProductStatusFilter, ProductStatus | undefined> =
 function buildSearchWhere(query: string): Prisma.ProductWhereInput {
   const term = query.trim();
   if (!term) return {};
-  // The store catalog contains tens of rows, not 70k reference entries. A
-  // case-insensitive contains query is sufficient and avoids the trgm index.
+  // The store catalog contains tens of rows, unlike the ~140k-row reference
+  // catalog. A case-insensitive contains query is sufficient and avoids the
+  // trgm index.
   return {
     OR: [
       { name: { contains: term, mode: "insensitive" } },
@@ -126,17 +127,23 @@ export async function getProductForEdit(id: string) {
       brandId: true,
       brand: { select: { id: true, name: true } },
       fragranceRefId: true,
-      fragranceRef: { select: { name: true, url: true } },
+      fragranceRef: { select: { name: true, slug: true, pid: true } },
       sourceUrl: true,
       description: true,
       gender: true,
       concentration: true,
       year: true,
-      seasons: true,
-      occasions: true,
+      collection: true,
       longevity: true,
       sillage: true,
       intensity: true,
+      seasonSpring: true,
+      seasonSummer: true,
+      seasonFall: true,
+      seasonWinter: true,
+      daypartDay: true,
+      daypartNight: true,
+      communityVotes: true,
       status: true,
       isFeatured: true,
       seoTitle: true,
@@ -145,15 +152,23 @@ export async function getProductForEdit(id: string) {
       // and remounts the form with persisted IDs.
       updatedAt: true,
       notes: {
-        orderBy: { sortOrder: "asc" },
+        // Same ordering as `getReferenceForAdoption`'s adoption payload, so
+        // the form receives a pyramid in the same shape either way.
+        orderBy: [
+          { position: "asc" },
+          { weight: "desc" },
+          { sortOrder: "asc" },
+        ],
         select: {
           position: true,
+          weight: true,
           note: { select: { id: true, nameEn: true, nameEs: true } },
         },
       },
       accords: {
         orderBy: { sortOrder: "asc" },
         select: {
+          strength: true,
           accord: { select: { id: true, nameEs: true, color: true } },
         },
       },
@@ -181,6 +196,21 @@ export async function getProductForEdit(id: string) {
 
   return {
     ...product,
+    // Panel-only deep link back to the source Fragrantica page, matching
+    // `getReferenceForAdoption`'s `referenceUrl` (`src/lib/admin/references.ts`);
+    // never shown to customers.
+    fragranceRef: product.fragranceRef
+      ? {
+          name: product.fragranceRef.name,
+          referenceUrl: `https://www.fragrantica.com/perfume/${product.fragranceRef.slug}-${product.fragranceRef.pid}.html`,
+        }
+      : null,
+    // Decimal is not Client Component serializable. `longevity` and
+    // `sillage` become plain numbers, matching the form's schema
+    // (`src/lib/validations/product.ts`); prices stay strings (see below)
+    // because they must never go through float arithmetic.
+    longevity: product.longevity === null ? null : Number(product.longevity),
+    sillage: product.sillage === null ? null : Number(product.sillage),
     // Decimal is not serializable to a Client Component. Send it as a string,
     // which is also what the form expects.
     variants: product.variants.map((v) => ({

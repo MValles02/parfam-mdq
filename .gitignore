@@ -17,8 +17,9 @@ next-env.d.ts
 .env.*
 !.env.example
 
-# Datasets de Fragrantica: 38 MB en total, se versionan (entran holgados en GitHub).
-# Si en el futuro se suma un dump mas pesado, ignorarlo explicitamente aca.
+# Local copy of the reference dataset: too large for git. Imported with
+# `pnpm db:import-references` and never read at runtime.
+/new-database/
 
 # Sistema / editores
 .DS_Store

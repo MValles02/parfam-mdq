@@ -15,6 +15,13 @@ that old prefix can be deleted after confirming no deployed instance still
 uses them. Database rows store a key, then public views derive the URL from
 `R2_PUBLIC_URL`.
 
+Local development and production currently configure the same `R2_BUCKET` —
+there is no separate development bucket or dev-only prefix beyond
+`products/dev/`. This makes any cleanup that deletes bucket keys unreferenced
+by one database's rows unsafe to run against production alone; see the open
+finding "Development and production share the R2 bucket" in
+`docs/findings.md`.
+
 `R2_BUCKET` currently names a bucket linked to the public image host. Its
 Spanish resource name can stay because it is an external infrastructure
 identifier. Renaming it requires creating a new bucket, configuring public

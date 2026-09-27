@@ -15,7 +15,6 @@ The Docker build needs public values that Next serializes into the output:
 
 - `NEXT_PUBLIC_SITE_URL`
 - `R2_PUBLIC_URL`
-- `NEXT_PUBLIC_UMAMI_*`
 
 The Dockerfile uses `AUTH_SECRET_PLACEHOLDER_BUILD`, a non-secret placeholder
 build argument for `AUTH_SECRET`, only because build validation requires a

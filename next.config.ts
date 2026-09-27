@@ -26,23 +26,6 @@ const r2PublicOrigin = imageHosts[0]
   ? `${imageHosts[0].protocol}://${imageHosts[0].hostname}`
   : undefined;
 
-/**
- * Umami is loaded with next/script only in the store layout
- * (src/app/(store)/layout.tsx) when both NEXT_PUBLIC_UMAMI_URL and
- * NEXT_PUBLIC_UMAMI_WEBSITE_ID are set. Its script tag and the tracking
- * beacon it sends both hit this same origin, so the CSP needs it in both
- * script-src and connect-src whenever it is configured.
- */
-const umamiOrigin = (() => {
-  const rawUrl = process.env.NEXT_PUBLIC_UMAMI_URL;
-  if (!rawUrl) return undefined;
-  try {
-    return new URL(rawUrl).origin;
-  } catch {
-    return undefined;
-  }
-})();
-
 const isDev = process.env.NODE_ENV === "development";
 
 /**
@@ -69,11 +52,11 @@ const isDev = process.env.NODE_ENV === "development";
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://static.cloudflareinsights.com${umamiOrigin ? ` ${umamiOrigin}` : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://static.cloudflareinsights.com`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob:${r2PublicOrigin ? ` ${r2PublicOrigin}` : ""}`,
   "font-src 'self'",
-  `connect-src 'self' https://*.r2.cloudflarestorage.com https://cloudflareinsights.com${umamiOrigin ? ` ${umamiOrigin}` : ""}`,
+  `connect-src 'self' https://*.r2.cloudflarestorage.com https://cloudflareinsights.com`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

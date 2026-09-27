@@ -5,3 +5,13 @@ allowBuilds:
   "@node-rs/argon2": true
   "@prisma/engines": true
   prisma: true
+
+# Pin transitive dependencies to patched versions to clear pnpm audit
+# advisories: lodash, mysql2, and deepmerge-ts come from the prisma CLI;
+# valibot comes from @t3-oss/env-nextjs and @hookform/resolvers. See the
+# "Startup" section of docs/deployment.md.
+overrides:
+  lodash: ^4.18.1
+  mysql2: ^3.23.1
+  valibot: ^1.4.2
+  deepmerge-ts: ^8.0.0

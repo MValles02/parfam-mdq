@@ -87,6 +87,13 @@ nothing left to match now that `nameEs` is required — and added
 from the initial migration are unaffected and still back admin search (see
 `docs/modules/reference-data.md`).
 
+`20260927120000_product_name_trgm_index` adds `Product_name_trgm_idx`, a GIN
+trigram index on `parfam_normalize("name")`, mirroring `Brand_name_trgm_idx`
+from the initial migration. It backs the accent-insensitive store search in
+`listCatalog` (`src/lib/store/queries.ts`), which matches product and brand
+names through `parfam_normalize` in a raw query rather than Prisma's
+`contains`, since Prisma cannot call a SQL function.
+
 Once applied, treat every migration as a historical artifact: never edit it,
 including its comments. Create a new migration for later schema changes.
 
@@ -103,4 +110,7 @@ pnpm db:seed
 
 `prisma/seed.ts` creates the administrator and singleton settings row. Example
 products are created by adopting reference catalog entries from the panel
-(see `docs/modules/reference-data.md`), not by a seed script.
+(see `docs/modules/reference-data.md`), not by a seed script. For local smoke
+checks, `pnpm db:seed:fixtures` (`prisma/seed-fixtures.ts`) additionally
+upserts a small `fixture-`-prefixed catalog; it refuses to run outside a
+local database.

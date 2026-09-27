@@ -13,8 +13,11 @@ export const authConfig = {
   },
   session: {
     strategy: "jwt",
-    // Thirty days suits this single-person internal panel.
-    maxAge: 60 * 60 * 24 * 30,
+    // Bounds how long a stolen token stays usable: JWT sessions have no
+    // server-side revocation, and weekly re-login is acceptable for a
+    // one-person panel. Rotating AUTH_SECRET invalidates every session
+    // immediately if a token is compromised sooner.
+    maxAge: 60 * 60 * 24 * 7,
   },
   callbacks: {
     /**

@@ -10,12 +10,14 @@ import { prisma } from "@/lib/db";
 import { getPublicUrl } from "@/lib/r2";
 import {
   SHORT_CONCENTRATION_LABELS,
+  escapeLikePattern,
   getVariantLabel,
   getStartingPrice,
   PYRAMID_LEVELS,
   formatProperName,
 } from "@/lib/catalog";
 import { PRICE_RANGE_LIMITS, type CatalogFilters } from "@/lib/store/filters";
+import { compareCatalogRows } from "@/lib/store/catalog-sort";
 import {
   rankSimilarProducts,
   type SimilarityCandidate,
@@ -85,6 +87,23 @@ const CARD_SELECT = {
   variants: {
     where: { isActive: true },
     select: { kind: true, sizeMl: true, priceArs: true, isActive: true },
+  },
+} satisfies Prisma.ProductSelect;
+
+/**
+ * Minimal shape `listCatalog` needs to sort every matching product: the same
+ * active-variant `where`/`select` `CARD_SELECT` uses, so `getStartingPrice`
+ * computes the identical starting price `toProductCard` would, without
+ * loading the rest of the card (images, accords, brand).
+ */
+const CATALOG_SORT_SELECT = {
+  id: true,
+  name: true,
+  createdAt: true,
+  isFeatured: true,
+  variants: {
+    where: { isActive: true },
+    select: { priceArs: true, isActive: true },
   },
 } satisfies Prisma.ProductSelect;
 
@@ -181,8 +200,36 @@ function whereVariant(
   };
 }
 
-function wherePublicProduct(filters: CatalogFilters): Prisma.ProductWhereInput {
+/**
+ * Ids of published products whose name or brand name matches the search term,
+ * accent- and case-insensitively. Prisma has no way to call the persisted
+ * `parfam_normalize` SQL function (lower(unaccent(x)), see
+ * `prisma/migrations/20260921225316_initial_schema/migration.sql`), so this
+ * runs as raw SQL with a bound parameter; both `Product_name_trgm_idx` and
+ * `Brand_name_trgm_idx` back it.
+ */
+async function getSearchMatchedProductIds(
+  searchTerm: string,
+): Promise<string[]> {
+  const pattern = escapeLikePattern(searchTerm);
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT p.id FROM "Product" p
+     WHERE parfam_normalize(p."name") LIKE parfam_normalize(${pattern}) ESCAPE '\\'
+        OR p."brandId" IN (
+          SELECT b.id FROM "Brand" b
+           WHERE parfam_normalize(b."name") LIKE parfam_normalize(${pattern}) ESCAPE '\\'
+        )
+  `;
+  return rows.map((row) => row.id);
+}
+
+async function wherePublicProduct(
+  filters: CatalogFilters,
+): Promise<Prisma.ProductWhereInput> {
   const searchTerm = filters.search.trim();
+  const matchedIds = searchTerm
+    ? await getSearchMatchedProductIds(searchTerm)
+    : null;
 
   return {
     status: ProductStatus.PUBLISHED,
@@ -196,76 +243,63 @@ function wherePublicProduct(filters: CatalogFilters): Prisma.ProductWhereInput {
     notes: filters.note
       ? { some: { note: { slug: filters.note } } }
       : undefined,
-    ...(searchTerm
-      ? {
-          OR: [
-            { name: { contains: searchTerm, mode: "insensitive" as const } },
-            {
-              brand: {
-                name: {
-                  contains: searchTerm,
-                  mode: "insensitive" as const,
-                },
-              },
-            },
-          ],
-        }
-      : {}),
+    ...(matchedIds !== null ? { id: { in: matchedIds } } : {}),
   };
 }
 
 /**
- * Lists and sorts the small public catalog in memory. Price sorting uses the
- * minimum active variant price, an aggregation Prisma cannot express here.
+ * Lists and sorts the public catalog in two steps. Price sorting uses the
+ * minimum active variant price, an aggregation Prisma's `orderBy` cannot
+ * express, so a full re-sort is unavoidable; to keep that affordable, only a
+ * light row (id, name, timestamps, active variant prices) is loaded for every
+ * matching product instead of the full `CARD_SELECT` shape. Once the sorted
+ * order and the current page's ids are known, a second query re-fetches only
+ * those ids with `CARD_SELECT` for the returned cards.
  */
 export async function listCatalog(filters: CatalogFilters) {
-  const products = await prisma.product.findMany({
-    where: wherePublicProduct(filters),
-    select: CARD_SELECT,
+  const where = await wherePublicProduct(filters);
+
+  const lightRows = await prisma.product.findMany({
+    where,
+    select: CATALOG_SORT_SELECT,
   });
 
-  const rows = products.map((product) => ({
-    card: toProductCard(product),
-    createdAt: product.createdAt.getTime(),
+  const rows = lightRows.map((product) => ({
+    id: product.id,
+    name: product.name,
+    startingPrice: getStartingPrice(product.variants),
     isFeatured: product.isFeatured,
+    createdAt: product.createdAt.getTime(),
   }));
 
-  rows.sort((left, right) => {
-    switch (filters.sort) {
-      case "priceAscending":
-      case "priceDescending": {
-        if (left.card.startingPrice === null) {
-          return right.card.startingPrice === null ? 0 : 1;
-        }
-        if (right.card.startingPrice === null) return -1;
-
-        const difference =
-          Number(left.card.startingPrice) - Number(right.card.startingPrice);
-        return filters.sort === "priceAscending" ? difference : -difference;
-      }
-      case "name":
-        return SPANISH_COLLATOR.compare(left.card.name, right.card.name);
-      default:
-        if (left.isFeatured !== right.isFeatured) {
-          return left.isFeatured ? -1 : 1;
-        }
-        return right.createdAt - left.createdAt;
-    }
-  });
+  rows.sort((left, right) => compareCatalogRows(filters.sort, left, right));
 
   const total = rows.length;
   const pages = Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE));
   const page = Math.min(Math.max(1, filters.page), pages);
   const offset = (page - 1) * PRODUCTS_PER_PAGE;
+  const pageIds = rows
+    .slice(offset, offset + PRODUCTS_PER_PAGE)
+    .map((row) => row.id);
 
-  return {
-    cards: rows
-      .slice(offset, offset + PRODUCTS_PER_PAGE)
-      .map((row) => row.card),
-    total,
-    page,
-    pages,
-  };
+  if (pageIds.length === 0) {
+    return { cards: [], total, page, pages };
+  }
+
+  const products = await prisma.product.findMany({
+    where: { AND: [where, { id: { in: pageIds } }] },
+    select: CARD_SELECT,
+  });
+
+  const productsById = new Map(
+    products.map((product) => [product.id, product]),
+  );
+  const cards = pageIds
+    .map((id) => productsById.get(id))
+    .filter((product): product is (typeof products)[number] => Boolean(product))
+    .map(toProductCard);
+
+  return { cards, total, page, pages };
 }
 
 /** Returns controls that can produce published catalog results. */

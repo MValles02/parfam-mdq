@@ -29,8 +29,6 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_SITE_URL: z.url(),
-    NEXT_PUBLIC_UMAMI_URL: optional(z.url()),
-    NEXT_PUBLIC_UMAMI_WEBSITE_ID: optional(z.string().min(1)),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -43,7 +41,5 @@ export const env = createEnv({
     ADMIN_SEED_EMAIL: process.env.ADMIN_SEED_EMAIL,
     ADMIN_SEED_PASSWORD: process.env.ADMIN_SEED_PASSWORD,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-    NEXT_PUBLIC_UMAMI_URL: process.env.NEXT_PUBLIC_UMAMI_URL,
-    NEXT_PUBLIC_UMAMI_WEBSITE_ID: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
   },
 });

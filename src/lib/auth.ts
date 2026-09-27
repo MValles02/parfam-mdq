@@ -4,7 +4,7 @@ import { verify } from "@node-rs/argon2";
 import { z } from "zod";
 import { authConfig } from "@/lib/auth.config";
 import { prisma } from "@/lib/db";
-import { rateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { getClientIp, rateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 const credentialsSchema = z.object({
   email: z.email(),
@@ -50,13 +50,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data;
 
-        // Same IP derivation as the (now removed) check in
-        // src/app/admin/login/actions.ts: this is also the entry point for
-        // POST /api/auth/callback/credentials, which bypasses that action.
-        const ipAddress =
-          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-          request.headers.get("x-real-ip") ??
-          "unknown";
+        // Shared IP derivation with src/app/(store)/checkout/actions.ts; this
+        // is also the entry point for POST /api/auth/callback/credentials,
+        // which bypasses the login Server Action.
+        const ipAddress = getClientIp(request.headers);
         const rateLimitKey = `login:${ipAddress}:${email.toLowerCase()}`;
 
         const limit = rateLimit(rateLimitKey, {

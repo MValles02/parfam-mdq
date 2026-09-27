@@ -34,6 +34,18 @@ Provide at runtime:
 Do not rename these environment variables during internal refactors. Docker,
 CI, Dokploy, and third-party SDKs consume them as external contracts.
 
+Production sits behind Cloudflare → Traefik → app. The VPS firewall's
+`DOCKER-USER` chain must keep accepting new IPv4 connections to 80/443 only
+from Cloudflare's published ranges (the `cf-v4` ipset) — every request then
+necessarily passes through Cloudflare, which overwrites `CF-Connecting-IP`
+with the real client IP. The VPS has no public IPv6 address: the
+`ip6tables` `DOCKER-USER` chain drops every new connection arriving on
+`ens3`, and Traefik publishes 80/443 on IPv4 only. `getClientIp()` in
+`src/lib/rate-limit.ts` trusts
+only that header for rate-limit keys (see "Rate limits" in
+`docs/authentication.md`); relaxing this firewall rule without changing that
+trust would let a spoofed header past the rate limiter again.
+
 ## Startup
 
 `docker-entrypoint.sh` applies pending Prisma migrations before starting the

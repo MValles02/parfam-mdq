@@ -70,3 +70,13 @@ Server Action and the Auth.js credentials callback route, so a scripted POST
 to `/api/auth/callback/credentials` is throttled the same way. It is suitable
 for the current single application process; a horizontally scaled deployment
 needs shared storage to provide a global limit.
+
+Both callers derive the IP with `getClientIp()`, which reads only
+`CF-Connecting-IP`. Production traffic is Cloudflare → Traefik → app, and the
+origin firewall accepts new connections to 80/443 only from Cloudflare's IP
+ranges (see "Runtime configuration" in `docs/deployment.md`), so that header
+is always the real client IP and cannot be spoofed by a request that reaches
+the app. `X-Forwarded-For` and `X-Real-IP` are deliberately not consulted:
+either can be set directly by the client, which previously let a script
+rotate a fake value per request to get a fresh bucket. Without Cloudflare in
+front (local development), every request shares the "unknown" bucket.

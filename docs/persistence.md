@@ -103,4 +103,7 @@ pnpm db:seed
 
 `prisma/seed.ts` creates the administrator and singleton settings row. Example
 products are created by adopting reference catalog entries from the panel
-(see `docs/modules/reference-data.md`), not by a seed script.
+(see `docs/modules/reference-data.md`), not by a seed script. For local smoke
+checks, `pnpm db:seed:fixtures` (`prisma/seed-fixtures.ts`) additionally
+upserts a small `fixture-`-prefixed catalog; it refuses to run outside a
+local database.

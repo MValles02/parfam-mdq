@@ -28,22 +28,22 @@
  * exceeds the documented [0, 1] range.
  */
 
-export type SimilarityGender = "MEN" | "WOMEN" | "UNISEX" | null;
+type SimilarityGender = "MEN" | "WOMEN" | "UNISEX" | null;
 
-export type SimilarityAccord = {
+type SimilarityAccord = {
   accordId: string;
   /** 0..100, `ProductAccord.strength`. */
   strength: number;
 };
 
-export type SimilarityNote = {
+type SimilarityNote = {
   /** `Note.family`, not the note itself: the score compares families. */
   family: string;
   /** 0..100, `ProductNote.weight`. */
   weight: number;
 };
 
-export type SimilarityProfile = {
+type SimilarityProfile = {
   seasonSpring: number | null;
   seasonSummer: number | null;
   seasonFall: number | null;
@@ -67,7 +67,7 @@ export type SimilarityCandidate = {
 };
 
 /** Top N precomputed per product, matching the "Se parece a" UI's cap. */
-export const SIMILAR_PRODUCTS_LIMIT = 20;
+const SIMILAR_PRODUCTS_LIMIT = 20;
 
 const ACCORD_WEIGHT = 0.5;
 const NOTE_WEIGHT = 0.3;

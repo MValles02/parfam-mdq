@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -11,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EmptyCart } from "@/components/store/cart/cart-item-list";
 import { formatArsPrice } from "@/lib/catalog";
 import { useCart, useHydrated } from "@/lib/cart";
 import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
@@ -58,16 +58,7 @@ export function CheckoutForm({
   if (!hydrated) return null;
 
   if (items.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-4 rounded border border-dashed p-16 text-center">
-        <p className="text-sm text-muted-foreground">
-          Todavía no agregaste nada al carrito.
-        </p>
-        <Button asChild>
-          <Link href="/catalogo">Ir al catálogo</Link>
-        </Button>
-      </div>
-    );
+    return <EmptyCart />;
   }
 
   const total = items.reduce(

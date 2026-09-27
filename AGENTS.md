@@ -123,10 +123,12 @@ pnpm db:up        # local PostgreSQL (Docker Compose, port 5433)
 pnpm db:down
 pnpm db:migrate   # prisma migrate dev
 pnpm db:seed      # admin user + singleton SiteSetting row
+pnpm db:seed:fixtures  # dev-only sample catalog (refuses non-local DATABASE_URL)
 pnpm db:import-references    # reference catalog (script: scripts/import-references.ts;
                               # accepts file PATH, limit N, batch-size N, translations-dir DIR —
                               # pnpm forwards `--` literally here, so pass flags without it)
 pnpm db:check-translations    # verifies note/accord translation coverage
+pnpm smoke        # headless Chromium smoke check against a running `pnpm start` (see docs/deployment.md)
 ```
 
 To reach `pnpm dev` from another machine, open an SSH tunnel
@@ -141,3 +143,7 @@ importer helpers, reference percentages, image type detection, R2 key
 validation, similar-products scoring, and checkout validation. Playwright
 and other end-to-end tooling are not installed. CI builds and publishes but does
 not run these checks.
+
+Optionally, `pnpm smoke` (see "Local smoke check" in `docs/deployment.md`) is a
+headless-Chromium check against a running `pnpm build && pnpm start`; it is not
+required to declare work complete.

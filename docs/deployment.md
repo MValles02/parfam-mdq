@@ -509,3 +509,23 @@ pnpm build
 A build needs the public build-time values above and a generated Prisma client.
 The CI workflow currently builds and publishes; its validation coverage should
 not be treated as a substitute for the local checks.
+
+## Local smoke check
+
+`pnpm smoke` (`scripts/smoke.ts`) loads every store and admin page in real
+headless Chromium over the Chrome DevTools Protocol, and fails on CSP
+violations, console errors, uncaught exceptions, or an unexpected HTTP status.
+It is optional, not part of the required checks above, and needs a running
+production server plus the dev-only fixture catalog:
+
+```bash
+pnpm db:up && pnpm db:seed && pnpm db:seed:fixtures && pnpm build
+pnpm start   # in another shell
+pnpm smoke
+```
+
+Env vars: `SMOKE_BASE_URL` (default `http://localhost:3000`),
+`SMOKE_ADMIN_EMAIL` / `SMOKE_ADMIN_PASSWORD` (default to `ADMIN_SEED_EMAIL` /
+`ADMIN_SEED_PASSWORD`; admin routes are skipped with a warning if neither pair
+is set), `CHROMIUM_PATH` (default `/usr/bin/chromium`), and `SMOKE_TIMEOUT_MS`
+(overall run timeout, default `180000`).

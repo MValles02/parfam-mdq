@@ -53,6 +53,18 @@ Next standalone server. This makes each container responsible for compatible
 schema setup. Migration files are immutable history and must already be present
 in the image.
 
+The `overrides` in `pnpm-workspace.yaml` pin several transitive
+dependencies (`lodash`, `mysql2`, `valibot`, `deepmerge-ts`) to versions that
+patch `pnpm audit` advisories (`valibot` via `@t3-oss/env-nextjs` and
+`@hookform/resolvers`; the rest via the Prisma CLI). The Dockerfile's
+`migrator` stage (around line 92) installs the Prisma CLI with
+`npm install` instead of `pnpm`, so it does not pick up those overrides; its
+copies of `lodash`, `deepmerge-ts`, and `mysql2` stay at whatever version
+`prisma` depends on. This is accepted because, in that stage, these packages
+only handle trusted inputs: the repository's own `prisma.config.ts` (loaded
+via `@prisma/config`, which uses `deepmerge-ts`) and schema, plus a
+PostgreSQL connection — `mysql2` and Studio's `lodash` are never loaded.
+
 The migration history currently has two migrations:
 `20260921225316_initial_schema` (the initial schema, including the
 `pg_trgm`/`unaccent` extensions) and `20260925201541_reference_dataset_v2`,

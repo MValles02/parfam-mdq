@@ -74,7 +74,7 @@ function blend(from: Rgb, to: Rgb, ratio: number): Rgb {
   return from.map((value, index) => value + (to[index] - value) * ratio) as Rgb;
 }
 
-export type ChipColor = { background: string; foreground: string };
+type ChipColor = { background: string; foreground: string };
 
 /**
  * Returns an accord chip's background and foreground while guaranteeing 4.5:1.

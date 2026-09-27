@@ -1,10 +1,5 @@
-import slugify from "slugify";
 import type { Prisma } from "@/generated/prisma/client";
-
-/** Uses the importer settings so brand and product slugs stay consistent. */
-export function toSlug(text: string) {
-  return slugify(text, { lower: true, strict: true, trim: true });
-}
+import { toSlug } from "@/lib/slug";
 
 /**
  * Returns an available slug, appending -2, -3, and so on when needed.

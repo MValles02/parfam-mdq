@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
-import { formatProperName } from "@/lib/catalog";
+import { formatProperName, getStartingPrice } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
 import { getPublicUrl } from "@/lib/r2";
 
@@ -68,20 +68,10 @@ export async function listProducts(options: {
   ]);
 
   const rows = products.map((product) => {
-    const activeVariants = product.variants.filter(
+    const activeVariantCount = product.variants.filter(
       (variant) => variant.isActive,
-    );
-    // The starting price must reflect what the customer can buy today, so it
-    // considers active variants only.
-    const startingPrice = activeVariants.reduce<string | null>(
-      (minimum, variant) => {
-        const price = variant.priceArs.toString();
-        return minimum === null || Number(price) < Number(minimum)
-          ? price
-          : minimum;
-      },
-      null,
-    );
+    ).length;
+    const startingPrice = getStartingPrice(product.variants);
 
     return {
       id: product.id,
@@ -99,7 +89,7 @@ export async function listProducts(options: {
           }
         : null,
       variantCount: product.variants.length,
-      activeVariantCount: activeVariants.length,
+      activeVariantCount,
       startingPrice,
     };
   });

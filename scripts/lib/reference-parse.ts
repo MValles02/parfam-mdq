@@ -16,7 +16,9 @@
  */
 
 import { z } from "zod";
-import slugify from "slugify";
+import { toSlug } from "../../src/lib/slug";
+
+export { toSlug };
 
 /**
  * Mirrors the Prisma `Gender` and `NotePosition` enums (prisma/schema.prisma)
@@ -27,17 +29,6 @@ import slugify from "slugify";
  */
 export type Gender = "WOMEN" | "MEN" | "UNISEX";
 export type NotePosition = "TOP" | "MIDDLE" | "BASE";
-
-/**
- * Same slugify options as `toSlug` in src/lib/admin/slug.ts, duplicated
- * rather than imported so this file stays free of any path to the generated
- * Prisma client (that module type-imports `Prisma` from it). Keeping the
- * options identical (lower + strict + trim) matters so reference brand/note
- * slugs are compatible with the slugs the panel already produces.
- */
-export function toSlug(value: string): string {
-  return slugify(value, { lower: true, strict: true, trim: true });
-}
 
 /**
  * A note's identity, for deduplication purposes, is its own display name —
@@ -138,7 +129,7 @@ const metaRecordSchema = z.object({
  * -typed field) and "the record has a nonsensical id" (checked explicitly in
  * `parseReferenceRecord`) as two distinguishable failures instead of one.
  */
-export const referenceRecordSchema = z.object({
+const referenceRecordSchema = z.object({
   id: z.number(),
   slug: z.string(),
   name: z.string(),
@@ -162,21 +153,21 @@ export const referenceRecordSchema = z.object({
   meta: metaRecordSchema.default({ scraped_at: null }),
 });
 
-export type ReferenceRecord = z.infer<typeof referenceRecordSchema>;
+type ReferenceRecord = z.infer<typeof referenceRecordSchema>;
 
-export interface ParsedPerfumer {
+interface ParsedPerfumer {
   name: string;
   slug: string;
 }
 
-export interface ParsedAccord {
+interface ParsedAccord {
   name: string;
   slug: string;
   strength: number;
   sortOrder: number;
 }
 
-export interface ParsedNote {
+interface ParsedNote {
   name: string;
   noteSlug: string;
   /** The dataset's own note slug, kept as given (e.g. "Bergamot"); several display names can share one family, see `toNoteSlug`. */
@@ -192,14 +183,14 @@ export interface ParsedNote {
   sortOrder: number;
 }
 
-export interface SeasonVotes {
+interface SeasonVotes {
   winter: number;
   spring: number;
   summer: number;
   autumn: number;
 }
 
-export interface DaypartVotes {
+interface DaypartVotes {
   day: number;
   night: number;
 }

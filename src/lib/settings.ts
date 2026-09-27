@@ -27,7 +27,7 @@ const DEFAULT_WHATSAPP_TEMPLATE =
 const DEFAULT_SHIPPING_INFO =
   "Coordinamos envío en Mar del Plata o retiro a convenir.";
 
-export type SiteSettings = {
+type SiteSettings = {
   whatsappNumber: string;
   whatsappMessageTemplate: string;
   instagramHandle: string;

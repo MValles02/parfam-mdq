@@ -10,7 +10,7 @@ const buckets = new LRUCache<string, number[]>({
   ttl: 1000 * 60 * 15,
 });
 
-export interface RateLimitResult {
+interface RateLimitResult {
   ok: boolean;
   /** Seconds before a retry is allowed when `ok` is false. */
   retryAfter: number;

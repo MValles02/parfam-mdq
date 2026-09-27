@@ -17,7 +17,7 @@ import type { InvalidReason } from "@/lib/store/server-cart";
  * database-backed total is always recalculated by createOrder.
  */
 
-export type PriceChange = {
+type PriceChange = {
   variantId: string;
   productName: string;
   variantLabel: string;

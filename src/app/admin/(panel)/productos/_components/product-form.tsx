@@ -7,6 +7,7 @@ import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ExternalLink, Loader2, Save, Send, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/admin/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -46,7 +47,7 @@ import {
 } from "../actions";
 import { deleteUploadedImage, importReferencePicture } from "../image-actions";
 import { CharacteristicBar } from "./characteristic-bar";
-import { Field, Step } from "./field";
+import { Step } from "./field";
 import { RemoteCombobox } from "./remote-combobox";
 import { PyramidEditor, type SelectedNote } from "./pyramid-editor";
 import { VariantEditor } from "./variant-editor";

@@ -16,6 +16,7 @@ import {
   formatProperName,
 } from "@/lib/catalog";
 import { PRICE_RANGE_LIMITS, type CatalogFilters } from "@/lib/store/filters";
+import { compareCatalogRows } from "@/lib/store/catalog-sort";
 import {
   rankSimilarProducts,
   type SimilarityCandidate,
@@ -85,6 +86,23 @@ const CARD_SELECT = {
   variants: {
     where: { isActive: true },
     select: { kind: true, sizeMl: true, priceArs: true, isActive: true },
+  },
+} satisfies Prisma.ProductSelect;
+
+/**
+ * Minimal shape `listCatalog` needs to sort every matching product: the same
+ * active-variant `where`/`select` `CARD_SELECT` uses, so `getStartingPrice`
+ * computes the identical starting price `toProductCard` would, without
+ * loading the rest of the card (images, accords, brand).
+ */
+const CATALOG_SORT_SELECT = {
+  id: true,
+  name: true,
+  createdAt: true,
+  isFeatured: true,
+  variants: {
+    where: { isActive: true },
+    select: { priceArs: true, isActive: true },
   },
 } satisfies Prisma.ProductSelect;
 
@@ -215,57 +233,58 @@ function wherePublicProduct(filters: CatalogFilters): Prisma.ProductWhereInput {
 }
 
 /**
- * Lists and sorts the small public catalog in memory. Price sorting uses the
- * minimum active variant price, an aggregation Prisma cannot express here.
+ * Lists and sorts the public catalog in two steps. Price sorting uses the
+ * minimum active variant price, an aggregation Prisma's `orderBy` cannot
+ * express, so a full re-sort is unavoidable; to keep that affordable, only a
+ * light row (id, name, timestamps, active variant prices) is loaded for every
+ * matching product instead of the full `CARD_SELECT` shape. Once the sorted
+ * order and the current page's ids are known, a second query re-fetches only
+ * those ids with `CARD_SELECT` for the returned cards.
  */
 export async function listCatalog(filters: CatalogFilters) {
-  const products = await prisma.product.findMany({
-    where: wherePublicProduct(filters),
-    select: CARD_SELECT,
+  const where = wherePublicProduct(filters);
+
+  const lightRows = await prisma.product.findMany({
+    where,
+    select: CATALOG_SORT_SELECT,
   });
 
-  const rows = products.map((product) => ({
-    card: toProductCard(product),
-    createdAt: product.createdAt.getTime(),
+  const rows = lightRows.map((product) => ({
+    id: product.id,
+    name: product.name,
+    startingPrice: getStartingPrice(product.variants),
     isFeatured: product.isFeatured,
+    createdAt: product.createdAt.getTime(),
   }));
 
-  rows.sort((left, right) => {
-    switch (filters.sort) {
-      case "priceAscending":
-      case "priceDescending": {
-        if (left.card.startingPrice === null) {
-          return right.card.startingPrice === null ? 0 : 1;
-        }
-        if (right.card.startingPrice === null) return -1;
-
-        const difference =
-          Number(left.card.startingPrice) - Number(right.card.startingPrice);
-        return filters.sort === "priceAscending" ? difference : -difference;
-      }
-      case "name":
-        return SPANISH_COLLATOR.compare(left.card.name, right.card.name);
-      default:
-        if (left.isFeatured !== right.isFeatured) {
-          return left.isFeatured ? -1 : 1;
-        }
-        return right.createdAt - left.createdAt;
-    }
-  });
+  rows.sort((left, right) => compareCatalogRows(filters.sort, left, right));
 
   const total = rows.length;
   const pages = Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE));
   const page = Math.min(Math.max(1, filters.page), pages);
   const offset = (page - 1) * PRODUCTS_PER_PAGE;
+  const pageIds = rows
+    .slice(offset, offset + PRODUCTS_PER_PAGE)
+    .map((row) => row.id);
 
-  return {
-    cards: rows
-      .slice(offset, offset + PRODUCTS_PER_PAGE)
-      .map((row) => row.card),
-    total,
-    page,
-    pages,
-  };
+  if (pageIds.length === 0) {
+    return { cards: [], total, page, pages };
+  }
+
+  const products = await prisma.product.findMany({
+    where: { AND: [where, { id: { in: pageIds } }] },
+    select: CARD_SELECT,
+  });
+
+  const productsById = new Map(
+    products.map((product) => [product.id, product]),
+  );
+  const cards = pageIds
+    .map((id) => productsById.get(id))
+    .filter((product): product is (typeof products)[number] => Boolean(product))
+    .map(toProductCard);
+
+  return { cards, total, page, pages };
 }
 
 /** Returns controls that can produce published catalog results. */

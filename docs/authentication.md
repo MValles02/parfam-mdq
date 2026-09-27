@@ -25,7 +25,9 @@ sequenceDiagram
   Auth-->>Administrator: Signed JWT session cookie
 ```
 
-Login applies the shared in-memory rate limiter before credentials are checked.
+The rate limit is enforced inside `authorize()` in `src/lib/auth.ts`, before
+the user is looked up, so it also covers `POST /api/auth/callback/credentials`
+requests that bypass the login Server Action.
 
 ## Route protection
 
@@ -62,6 +64,9 @@ public Next POST endpoints and can be invoked without rendering the layout.
 ## Rate limits
 
 `src/lib/rate-limit.ts` is an in-memory, process-local limiter. It protects
-login and checkout by an IP-derived key. It is suitable for the current single
-application process; a horizontally scaled deployment needs shared storage to
-provide a global limit.
+checkout by an IP-derived key, and login by an IP+email key checked inside
+`authorize()` in `src/lib/auth.ts` — the shared entry point for both the login
+Server Action and the Auth.js credentials callback route, so a scripted POST
+to `/api/auth/callback/credentials` is throttled the same way. It is suitable
+for the current single application process; a horizontally scaled deployment
+needs shared storage to provide a global limit.

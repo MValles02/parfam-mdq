@@ -8,8 +8,8 @@ Authenticate the single panel administrator and return them to the requested adm
 
 1. `src/proxy.ts` optimistically redirects unauthenticated `/admin/*` requests to `/admin/login?returnTo=<original path>`.
 2. `LoginForm` posts to the login Server Action with the `returnTo` field.
-3. The action validates input, applies an IP and email rate limit, then calls Auth.js Credentials `signIn` without a framework redirect.
-4. The credentials provider looks up `User` by normalized email and verifies argon2. It uses a dummy hash for absent users to reduce timing disclosure.
+3. The action validates input, then calls Auth.js Credentials `signIn` without a framework redirect.
+4. Inside `authorize()`, an IP and email rate limit is checked before the `User` lookup and argon2 verify, so it also covers direct POSTs to `/api/auth/callback/credentials`. It uses a dummy hash for absent users to reduce timing disclosure, and resets the limit only once the password verifies.
 5. Auth.js writes the JWT session cookie. `requireAdmin()` protects every writing panel Server Action and the panel layout enforces the rendered route.
 
 `AUTH_SECRET` must contain at least 32 characters. Production deployments also need `AUTH_TRUST_HOST=true` behind Dokploy's proxy.

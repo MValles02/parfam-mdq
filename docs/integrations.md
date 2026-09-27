@@ -91,9 +91,11 @@ See [authentication.md](authentication.md).
 
 ## Analytics and external media
 
-Umami values prefixed with `NEXT_PUBLIC_` are embedded at build time. Remote
-image configuration is built from `R2_PUBLIC_URL`. Update those build-time
-values in CI as well as the deployment environment.
+Cloudflare Web Analytics is injected at the edge, in front of this
+deployment, so no code in this repository loads or configures it (see the
+"Security headers" section below). Remote image configuration is built from
+`R2_PUBLIC_URL`. Update that build-time value in CI as well as the
+deployment environment.
 
 ## Security headers
 
@@ -113,9 +115,6 @@ The CSP allows exactly these origins, beyond `'self'`:
 - `'unsafe-eval'` in `script-src`, only when `NODE_ENV === "development"`
   (React's development error-stack reconstruction needs it; see the CSP doc's
   "Development vs Production Considerations" section).
-- The Umami origin (`new URL(NEXT_PUBLIC_UMAMI_URL).origin`), in `script-src`
-  and `connect-src`, when `NEXT_PUBLIC_UMAMI_URL` is set: the tracking script
-  in `src/app/(store)/layout.tsx` loads from and reports to that origin.
 - The R2 public origin (derived from `R2_PUBLIC_URL`, the same value behind
   `imageHosts` above), in `img-src`, so `next/image` can fetch product photos
   it optimizes.
@@ -130,9 +129,9 @@ The CSP allows exactly these origins, beyond `'self'`:
   front of this deployment, so neither call appears anywhere in this app's
   source.
 
-Both the Umami and R2 origins are resolved from build-time environment
-variables, the same way `imageHosts` is, so changing `NEXT_PUBLIC_UMAMI_URL`
-or `R2_PUBLIC_URL` requires a rebuild, not just a Dokploy environment update.
+The R2 origin is resolved from a build-time environment variable, the same
+way `imageHosts` is, so changing `R2_PUBLIC_URL` requires a rebuild, not just
+a Dokploy environment update.
 
 HSTS (`Strict-Transport-Security`) is intentionally not set by the
 application; Cloudflare adds it at the edge in front of this deployment.

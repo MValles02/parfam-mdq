@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -66,17 +66,31 @@ export function PyramidEditor({
   );
   const mode = valueMode ?? preferredMode;
 
+  // Remembers each note's tier from before switching to the flat list, so
+  // switching back to the pyramid restores the original TOP/MIDDLE/BASE
+  // distribution instead of dumping every note into TOP.
+  const lastPositionRef = useRef(new Map<string, NotePosition>());
+
   function changeMode(nextMode: PyramidMode) {
     setPreferredMode(nextMode);
     if (nextMode === "flat") {
+      for (const note of value) {
+        if (note.position !== null) {
+          lastPositionRef.current.set(note.noteId, note.position);
+        }
+      }
       onChange(value.map((note) => ({ ...note, position: null })));
     } else {
-      // Converting from a flat list to a pyramid needs a tier per note.
-      // Every note starts at "salida"; the administrator redistributes them
-      // by removing and re-adding to the correct column.
+      // A note added while in flat mode has no remembered tier and starts
+      // at "salida"; the administrator redistributes it to the right column.
       onChange(
         value.map((note) =>
-          note.position === null ? { ...note, position: "TOP" } : note,
+          note.position === null
+            ? {
+                ...note,
+                position: lastPositionRef.current.get(note.noteId) ?? "TOP",
+              }
+            : note,
         ),
       );
     }

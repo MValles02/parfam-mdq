@@ -6,16 +6,17 @@ describe operational constraints rather than customer-facing behavior.
 
 ## Resolved safeguards
 
-| Area                     | Current safeguard                                                                                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sitemap freshness        | Product mutations revalidate the sitemap tag and relevant public routes.                                                                          |
-| WhatsApp return link     | The thank-you page accepts only a valid `https://wa.me/` link.                                                                                    |
-| R2 cleanup               | Product image deletion removes unreferenced keys after the database transaction commits. Shared keys survive until their final reference is gone. |
-| Note and brand freshness | Related public pages are revalidated after translation or display-name changes.                                                                   |
-| Action envelopes         | Admin actions use shared `ActionResult<T>` and `fieldErrors()`. Raw Spanish fields remain at the client boundary.                                 |
-| Cart compatibility       | Persisted cart version 2 migrates legacy image fields to the English internal model.                                                              |
-| Public action safety     | Checkout uses a honeypot, request validation, price rereads, and rate limiting.                                                                   |
-| Product safety           | Publication checks, relationship ID validation, product ownership checks, and R2 key validation run server-side.                                  |
+| Area                     | Current safeguard                                                                                                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sitemap freshness        | Product mutations revalidate the sitemap tag and relevant public routes.                                                                                                                             |
+| WhatsApp return link     | The thank-you page accepts only a valid `https://wa.me/` link.                                                                                                                                       |
+| R2 cleanup               | Product image deletion removes unreferenced keys after the database transaction commits. Shared keys survive until their final reference is gone.                                                    |
+| Note and brand freshness | Related public pages are revalidated after translation or display-name changes.                                                                                                                      |
+| Action envelopes         | Admin actions use shared `ActionResult<T>` and `fieldErrors()`. Raw Spanish fields remain at the client boundary.                                                                                    |
+| Cart compatibility       | Persisted cart version 2 migrates legacy image fields to the English internal model.                                                                                                                 |
+| Public action safety     | Checkout uses a honeypot, request validation, price rereads, and rate limiting.                                                                                                                      |
+| Product safety           | Publication checks, relationship ID validation, product ownership checks, and R2 key validation run server-side.                                                                                     |
+| Security headers         | `next.config.ts`'s `headers()` sends CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` on every route; see "Security headers" in `docs/integrations.md`. |
 
 ## Open operational considerations
 

@@ -91,6 +91,48 @@ Umami values prefixed with `NEXT_PUBLIC_` are embedded at build time. Remote
 image configuration is built from `R2_PUBLIC_URL`. Update those build-time
 values in CI as well as the deployment environment.
 
+## Security headers
+
+`next.config.ts`'s `headers()` applies five headers to every route
+(`source: "/(.*)"`): `Content-Security-Policy`, `X-Content-Type-Options`,
+`X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`. They are set in
+`next.config.ts` rather than `src/proxy.ts` because a nonce-based CSP requires
+every page to render dynamically (see the "Static vs Dynamic Rendering"
+section of `node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md`),
+which would disable static generation and CDN caching for the storefront, and
+because `src/proxy.ts`'s matcher only covers `/admin/:path*`.
+
+The CSP allows exactly these origins, beyond `'self'`:
+
+- `'unsafe-inline'` for `script-src` and `style-src`, the tradeoff for not
+  using a nonce (see above).
+- `'unsafe-eval'` in `script-src`, only when `NODE_ENV === "development"`
+  (React's development error-stack reconstruction needs it; see the CSP doc's
+  "Development vs Production Considerations" section).
+- The Umami origin (`new URL(NEXT_PUBLIC_UMAMI_URL).origin`), in `script-src`
+  and `connect-src`, when `NEXT_PUBLIC_UMAMI_URL` is set: the tracking script
+  in `src/app/(store)/layout.tsx` loads from and reports to that origin.
+- The R2 public origin (derived from `R2_PUBLIC_URL`, the same value behind
+  `imageHosts` above), in `img-src`, so `next/image` can fetch product photos
+  it optimizes.
+- `https://*.r2.cloudflarestorage.com`, in `connect-src`: admin image uploads
+  PUT directly from the browser to a presigned URL on this account-scoped R2
+  endpoint (`getUploadUrl` in `src/lib/r2.ts`, the `XMLHttpRequest` in
+  `image-panel.tsx`), a different host than the public `R2_PUBLIC_URL`.
+- `https://static.cloudflareinsights.com`, in `script-src`, and
+  `https://cloudflareinsights.com`, in `connect-src`, unconditionally (both
+  production and development): Cloudflare injects its Web Analytics beacon
+  script from the first origin and it reports to the second at the edge, in
+  front of this deployment, so neither call appears anywhere in this app's
+  source.
+
+Both the Umami and R2 origins are resolved from build-time environment
+variables, the same way `imageHosts` is, so changing `NEXT_PUBLIC_UMAMI_URL`
+or `R2_PUBLIC_URL` requires a rebuild, not just a Dokploy environment update.
+
+HSTS (`Strict-Transport-Security`) is intentionally not set by the
+application; Cloudflare adds it at the edge in front of this deployment.
+
 ## Environment contract
 
 Environment-variable names are integration and deployment contracts. Preserve

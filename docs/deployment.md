@@ -15,7 +15,6 @@ The Docker build needs public values that Next serializes into the output:
 
 - `NEXT_PUBLIC_SITE_URL`
 - `R2_PUBLIC_URL`
-- `NEXT_PUBLIC_UMAMI_*`
 
 The Dockerfile uses `AUTH_SECRET_PLACEHOLDER_BUILD`, a non-secret placeholder
 build argument for `AUTH_SECRET`, only because build validation requires a
@@ -34,12 +33,36 @@ Provide at runtime:
 Do not rename these environment variables during internal refactors. Docker,
 CI, Dokploy, and third-party SDKs consume them as external contracts.
 
+Production sits behind Cloudflare → Traefik → app. The VPS firewall's
+`DOCKER-USER` chain must keep accepting new IPv4 connections to 80/443 only
+from Cloudflare's published ranges (the `cf-v4` ipset) — every request then
+necessarily passes through Cloudflare, which overwrites `CF-Connecting-IP`
+with the real client IP. The VPS has no public IPv6 address: the
+`ip6tables` `DOCKER-USER` chain drops every new connection arriving on
+`ens3`, and Traefik publishes 80/443 on IPv4 only. `getClientIp()` in
+`src/lib/rate-limit.ts` trusts
+only that header for rate-limit keys (see "Rate limits" in
+`docs/authentication.md`); relaxing this firewall rule without changing that
+trust would let a spoofed header past the rate limiter again.
+
 ## Startup
 
 `docker-entrypoint.sh` applies pending Prisma migrations before starting the
 Next standalone server. This makes each container responsible for compatible
 schema setup. Migration files are immutable history and must already be present
 in the image.
+
+The `overrides` in `pnpm-workspace.yaml` pin several transitive
+dependencies (`lodash`, `mysql2`, `valibot`, `deepmerge-ts`) to versions that
+patch `pnpm audit` advisories (`valibot` via `@t3-oss/env-nextjs` and
+`@hookform/resolvers`; the rest via the Prisma CLI). The Dockerfile's
+`migrator` stage (around line 92) installs the Prisma CLI with
+`npm install` instead of `pnpm`, so it does not pick up those overrides; its
+copies of `lodash`, `deepmerge-ts`, and `mysql2` stay at whatever version
+`prisma` depends on. This is accepted because, in that stage, these packages
+only handle trusted inputs: the repository's own `prisma.config.ts` (loaded
+via `@prisma/config`, which uses `deepmerge-ts`) and schema, plus a
+PostgreSQL connection — `mysql2` and Studio's `lodash` are never loaded.
 
 The migration history currently has two migrations:
 `20260921225316_initial_schema` (the initial schema, including the
@@ -486,3 +509,23 @@ pnpm build
 A build needs the public build-time values above and a generated Prisma client.
 The CI workflow currently builds and publishes; its validation coverage should
 not be treated as a substitute for the local checks.
+
+## Local smoke check
+
+`pnpm smoke` (`scripts/smoke.ts`) loads every store and admin page in real
+headless Chromium over the Chrome DevTools Protocol, and fails on CSP
+violations, console errors, uncaught exceptions, or an unexpected HTTP status.
+It is optional, not part of the required checks above, and needs a running
+production server plus the dev-only fixture catalog:
+
+```bash
+pnpm db:up && pnpm db:seed && pnpm db:seed:fixtures && pnpm build
+pnpm start   # in another shell
+pnpm smoke
+```
+
+Env vars: `SMOKE_BASE_URL` (default `http://localhost:3000`),
+`SMOKE_ADMIN_EMAIL` / `SMOKE_ADMIN_PASSWORD` (default to `ADMIN_SEED_EMAIL` /
+`ADMIN_SEED_PASSWORD`; admin routes are skipped with a warning if neither pair
+is set), `CHROMIUM_PATH` (default `/usr/bin/chromium`), and `SMOKE_TIMEOUT_MS`
+(overall run timeout, default `180000`).

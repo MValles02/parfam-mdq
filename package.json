@@ -18,8 +18,10 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:fixtures": "tsx prisma/seed-fixtures.ts",
     "db:import-references": "tsx scripts/import-references.ts",
     "db:check-translations": "tsx scripts/check-reference-translations.ts",
+    "smoke": "tsx scripts/smoke.ts",
     "postinstall": "prisma generate",
     "prepare": "husky"
   },

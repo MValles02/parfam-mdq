@@ -21,6 +21,48 @@ const imageHosts = (() => {
   }
 })();
 
+/** Origin (scheme + host) `next/image` is allowed to fetch from, reused by the CSP img-src below. */
+const r2PublicOrigin = imageHosts[0]
+  ? `${imageHosts[0].protocol}://${imageHosts[0].hostname}`
+  : undefined;
+
+const isDev = process.env.NODE_ENV === "development";
+
+/**
+ * The CSP is set here, in `headers()`, instead of as a per-request nonce in
+ * src/proxy.ts, following the "Without Nonces" pattern documented in
+ * node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md.
+ * A nonce only works when every page renders dynamically (see that doc's
+ * "Static vs Dynamic Rendering" section), which would disable static
+ * generation and CDN caching for the whole storefront; src/proxy.ts also
+ * only matches `/admin/:path*`, not the public catalog. `'unsafe-inline'`
+ * for scripts and styles is the tradeoff that keeps static rendering intact.
+ *
+ * connect-src allows the whole `*.r2.cloudflarestorage.com` wildcard, not
+ * just R2_PUBLIC_ORIGIN, because admin image uploads PUT directly from the
+ * browser to a presigned R2 endpoint scoped to the account id
+ * (`https://<account>.r2.cloudflarestorage.com`, see `getUploadUrl` in
+ * src/lib/r2.ts and the XMLHttpRequest in image-panel.tsx) — a different
+ * host than the public R2_PUBLIC_URL used to display images.
+ *
+ * Cloudflare injects its Web Analytics beacon (`static.cloudflareinsights.com`)
+ * at the edge in production, so it never appears in this app's source; both
+ * origins are listed unconditionally, in every environment, so the beacon
+ * isn't blocked wherever Cloudflare happens to inject it.
+ */
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://static.cloudflareinsights.com`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob:${r2PublicOrigin ? ` ${r2PublicOrigin}` : ""}`,
+  "font-src 'self'",
+  `connect-src 'self' https://*.r2.cloudflarestorage.com https://cloudflareinsights.com`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const nextConfig: NextConfig = {
   // Docker deploys `.next/standalone`: server.js plus only traced node_modules.
   output: "standalone",
@@ -42,6 +84,25 @@ const nextConfig: NextConfig = {
       pathname: "/**",
     })),
     formats: ["image/avif", "image/webp"],
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value:
+              "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+          },
+        ],
+      },
+    ];
   },
 };
 

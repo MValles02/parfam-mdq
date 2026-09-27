@@ -9,7 +9,11 @@ Credentials login is implemented in `src/lib/auth.ts` and
 `src/app/admin/login/actions.ts`. Auth.js uses JWT sessions and the
 Credentials provider. Passwords are verified with argon2. The JWT stores the
 user ID; there is no active role hierarchy because the application has one
-administrator role.
+administrator role. The session cookie (`session.maxAge` in
+`src/lib/auth.config.ts`) lasts 7 days, bounding how long a stolen token stays
+usable since JWT sessions cannot be revoked server-side. Rotating
+`AUTH_SECRET` is the emergency revocation: it invalidates every session
+immediately.
 
 ```mermaid
 sequenceDiagram
@@ -25,7 +29,9 @@ sequenceDiagram
   Auth-->>Administrator: Signed JWT session cookie
 ```
 
-Login applies the shared in-memory rate limiter before credentials are checked.
+The rate limit is enforced inside `authorize()` in `src/lib/auth.ts`, before
+the user is looked up, so it also covers `POST /api/auth/callback/credentials`
+requests that bypass the login Server Action.
 
 ## Route protection
 
@@ -62,6 +68,19 @@ public Next POST endpoints and can be invoked without rendering the layout.
 ## Rate limits
 
 `src/lib/rate-limit.ts` is an in-memory, process-local limiter. It protects
-login and checkout by an IP-derived key. It is suitable for the current single
-application process; a horizontally scaled deployment needs shared storage to
-provide a global limit.
+checkout by an IP-derived key, and login by an IP+email key checked inside
+`authorize()` in `src/lib/auth.ts` — the shared entry point for both the login
+Server Action and the Auth.js credentials callback route, so a scripted POST
+to `/api/auth/callback/credentials` is throttled the same way. It is suitable
+for the current single application process; a horizontally scaled deployment
+needs shared storage to provide a global limit.
+
+Both callers derive the IP with `getClientIp()`, which reads only
+`CF-Connecting-IP`. Production traffic is Cloudflare → Traefik → app, and the
+origin firewall accepts new connections to 80/443 only from Cloudflare's IP
+ranges (see "Runtime configuration" in `docs/deployment.md`), so that header
+is always the real client IP and cannot be spoofed by a request that reaches
+the app. `X-Forwarded-For` and `X-Real-IP` are deliberately not consulted:
+either can be set directly by the client, which previously let a script
+rotate a fake value per request to get a fresh bucket. Without Cloudflare in
+front (local development), every request shares the "unknown" bucket.

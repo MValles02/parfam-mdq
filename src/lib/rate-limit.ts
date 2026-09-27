@@ -43,3 +43,19 @@ export function rateLimit(
 export function resetRateLimit(key: string): void {
   buckets.delete(key);
 }
+
+/**
+ * Derives the client IP for rate-limit keys from `CF-Connecting-IP` only.
+ * Production traffic reaches the app through Cloudflare → Traefik, and the
+ * origin firewall's DOCKER-USER chain accepts new connections to 80/443 only
+ * from Cloudflare's published IP ranges (see "Runtime configuration" in
+ * docs/deployment.md), so Cloudflare is guaranteed to have set this header to
+ * the real client IP, overwriting whatever the client sent. `X-Forwarded-For`
+ * and `X-Real-IP` are not used here because a client can set them directly;
+ * trusting either lets a script rotate a fake value per request and get a
+ * fresh rate-limit bucket every time. Without Cloudflare in front (e.g. local
+ * development), every request falls into the shared "unknown" bucket.
+ */
+export function getClientIp(headers: Pick<Headers, "get">): string {
+  return headers.get("cf-connecting-ip")?.trim() || "unknown";
+}

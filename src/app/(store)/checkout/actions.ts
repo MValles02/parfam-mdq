@@ -6,7 +6,7 @@ import { ProductStatus } from "@/generated/prisma/enums";
 import { getSiteSettings } from "@/lib/settings";
 import { getVariantLabel } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
-import { rateLimit } from "@/lib/rate-limit";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { siteDefaults } from "@/lib/site";
 import type { InvalidReason } from "@/lib/store/server-cart";
 import {
@@ -65,11 +65,7 @@ export async function createOrder(input: {
   // Five attempts per ten minutes matches login rate limiting. A real customer
   // only submits a few orders close together, so this limits scripts without
   // blocking ordinary retries.
-  const headerList = await headers();
-  const clientIp =
-    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headerList.get("x-real-ip") ??
-    "unknown";
+  const clientIp = getClientIp(await headers());
   const rateLimitResult = rateLimit(`checkout:${clientIp}`, {
     limit: 5,
     windowMs: 1000 * 60 * 10,

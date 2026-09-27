@@ -1,6 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { Gender } from "@/generated/prisma/enums";
-import { formatProperName } from "@/lib/catalog";
+import { escapeLikePattern, formatProperName } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
 
 export type ReferenceSearchResult = {
@@ -14,16 +14,6 @@ export type ReferenceSearchResult = {
   /** Internal only: used for sorting and context in the admin panel. */
   popularity: number | null;
 };
-
-/** Escapes LIKE wildcards so administrator input cannot broaden matching. The
- * backslash is escaped first to prevent escaping it a second time. */
-function escapeLikePattern(term: string) {
-  const escaped = term
-    .replace(/\\/g, "\\\\")
-    .replace(/%/g, "\\%")
-    .replace(/_/g, "\\_");
-  return `%${escaped}%`;
-}
 
 /** A trigram index cannot resolve patterns shorter than three characters. They
  * fall back to a sequential scan of the ~140k-row reference catalog, which is

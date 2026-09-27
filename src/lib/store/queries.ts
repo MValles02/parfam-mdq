@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db";
 import { getPublicUrl } from "@/lib/r2";
 import {
   SHORT_CONCENTRATION_LABELS,
+  escapeLikePattern,
   getVariantLabel,
   getStartingPrice,
   PYRAMID_LEVELS,
@@ -199,8 +200,36 @@ function whereVariant(
   };
 }
 
-function wherePublicProduct(filters: CatalogFilters): Prisma.ProductWhereInput {
+/**
+ * Ids of published products whose name or brand name matches the search term,
+ * accent- and case-insensitively. Prisma has no way to call the persisted
+ * `parfam_normalize` SQL function (lower(unaccent(x)), see
+ * `prisma/migrations/20260921225316_initial_schema/migration.sql`), so this
+ * runs as raw SQL with a bound parameter; both `Product_name_trgm_idx` and
+ * `Brand_name_trgm_idx` back it.
+ */
+async function getSearchMatchedProductIds(
+  searchTerm: string,
+): Promise<string[]> {
+  const pattern = escapeLikePattern(searchTerm);
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT p.id FROM "Product" p
+     WHERE parfam_normalize(p."name") LIKE parfam_normalize(${pattern}) ESCAPE '\\'
+        OR p."brandId" IN (
+          SELECT b.id FROM "Brand" b
+           WHERE parfam_normalize(b."name") LIKE parfam_normalize(${pattern}) ESCAPE '\\'
+        )
+  `;
+  return rows.map((row) => row.id);
+}
+
+async function wherePublicProduct(
+  filters: CatalogFilters,
+): Promise<Prisma.ProductWhereInput> {
   const searchTerm = filters.search.trim();
+  const matchedIds = searchTerm
+    ? await getSearchMatchedProductIds(searchTerm)
+    : null;
 
   return {
     status: ProductStatus.PUBLISHED,
@@ -214,21 +243,7 @@ function wherePublicProduct(filters: CatalogFilters): Prisma.ProductWhereInput {
     notes: filters.note
       ? { some: { note: { slug: filters.note } } }
       : undefined,
-    ...(searchTerm
-      ? {
-          OR: [
-            { name: { contains: searchTerm, mode: "insensitive" as const } },
-            {
-              brand: {
-                name: {
-                  contains: searchTerm,
-                  mode: "insensitive" as const,
-                },
-              },
-            },
-          ],
-        }
-      : {}),
+    ...(matchedIds !== null ? { id: { in: matchedIds } } : {}),
   };
 }
 
@@ -242,7 +257,7 @@ function wherePublicProduct(filters: CatalogFilters): Prisma.ProductWhereInput {
  * those ids with `CARD_SELECT` for the returned cards.
  */
 export async function listCatalog(filters: CatalogFilters) {
-  const where = wherePublicProduct(filters);
+  const where = await wherePublicProduct(filters);
 
   const lightRows = await prisma.product.findMany({
     where,

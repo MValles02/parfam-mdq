@@ -6,7 +6,10 @@ import { describe, expect, it, vi } from "vitest";
 // DATABASE_URL or a generated client available to the test runner.
 vi.mock("@/generated/prisma/client", () => ({ Prisma: {} }));
 vi.mock("@/lib/db", () => ({ prisma: {} }));
-vi.mock("@/lib/catalog", () => ({ formatProperName: (name: string) => name }));
+vi.mock("@/lib/catalog", () => ({
+  formatProperName: (name: string) => name,
+  escapeLikePattern: (term: string) => `%${term}%`,
+}));
 
 import { toPercentages } from "./references";
 

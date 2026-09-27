@@ -139,6 +139,16 @@ export function getStartingPrice(
     }, null);
 }
 
+/** Escapes LIKE wildcards so administrator input cannot broaden matching. The
+ * backslash is escaped first to prevent escaping it a second time. */
+export function escapeLikePattern(term: string) {
+  const escaped = term
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_");
+  return `%${escaped}%`;
+}
+
 /**
  * Normalizes a proper name from the dataset ("françois demachy",
  * "PAUL PARQUET") for display: "François Demachy", "Paul Parquet".

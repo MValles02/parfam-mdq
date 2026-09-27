@@ -84,7 +84,11 @@ function Thumbnails({ images }: { images: ProductImageData[] }) {
               FOCUS_VISIBLE,
             )}
           >
-            <ProductImage image={image} sizes="146px" />
+            {/* Below lg the grid is 4 columns full-width, so each thumbnail is ~25vw */}
+            <ProductImage
+              image={image}
+              sizes="(min-width: 1024px) 146px, 25vw"
+            />
           </button>
         );
       })}

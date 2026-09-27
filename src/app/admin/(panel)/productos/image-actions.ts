@@ -59,7 +59,11 @@ export async function requestUploadUrl(input: {
   // and collisions between uploads from different administrators.
   const storageKey = createProductStorageKey(extension);
 
-  const uploadUrl = await getUploadUrl({ key: storageKey, contentType });
+  const uploadUrl = await getUploadUrl({
+    key: storageKey,
+    contentType,
+    sizeBytes: parsedInput.data.sizeBytes,
+  });
 
   // Return the key, rather than a public URL. The admin panel builds previews
   // from its server-provided host, and only the key is persisted.

@@ -62,6 +62,20 @@ function getClient(): S3Client {
 }
 
 /**
+ * Headers bound into the signature so the URL only accepts the exact upload
+ * the server validated. `@aws-sdk/s3-request-presigner` excludes
+ * `content-type` from signing by default (it force-adds it to
+ * `unsignableHeaders` in its `prepareRequest`, see
+ * node_modules/@aws-sdk/s3-request-presigner/dist-cjs/index.js), so it must be
+ * requested explicitly through `signableHeaders`. `content-length` is not
+ * excluded by that default, but listing it here keeps both headers pinned
+ * together and documents the intent: without it, a PUT of any size would
+ * succeed within the URL's expiration window regardless of the size this
+ * server already checked against `MAX_IMAGE_BYTES`.
+ */
+const SIGNABLE_UPLOAD_HEADERS = new Set(["content-length", "content-type"]);
+
+/**
  * Generates a signed URL for a direct browser PUT upload. The file never
  * passes through this server and the URL expires quickly after this immediate
  * upload.
@@ -69,15 +83,18 @@ function getClient(): S3Client {
 export async function getUploadUrl(options: {
   key: string;
   contentType: string;
+  sizeBytes: number;
 }): Promise<string> {
   const { bucket } = getCredentials();
   const command = new PutObjectCommand({
     Bucket: bucket,
     Key: options.key,
     ContentType: options.contentType,
+    ContentLength: options.sizeBytes,
   });
   return getSignedUrl(getClient(), command, {
     expiresIn: UPLOAD_URL_EXPIRATION_SECONDS,
+    signableHeaders: SIGNABLE_UPLOAD_HEADERS,
   });
 }
 

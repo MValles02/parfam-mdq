@@ -5,7 +5,11 @@
 `src/lib/r2.ts` creates the S3-compatible client lazily and exposes signed PUT
 URLs, public URL construction, key validation, and deletion. Upload actions
 allow only approved MIME types and enforce the configured size limit before a
-URL is signed.
+URL is signed, and that validated size is bound into the signature itself:
+`getUploadUrl` sets `ContentLength` on the `PutObjectCommand` and signs it
+(alongside `Content-Type`) via `signableHeaders`, so the resulting URL only
+accepts a PUT body of exactly the size the server checked, not an arbitrary
+one sent within the URL's expiration window.
 
 Product image keys use `products/`; development seed images use
 `products/dev/`. The fresh prelaunch database has no rows with old

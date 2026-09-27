@@ -9,7 +9,11 @@ Credentials login is implemented in `src/lib/auth.ts` and
 `src/app/admin/login/actions.ts`. Auth.js uses JWT sessions and the
 Credentials provider. Passwords are verified with argon2. The JWT stores the
 user ID; there is no active role hierarchy because the application has one
-administrator role.
+administrator role. The session cookie (`session.maxAge` in
+`src/lib/auth.config.ts`) lasts 7 days, bounding how long a stolen token stays
+usable since JWT sessions cannot be revoked server-side. Rotating
+`AUTH_SECRET` is the emergency revocation: it invalidates every session
+immediately.
 
 ```mermaid
 sequenceDiagram

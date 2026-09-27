@@ -1,11 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { z } from "zod";
-import { signIn } from "@/lib/auth";
-import { rateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { RateLimitedSignin, signIn } from "@/lib/auth";
 
 const loginSchema = z.object({
   email: z.email("Revisá el email."),
@@ -34,24 +32,6 @@ export async function authenticate(
     };
   }
 
-  const headerList = await headers();
-  const ipAddress =
-    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headerList.get("x-real-ip") ??
-    "unknown";
-  const rateLimitKey = `login:${ipAddress}:${parsed.data.email.toLowerCase()}`;
-
-  const limit = rateLimit(rateLimitKey, {
-    limit: 5,
-    windowMs: 1000 * 60 * 10,
-  });
-  if (!limit.ok) {
-    const retryAfterMinutes = Math.ceil(limit.retryAfter / 60);
-    return {
-      error: `Demasiados intentos. Probá de nuevo en ${retryAfterMinutes} ${retryAfterMinutes === 1 ? "minuto" : "minutos"}.`,
-    };
-  }
-
   // Accept a submitted legacy form from a tab opened before this deployment.
   const rawReturnTo = formData.get("returnTo") ?? formData.get("volverA");
   const returnTo =
@@ -66,12 +46,17 @@ export async function authenticate(
       redirect: false,
     });
   } catch (error) {
+    if (error instanceof RateLimitedSignin) {
+      const retryAfterMinutes = Math.ceil(error.retryAfter / 60);
+      return {
+        error: `Demasiados intentos. Probá de nuevo en ${retryAfterMinutes} ${retryAfterMinutes === 1 ? "minuto" : "minutos"}.`,
+      };
+    }
     if (error instanceof AuthError) {
       return { error: INVALID_CREDENTIALS_MESSAGE };
     }
     throw error;
   }
 
-  resetRateLimit(rateLimitKey);
   redirect(returnTo);
 }

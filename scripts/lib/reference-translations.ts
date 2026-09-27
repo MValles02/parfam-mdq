@@ -37,10 +37,8 @@ export const accordTranslationEntrySchema = z.object({
     .regex(/^#[0-9A-Fa-f]{6}$/, "must be a hex color like #RRGGBB"),
 });
 
-export type NoteTranslationEntry = z.infer<typeof noteTranslationEntrySchema>;
-export type AccordTranslationEntry = z.infer<
-  typeof accordTranslationEntrySchema
->;
+type NoteTranslationEntry = z.infer<typeof noteTranslationEntrySchema>;
+type AccordTranslationEntry = z.infer<typeof accordTranslationEntrySchema>;
 
 /**
  * Builds the whole-file schema for one translation file: a map keyed by slug
@@ -147,7 +145,7 @@ export function loadReferenceTranslations(
   };
 }
 
-export interface ReferenceSlugs {
+interface ReferenceSlugs {
   noteSlugs: Iterable<string>;
   accordSlugs: Iterable<string>;
 }

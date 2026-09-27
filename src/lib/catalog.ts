@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import type {
   Concentration,
   Gender,
@@ -117,6 +118,25 @@ const arsPriceFormatter = new Intl.NumberFormat("es-AR", {
 /** Formats an ARS price. Accepts Prisma Decimal values already converted to strings. */
 export function formatArsPrice(value: string | number) {
   return arsPriceFormatter.format(Number(value));
+}
+
+/**
+ * Lowest `priceArs` among active variants, as the Decimal's string form
+ * (never converted to a JS float, so it keeps exact precision). Both the
+ * store's product cards and the admin product table need this: the price a
+ * customer can actually pay today. Returns null when no variant is active.
+ */
+export function getStartingPrice(
+  variants: { priceArs: Prisma.Decimal; isActive: boolean }[],
+): string | null {
+  return variants
+    .filter((variant) => variant.isActive)
+    .reduce<string | null>((minimum, variant) => {
+      const price = variant.priceArs.toString();
+      return minimum === null || Number(price) < Number(minimum)
+        ? price
+        : minimum;
+    }, null);
 }
 
 /**

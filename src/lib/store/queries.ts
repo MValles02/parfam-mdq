@@ -11,6 +11,7 @@ import { getPublicUrl } from "@/lib/r2";
 import {
   SHORT_CONCENTRATION_LABELS,
   getVariantLabel,
+  getStartingPrice,
   PYRAMID_LEVELS,
   formatProperName,
 } from "@/lib/catalog";
@@ -89,15 +90,6 @@ const CARD_SELECT = {
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function getStartingPrice(variants: RawVariant[]): string | null {
-  return variants.reduce<string | null>((minimum, variant) => {
-    const price = variant.priceArs.toString();
-    return minimum === null || Number(price) < Number(minimum)
-      ? price
-      : minimum;
-  }, null);
 }
 
 function getCardBadge(year: number | null, variants: RawVariant[]): CardBadge {
@@ -566,9 +558,7 @@ const cachedSimilarProductIds = unstable_cache(
 );
 
 /** Top 20 similar product IDs per product ID, ranked by `scoreSimilarity`. */
-export async function getSimilarProductIds(): Promise<
-  Record<string, string[]>
-> {
+async function getSimilarProductIds(): Promise<Record<string, string[]>> {
   return cachedSimilarProductIds();
 }
 

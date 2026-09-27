@@ -5,8 +5,9 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
-import { findAvailableSlug, toSlug } from "@/lib/admin/slug";
+import { findAvailableSlug } from "@/lib/admin/slug";
 import { prisma } from "@/lib/db";
+import { toSlug } from "@/lib/slug";
 import {
   searchReferences,
   getReferenceForAdoption,

@@ -42,10 +42,10 @@ const MIN_TRIMMED_DIMENSION_PX = 64;
 /** JPEG quality used for the re-encoded, trimmed output. */
 const TRIMMED_JPEG_QUALITY = 90;
 
-export type TrimmedContentType =
+type TrimmedContentType =
   "image/jpeg" | "image/png" | "image/webp" | "image/avif";
 
-export interface TrimResult {
+interface TrimResult {
   bytes: Uint8Array;
   contentType: TrimmedContentType;
   trimmed: boolean;

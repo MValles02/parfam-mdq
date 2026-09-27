@@ -59,12 +59,12 @@ export class SlugFrequencyTracker {
   }
 }
 
-export interface BrandDimension {
+interface BrandDimension {
   slug: string;
   name: string;
 }
 
-export interface PerfumerDimension {
+interface PerfumerDimension {
   slug: string;
   name: string;
 }

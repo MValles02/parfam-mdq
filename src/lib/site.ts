@@ -20,5 +20,3 @@ export const siteDefaults = {
   instagram: "parfam_mdq",
   url: "https://parfammdq.com",
 } as const;
-
-export type SiteDefaults = typeof siteDefaults;

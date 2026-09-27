@@ -7,6 +7,23 @@ import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
 import { CartItemRow } from "@/components/store/cart/cart-item-row";
 
 /**
+ * Empty-cart placeholder shared by the drawer (/carrito preview) and the
+ * standalone checkout page, which show it when the cart has no items.
+ */
+export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-4 rounded border border-dashed border-border p-16 text-center">
+      <p className="text-sm text-muted-foreground">
+        Todavía no agregaste nada al carrito.
+      </p>
+      <Button asChild onClick={onNavigate}>
+        <Link href="/catalogo">Ir al catálogo</Link>
+      </Button>
+    </div>
+  );
+}
+
+/**
  * Renders cart items and the empty state for both the drawer and /carrito.
  * It owns the shared reconciliation trigger so either surface refreshes cart
  * availability exactly once.
@@ -19,16 +36,7 @@ export function CartItemList({ onNavigate }: { onNavigate?: () => void }) {
   if (!hydrated) return null;
 
   if (items.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-4 rounded border border-dashed border-border p-16 text-center">
-        <p className="text-sm text-muted-foreground">
-          Todavía no agregaste nada al carrito.
-        </p>
-        <Button asChild onClick={onNavigate}>
-          <Link href="/catalogo">Ir al catálogo</Link>
-        </Button>
-      </div>
-    );
+    return <EmptyCart onNavigate={onNavigate} />;
   }
 
   return (

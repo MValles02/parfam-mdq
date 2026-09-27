@@ -1,5 +1,3 @@
-export { Field as Field } from "@/components/admin/field";
-
 /** Numbered card for each creation step. */
 export function Step({
   number,

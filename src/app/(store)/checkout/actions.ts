@@ -25,7 +25,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type InvalidItem = { variantId: string; reason: InvalidReason };
 
-export type CheckoutResult =
+type CheckoutResult =
   | { ok: true; orderNumber: string; link: string }
   | {
       ok: false;

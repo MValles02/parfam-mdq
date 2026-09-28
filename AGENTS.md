@@ -141,8 +141,9 @@ the dev server blocks non-localhost origins otherwise.
 current test coverage covers reference record parsing, translation files,
 importer helpers, reference percentages, image type detection, R2 key
 validation, similar-products scoring, and checkout validation. Playwright
-and other end-to-end tooling are not installed. CI builds and publishes but does
-not run these checks.
+and other end-to-end tooling are not installed. CI
+(`.github/workflows/ci.yml`) runs these checks on every pull request, and
+they are required to merge.
 
 Optionally, `pnpm smoke` (see "Local smoke check" in `docs/deployment.md`) is a
 headless-Chromium check against a running `pnpm build && pnpm start`; it is not

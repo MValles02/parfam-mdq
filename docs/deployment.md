@@ -3,14 +3,17 @@
 The application is built as a multi-stage Docker image and published to GHCR by
 `.github/workflows/deploy.yml`. Dokploy runs the published image.
 
-A pull request only runs the `checks` job (typecheck, lint, test). On `main`,
-`checks` is followed by the `image` job, which logs in to GHCR with the
+`.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
+lint, test) on every pull request and is reused by `deploy.yml`. On `main`,
+`checks` is followed by the `publish` job, which logs in to GHCR with the
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
 so no separate registry credential is needed. The `deploy` job then POSTs the
-Dokploy webhook, with an optional verify step that polls `vars.HEALTH_URL`
-until its `sha` matches, when that repo variable is set. The only repo secret
-this workflow uses is `DOKPLOY_WEBHOOK_URL`.
+Dokploy webhook (failing if the `DOKPLOY_WEBHOOK_URL` secret is missing),
+waits until `vars.HEALTH_URL` reports status `ok` with the new commit SHA
+(failing if that repo variable is missing), then smoke-tests that the site's
+home page returns `200`. The only repo secret this workflow uses is
+`DOKPLOY_WEBHOOK_URL`.
 
 ## Build stages
 
@@ -200,12 +203,18 @@ dump before a release is an extra safety margin, not the only backup.
    runbook below, through `docker exec <db-container> psql -U parfam -d parfam
 -c '...'` instead of a tunneled `psql "$APP_URL"`.
 
-6. **Verify health from inside the container, not with a bare `curl` from
-   outside.** Cloudflare's Bot Fight Mode is deliberately kept ON for
-   `parfammdq.com`, so non-browser clients — `curl`, CI, uptime monitors —
-   get challenged (`cf-mitigated: challenge`, HTTP 403) instead of reaching
-   the app. That's also why `HEALTH_URL` is not set for this repo's CI. Check
-   health from inside the server, or via Dokploy logs, instead:
+6. **Verify health.** Cloudflare's Bot Fight Mode was turned OFF for
+   `parfammdq.com` on 2026-09-28 so non-browser clients — `curl`, CI, uptime
+   monitors — can reach the app instead of being challenged. `HEALTH_URL` is
+   set to `https://parfammdq.com/api/health` for this repo's CI, which is
+   what `deploy.yml` uses for the post-deploy health check and smoke test.
+   You can check health the same way:
+
+   ```bash
+   curl -fsS https://parfammdq.com/api/health
+   ```
+
+   Checking from inside the server still works too:
 
    ```bash
    docker exec <web-container> node -e \
@@ -386,8 +395,9 @@ comes only after the import and its checks succeed.
    create them, not the importer.
 
 9. **Merge the feature branch into `main` and push.** Only now does the code
-   reach `main`: `.github/workflows/deploy.yml` builds the image and, once
-   `DOKPLOY_WEBHOOK_URL` is configured, POSTs the Dokploy webhook to deploy it.
+   reach `main`: `.github/workflows/deploy.yml` builds the image and POSTs
+   the Dokploy webhook to deploy it (the `deploy` job fails if
+   `DOKPLOY_WEBHOOK_URL` is not configured).
    The new container's entrypoint runs `prisma migrate deploy` again, but it
    is now a no-op — step 5 already applied every migration in this branch to
    `$APP_URL`, so there is nothing pending. If auto-deploy is disabled or the
@@ -517,8 +527,10 @@ pnpm build
 ```
 
 A build needs the public build-time values above and a generated Prisma client.
-The CI workflow currently builds and publishes; its validation coverage should
-not be treated as a substitute for the local checks.
+The CI workflow (`checks` job) runs `pnpm typecheck`, `pnpm lint`, and `pnpm
+test`; it does not run `pnpm format`, `pnpm db:check-translations`, or `pnpm
+build`, so it should not be treated as a substitute for the local checks
+above.
 
 ## Local smoke check
 

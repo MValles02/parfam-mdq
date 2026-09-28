@@ -2,9 +2,12 @@
 #
 # The VPS has four shared vCPUs, so CI builds the image and the server only
 # pulls the completed artifact.
+#
+# Checks run on PRs and pushes; image + deploy only on main.
 name: Deploy
 
 on:
+  pull_request:
   push:
     branches: [main]
     # Documentation-only commits do not need an image rebuild or redeployment.
@@ -16,10 +19,9 @@ on:
 permissions: {}
 
 concurrency:
-  # Concurrent deployments could make Dokploy pull a partially pushed `latest`.
-  # Queue them instead of cancelling an in-progress deployment.
-  group: deploy-main
-  cancel-in-progress: false
+  # PRs: cancel superseded check runs. main: queue deployments so Dokploy never pulls a partially pushed `latest`.
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}', github.ref) || 'deploy-main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
@@ -60,6 +62,7 @@ jobs:
   image:
     name: Build and publish to GHCR
     needs: checks
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -109,6 +112,7 @@ jobs:
   deploy:
     name: Notify Dokploy
     needs: image
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions: {}
 
@@ -125,3 +129,10 @@ jobs:
           fi
           curl -fsS -X POST "$WEBHOOK"
           echo "Redeployment webhook sent."
+
+      - name: Verify deploy
+        if: vars.HEALTH_URL != ''
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+        run: |
+          for i in $(seq 30); do curl -fsS -m 10 "$HEALTH_URL" | jq -e --arg s "$GITHUB_SHA" '.status=="ok" and .sha==$s' && exit 0; sleep 10; done; exit 1

@@ -6,10 +6,10 @@ argument as untrusted input.
 
 ## Route Handlers
 
-| Method       | Route                     | Implementation                          | Contract                                             |
-| ------------ | ------------------------- | --------------------------------------- | ---------------------------------------------------- |
-| `GET`        | `/api/health`             | `src/app/api/health/route.ts`           | Executes `SELECT 1`; returns `{ status, database }`. |
-| `GET`/`POST` | `/api/auth/[...nextauth]` | Auth.js handlers from `src/lib/auth.ts` | Auth.js protocol endpoint.                           |
+| Method       | Route                     | Implementation                          | Contract                                                  |
+| ------------ | ------------------------- | --------------------------------------- | --------------------------------------------------------- |
+| `GET`        | `/api/health`             | `src/app/api/health/route.ts`           | Executes `SELECT 1`; returns `{ status, database, sha }`. |
+| `GET`/`POST` | `/api/auth/[...nextauth]` | Auth.js handlers from `src/lib/auth.ts` | Auth.js protocol endpoint.                                |
 
 `/api/health` is dynamic, returns `Cache-Control: no-store`, and is used by
 Docker/Dokploy health checks.

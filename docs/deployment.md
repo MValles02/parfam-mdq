@@ -101,8 +101,9 @@ Production Postgres runs as its own Dokploy service — container name prefixed
 attachable overlay network `dokploy-network`, with no port published to the
 host. Reach it with `docker exec` from the VPS, not a client connecting over a
 published port. Dokploy already takes a daily 03:00 backup of this database to
-a Cloudflare R2 destination named "Cloudflare Backups" (14 backups kept), so a
-manual dump before a release is an extra safety margin, not the only backup.
+the private `vps-dokploy-backups` bucket, under `<dokploy db appName>/daily/`
+(30 backups kept, plus a 45-day bucket lifecycle as a safety net), so a manual
+dump before a release is an extra safety margin, not the only backup.
 
 0. **Preconditions.** The dataset file and translations are ready (see
    `docs/modules/reference-data.md`), `pnpm db:check-translations` passes
@@ -203,9 +204,9 @@ manual dump before a release is an extra safety margin, not the only backup.
   (reference tables were empty, so the full reset runbook below was not
   needed): imported 140,228 references / 8,287 brands / 3,083 perfumers /
   2,581 notes / 92 accords (2 out-of-range years); AVIF generation confirmed
-  working in production; the R2 cleanup step was skipped because the bucket
-  is shared with local development (see the open finding in
-  `docs/findings.md`).
+  working in production; the R2 cleanup step was skipped because dev and prod
+  still pointed at the same bucket at the time (since resolved; see "R2
+  bucket isolation" in `docs/findings.md`).
 
 ## Full reset runbook (when a migration cannot apply over existing reference rows)
 
@@ -410,15 +411,10 @@ comes only after the import and its checks succeed.
     `products/` prefix (see `PRODUCT_STORAGE_PREFIX` in `src/lib/r2.ts`) —
     nothing else lives in the bucket.
 
-    > **Warning: local development and production currently configure the
-    > same R2 bucket** (see the open finding in `docs/findings.md`). The
-    > `referenced-keys.txt` query below must run against **every** database
-    > that points at this bucket — union the `storageKey` values from
-    > production **and** from any local/dev database — not just `$APP_URL`,
-    > or a key that only a developer's database references still looks
-    > unreferenced from production's point of view and gets deleted. If a
-    > dev-only bucket or key prefix (see the finding's recommendation) is not
-    > in place yet, skip this step instead of guessing at the union.
+    > Dev and prod use separate buckets (`parfam-mdq-imagenes-dev` and
+    > `parfam-mdq-imagenes`; see "R2 bucket isolation" in
+    > `docs/findings.md`), so the `referenced-keys.txt` query below only
+    > needs `$APP_URL` — no dev-only key can appear as unreferenced here.
 
     ```bash
     export R2_BUCKET="<r2-bucket-name>"

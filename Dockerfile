@@ -124,6 +124,10 @@ COPY --chown=nextjs:nodejs prisma/migrations ./migrations/prisma/migrations
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Lets /api/health report which image is running.
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
+
 USER nextjs
 EXPOSE 3000
 

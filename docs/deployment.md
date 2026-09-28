@@ -9,11 +9,15 @@ lint, test) on every pull request and is reused by `deploy.yml`. On `main`,
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
 so no separate registry credential is needed. The `deploy` job then POSTs the
-Dokploy webhook (failing if the `DOKPLOY_WEBHOOK_URL` secret is missing),
-waits until `vars.HEALTH_URL` reports status `ok` with the new commit SHA
-(failing if that repo variable is missing), then smoke-tests that the site's
-home page returns `200`. The only repo secret this workflow uses is
-`DOKPLOY_WEBHOOK_URL`.
+Dokploy webhook, sending `CF-Access-Client-Id`/`CF-Access-Client-Secret`
+headers with a Cloudflare Access service token (`github-actions-deploy`),
+because `dokploy.mateovalles.cloud/api/deploy*` is protected by Cloudflare
+Access; the step fails if `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, or
+`CF_ACCESS_CLIENT_SECRET` is missing. It then waits until `vars.HEALTH_URL`
+reports status `ok` with the new commit SHA (failing if that repo variable is
+missing), then smoke-tests that the site's home page returns `200`. The repo
+secrets this workflow uses are `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`,
+and `CF_ACCESS_CLIENT_SECRET`.
 
 ## Build stages
 
@@ -397,7 +401,8 @@ comes only after the import and its checks succeed.
 9. **Merge the feature branch into `main` and push.** Only now does the code
    reach `main`: `.github/workflows/deploy.yml` builds the image and POSTs
    the Dokploy webhook to deploy it (the `deploy` job fails if
-   `DOKPLOY_WEBHOOK_URL` is not configured).
+   `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, or `CF_ACCESS_CLIENT_SECRET`
+   is not configured).
    The new container's entrypoint runs `prisma migrate deploy` again, but it
    is now a no-op — step 5 already applied every migration in this branch to
    `$APP_URL`, so there is nothing pending. If auto-deploy is disabled or the

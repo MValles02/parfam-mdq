@@ -18,7 +18,7 @@ export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return NextResponse.json(
-      { status: "ok", database: "ok" },
+      { status: "ok", database: "ok", sha: process.env.GIT_SHA ?? null },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

@@ -11,20 +11,18 @@ URL is signed, and that validated size is bound into the signature itself:
 accepts a PUT body of exactly the size the server checked, not an arbitrary
 one sent within the URL's expiration window.
 
-Product image keys use `products/`; development seed images use
-`products/dev/`. The fresh prelaunch database has no rows with old
-`productos/` keys. Any deployed database still storing those keys must be
-reset or migrated before this version is deployed. Existing R2 objects under
-that old prefix can be deleted after confirming no deployed instance still
-uses them. Database rows store a key, then public views derive the URL from
-`R2_PUBLIC_URL`.
+Product image keys use `products/`. The legacy `productos/` prefix and the
+`products/dev/` fixtures are gone from the production bucket. Database rows
+store a key, then public views derive the URL from `R2_PUBLIC_URL`.
 
-Local development and production currently configure the same `R2_BUCKET` —
-there is no separate development bucket or dev-only prefix beyond
-`products/dev/`. This makes any cleanup that deletes bucket keys unreferenced
-by one database's rows unsafe to run against production alone; see the open
-finding "Development and production share the R2 bucket" in
-`docs/findings.md`.
+Local development uses its own bucket, `parfam-mdq-imagenes-dev`, public via
+its r2.dev URL, with CORS restricted to `http://localhost:3000`. Production
+uses `parfam-mdq-imagenes`, public only via the custom domain
+`https://img.parfammdq.com` (its r2.dev URL is disabled), with CORS
+restricted to `parfammdq.com` and `www.parfammdq.com`. Each bucket has its own
+R2 API token scoped to it (Object Read & Write), so a dev token can never
+touch production's bucket, and R2 cleanup can safely scope to one database's
+keys; see "R2 bucket isolation" in `docs/findings.md`.
 
 `R2_BUCKET` currently names a bucket linked to the public image host. Its
 Spanish resource name can stay because it is an external infrastructure

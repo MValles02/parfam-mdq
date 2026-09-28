@@ -203,12 +203,18 @@ dump before a release is an extra safety margin, not the only backup.
    runbook below, through `docker exec <db-container> psql -U parfam -d parfam
 -c '...'` instead of a tunneled `psql "$APP_URL"`.
 
-6. **Verify health from inside the container, not with a bare `curl` from
-   outside.** Cloudflare's Bot Fight Mode is deliberately kept ON for
-   `parfammdq.com`, so non-browser clients — `curl`, CI, uptime monitors —
-   get challenged (`cf-mitigated: challenge`, HTTP 403) instead of reaching
-   the app. That's also why `HEALTH_URL` is not set for this repo's CI. Check
-   health from inside the server, or via Dokploy logs, instead:
+6. **Verify health.** Cloudflare's Bot Fight Mode was turned OFF for
+   `parfammdq.com` on 2026-09-28 so non-browser clients — `curl`, CI, uptime
+   monitors — can reach the app instead of being challenged. `HEALTH_URL` is
+   set to `https://parfammdq.com/api/health` for this repo's CI, which is
+   what `deploy.yml` uses for the post-deploy health check and smoke test.
+   You can check health the same way:
+
+   ```bash
+   curl -fsS https://parfammdq.com/api/health
+   ```
+
+   Checking from inside the server still works too:
 
    ```bash
    docker exec <web-container> node -e \

@@ -3,6 +3,15 @@
 The application is built as a multi-stage Docker image and published to GHCR by
 `.github/workflows/deploy.yml`. Dokploy runs the published image.
 
+A pull request only runs the `checks` job (typecheck, lint, test). On `main`,
+`checks` is followed by the `image` job, which logs in to GHCR with the
+built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
+`latest`/`sha-*` tags — the GHCR package inherits access from this repository,
+so no separate registry credential is needed. The `deploy` job then POSTs the
+Dokploy webhook, with an optional verify step that polls `vars.HEALTH_URL`
+until its `sha` matches, when that repo variable is set. The only repo secret
+this workflow uses is `DOKPLOY_WEBHOOK_URL`.
+
 ## Build stages
 
 | Stage        | Responsibility                                                                                  |
@@ -96,13 +105,17 @@ is the actual procedure used to ship `20260925201541_reference_dataset_v2` on
 "Full reset runbook" below (written for the case where migrating over
 existing rows would fail) was not needed.
 
-Production Postgres runs as its own Dokploy service — container name prefixed
-`parfammdq-database-oqwwzm`, database and user both `parfam` — on the
+Production Postgres runs as its own Dokploy service — appName/host
+`parfammdq-db-v2-guduob`, database and user both `parfam` — on the
 attachable overlay network `dokploy-network`, with no port published to the
 host. Reach it with `docker exec` from the VPS, not a client connecting over a
-published port. Dokploy already takes a daily 03:00 backup of this database to
-the private `vps-dokploy-backups` bucket, under `<dokploy db appName>/daily/`
-(30 backups kept, plus a 45-day bucket lifecycle as a safety net), so a manual
+published port. Dokploy already backs up this database to the private
+`vps-dokploy-backups` R2 bucket: hourly (`0 * * * *`, 48 kept) and daily at
+03:30 UTC (30 kept), under
+`parfammdq-db-v2-guduob/postgres/parfam/{hourly,daily}/`, with a 60-day bucket
+lifecycle and a 14-day bucket lock on the daily prefix. **Never restore with
+Dokploy's "Duplicate/copy"** — restore into a newly created DB instead (see
+`infra/backups.md` for the full schedule, lock, and restore details). A manual
 dump before a release is an extra safety margin, not the only backup.
 
 0. **Preconditions.** The dataset file and translations are ready (see
@@ -188,10 +201,11 @@ dump before a release is an extra safety margin, not the only backup.
 -c '...'` instead of a tunneled `psql "$APP_URL"`.
 
 6. **Verify health from inside the container, not with a bare `curl` from
-   outside.** Cloudflare answers an external `curl` request to `/api/health`
-   with a bot challenge (`cf-mitigated: challenge`, HTTP 403) instead of
-   reaching the app, so check from inside the web container, or use a real
-   browser:
+   outside.** Cloudflare's Bot Fight Mode is deliberately kept ON for
+   `parfammdq.com`, so non-browser clients — `curl`, CI, uptime monitors —
+   get challenged (`cf-mitigated: challenge`, HTTP 403) instead of reaching
+   the app. That's also why `HEALTH_URL` is not set for this repo's CI. Check
+   health from inside the server, or via Dokploy logs, instead:
 
    ```bash
    docker exec <web-container> node -e \

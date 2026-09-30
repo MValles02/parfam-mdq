@@ -84,7 +84,7 @@ export function CartItemRow({
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] font-bold tracking-[0.18em] text-muted-foreground uppercase">
+            <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground uppercase lg:text-[9px]">
               {item.brandName}
             </span>
             <Link

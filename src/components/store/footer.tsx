@@ -16,7 +16,7 @@ const STORE_LINKS = [
 ] as const;
 
 const COLUMN_TITLE_CLASS =
-  "text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase";
+  "text-[11px] lg:text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase";
 
 /** Store footer with desktop and mobile layouts. */
 export async function Footer() {

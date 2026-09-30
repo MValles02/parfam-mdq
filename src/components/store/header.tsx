@@ -135,7 +135,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
-                className="contents"
+                className="flex"
               >
                 <CartBadge variant="chip" />
               </button>
@@ -161,7 +161,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
-                className="contents"
+                className="flex"
               >
                 <CartBadge variant="button" />
               </button>

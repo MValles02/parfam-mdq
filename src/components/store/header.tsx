@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/store/cart-badge";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Logo } from "@/components/store/logo";
@@ -145,7 +146,11 @@ export function Header() {
 
         {/* Mobile */}
         <div className="flex items-center justify-between px-5 py-[18px] lg:hidden">
-          <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
+          <Link
+            href="/"
+            aria-label={`Ir al inicio de ${siteDefaults.name}`}
+            className="relative before:absolute before:inset-x-0 before:-inset-y-2"
+          >
             <Logo size="header" />
           </Link>
           <div className="flex items-center gap-2">
@@ -177,7 +182,11 @@ export function Header() {
                   <Menu className="size-[19px]" strokeWidth={1.6} />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="gap-0 px-0">
+              <SheetContent
+                side="right"
+                showCloseButton={false}
+                className="gap-0 px-0"
+              >
                 <SheetHeader>
                   {/* Hidden because Radix requires an accessible title even
                       when the panel design has no visible heading. */}
@@ -208,6 +217,19 @@ export function Header() {
                     </SheetClose>
                   ))}
                 </nav>
+                <SheetClose asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn(
+                      "absolute top-1 right-1 size-11 lg:top-3 lg:right-3 lg:size-7",
+                      FOCUS_VISIBLE,
+                    )}
+                  >
+                    <XIcon />
+                    <span className="sr-only">Cerrar</span>
+                  </Button>
+                </SheetClose>
               </SheetContent>
             </Sheet>
           </div>

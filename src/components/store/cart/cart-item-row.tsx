@@ -82,7 +82,7 @@ export function CartItemRow({
       </Link>
 
       <div className="flex flex-1 flex-col gap-1">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-1 lg:gap-2">
           <div className="flex flex-col gap-0.5">
             <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground uppercase lg:text-[9px]">
               {item.brandName}
@@ -102,20 +102,20 @@ export function CartItemRow({
             type="button"
             aria-label={`Quitar ${item.productName} del carrito`}
             onClick={() => remove(item.variantId)}
-            className="shrink-0 p-1 text-muted-foreground hover:text-foreground"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center p-1 text-muted-foreground hover:text-foreground lg:min-h-0 lg:min-w-0"
           >
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between gap-2">
           <div className="flex items-center rounded border border-border bg-background">
             <button
               type="button"
               aria-label="Quitar una unidad"
               onClick={() => updateQuantity(item.variantId, item.qty - 1)}
               disabled={item.qty <= 1}
-              className="p-2 text-muted-foreground disabled:opacity-40"
+              className="flex min-h-11 min-w-11 items-center justify-center p-2 text-muted-foreground disabled:opacity-40 lg:min-h-0 lg:min-w-0"
             >
               <Minus className="size-3.5" />
             </button>
@@ -127,7 +127,7 @@ export function CartItemRow({
               aria-label="Agregar una unidad"
               onClick={() => updateQuantity(item.variantId, item.qty + 1)}
               disabled={item.qty >= MAX_QUANTITY}
-              className="p-2 disabled:opacity-40"
+              className="flex min-h-11 min-w-11 items-center justify-center p-2 disabled:opacity-40 lg:min-h-0 lg:min-w-0"
             >
               <Plus className="size-3.5" />
             </button>

@@ -51,7 +51,7 @@ export function Hero() {
 
       <a
         href="#catalogo"
-        className="absolute bottom-9 z-10 flex flex-col items-center gap-2.5 text-[11px] font-bold tracking-[0.3em] text-background underline-offset-4 hover:underline lg:bottom-11 lg:text-[10px] lg:tracking-[0.34em]"
+        className="absolute bottom-9 z-10 flex flex-col items-center gap-2.5 text-[11px] font-bold tracking-[0.3em] text-background underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-1 hover:underline lg:bottom-11 lg:text-[10px] lg:tracking-[0.34em] lg:before:content-none"
       >
         VER CATÁLOGO
         <ChevronDown className="size-4 lg:size-[18px]" />

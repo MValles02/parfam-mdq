@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, XIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import {
   Sheet,
@@ -10,7 +10,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 import {
   countActiveCatalogFilters,
   catalogFilterQueryOptions,
@@ -67,6 +68,7 @@ export function FilterDrawer({
 
       <SheetContent
         side="bottom"
+        showCloseButton={false}
         className="flex max-h-[88dvh] flex-col gap-0 rounded-t-xl border-border px-5 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
       >
         <SheetTitle className="text-[22px] font-extrabold tracking-[-0.02em]">
@@ -120,6 +122,20 @@ export function FilterDrawer({
             </button>
           </SheetClose>
         </div>
+
+        <SheetClose asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className={cn(
+              "absolute top-1 right-1 size-11 lg:top-3 lg:right-3 lg:size-7",
+              FOCUS_VISIBLE,
+            )}
+          >
+            <XIcon />
+            <span className="sr-only">Cerrar</span>
+          </Button>
+        </SheetClose>
       </SheetContent>
     </Sheet>
   );

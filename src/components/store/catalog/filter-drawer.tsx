@@ -68,7 +68,7 @@ export function FilterDrawer({
 
       <SheetContent
         side="bottom"
-        className="flex max-h-[88vh] flex-col gap-0 rounded-t-xl border-border px-5 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        className="flex max-h-[88dvh] flex-col gap-0 rounded-t-xl border-border px-5 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
       >
         <SheetTitle className="text-[22px] font-extrabold tracking-[-0.02em]">
           Filtros

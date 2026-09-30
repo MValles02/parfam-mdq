@@ -35,6 +35,7 @@ Cloudflare R2. The repository is a single application, not a monorepo.
 | [persistence.md](persistence.md)             | Understand tables, relationships, and migrations.          |
 | [integrations.md](integrations.md)           | Configure R2, WhatsApp, analytics, and environment values. |
 | [deployment.md](deployment.md)               | Build and deploy the application.                          |
+| [WORKFLOW.md](WORKFLOW.md)                   | Branching, commits, pull requests, and the CI gate.        |
 | [user-flows.md](user-flows.md)               | Browse end-to-end flows.                                   |
 | [findings.md](findings.md)                   | Review known risks and resolved findings.                  |
 

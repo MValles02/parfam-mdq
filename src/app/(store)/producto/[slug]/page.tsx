@@ -96,7 +96,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
         }}
       />
 
-      <div className="mx-auto max-w-page px-5 lg:px-16">
+      <div className="mx-auto max-w-page px-5 pb-24 lg:px-16 lg:pb-0">
         <p className="pt-5 text-xs text-muted-foreground">
           <Link href="/catalogo" className="hover:text-foreground">
             Catálogo

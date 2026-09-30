@@ -10,7 +10,7 @@
 
 ## Migration
 
-<!-- None, or: the migration and whether it is backward-compatible with the running release. -->
+<!-- None, or: the migration, and whether the previous release still works against the migrated schema (deploys are start-first: old and new containers overlap on the same DB). Destructive changes (drop/rename) go in a later release. -->
 
 ## Screenshots
 

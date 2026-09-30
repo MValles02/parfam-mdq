@@ -31,3 +31,10 @@ docker-compose.dev.yml
 Dockerfile
 .dockerignore
 *.md
+
+# Keys and credentials: never part of the build context.
+*.pem
+*.key
+.claude
+.prettierignore
+.lintstagedrc.json

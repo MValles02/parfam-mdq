@@ -26,7 +26,6 @@ import {
   NoteSelect,
   PriceSelect,
 } from "./filter-controls";
-import { CatalogSearch } from "./search";
 
 /**
  * Mobile filter drawer. The applied-filter count is derived from URL state in
@@ -75,14 +74,6 @@ export function FilterDrawer({
         </SheetTitle>
 
         <div className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto">
-          {/* Mobile users only access text search from this drawer. */}
-          <div className="flex flex-col gap-[11px]">
-            <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Buscar
-            </span>
-            <CatalogSearch height="h-[50px]" />
-          </div>
-
           <div className="flex flex-col gap-[11px]">
             <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
               Género

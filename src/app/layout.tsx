@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { getSiteSettings } from "@/lib/settings";
@@ -9,6 +9,9 @@ const outfit = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
 });
+
+// Lets bottom-fixed surfaces pad for device insets via env(safe-area-inset-*).
+export const viewport: Viewport = { viewportFit: "cover" };
 
 /**
  * The brand name is fixed (`siteDefaults.name`), but

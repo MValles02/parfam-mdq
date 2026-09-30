@@ -32,7 +32,7 @@ export function CartDrawer({ close }: { close: () => void }) {
       </div>
 
       {hydrated && items.length > 0 ? (
-        <div className="border-t border-border px-7 py-6">
+        <div className="border-t border-border px-7 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <CartSummary onNavigate={close} />
         </div>
       ) : null}

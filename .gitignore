@@ -36,8 +36,7 @@ pnpm-debug.log*
 
 # Configuracion local y memoria de agentes de Claude Code: son de esta
 # maquina, no del proyecto. Solo `settings.json` se versiona.
-.claude/*
-!.claude/settings.json
+.claude/
 
 # Testing
 /coverage

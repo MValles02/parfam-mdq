@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Search } from "lucide-react";
@@ -32,6 +32,44 @@ const MOBILE_ICON_BUTTON_CLASS = cn(
   FOCUS_VISIBLE,
 );
 
+const HIDE_DELTA_PX = 8;
+const HEADER_HEIGHT_PX = 90;
+
+/**
+ * Reports whether the mobile header should be hidden: true after scrolling
+ * down more than HIDE_DELTA_PX past the header height, false on any scroll up
+ * or near the top. Starts visible so SSR and the first render match.
+ */
+function useHideOnScrollDown() {
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const y = window.scrollY;
+      if (y < HEADER_HEIGHT_PX || y < lastY) {
+        setHidden(false);
+        lastY = y;
+      } else if (y - lastY > HIDE_DELTA_PX) {
+        setHidden(true);
+        lastY = y;
+      }
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return hidden;
+}
+
 /**
  * Store header with desktop and mobile layouts. The mobile menu button and its
  * Sheet make content pages reachable on mobile.
@@ -41,6 +79,9 @@ export function Header() {
   // This component owns the cart Sheet because the drawer's "Finalizar pedido
   // por WhatsApp" CTA must close it when navigating (see cart-drawer.tsx).
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
+  const scrolledDown = useHideOnScrollDown();
+  const hidden = scrolledDown && !hasFocus && !isCartOpen;
   const quantity = useCartQuantity();
   const cartAccessibleLabel = cartLabel(quantity);
 
@@ -54,7 +95,18 @@ export function Header() {
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-      <header>
+      <header
+        // Only keyboard focus pins the header; a tap leaves focus on the
+        // button, which would otherwise disable hide-on-scroll afterwards.
+        onFocusCapture={(event) =>
+          setHasFocus(event.target.matches(":focus-visible"))
+        }
+        onBlurCapture={() => setHasFocus(false)}
+        className={cn(
+          "sticky top-0 z-30 bg-background transition-transform duration-200 motion-reduce:transition-none lg:static lg:translate-y-0 lg:bg-transparent",
+          hidden && "-translate-y-full",
+        )}
+      >
         <span role="status" className="sr-only">
           {cartAccessibleLabel}
         </span>

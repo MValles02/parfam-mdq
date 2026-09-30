@@ -35,9 +35,8 @@ pnpm-debug.log*
 /src/generated/prisma
 
 # Configuracion local y memoria de agentes de Claude Code: son de esta
-# maquina, no del proyecto. Solo `settings.json` se versiona.
-.claude/*
-!.claude/settings.json
+# maquina, no del proyecto.
+.claude/
 
 # Testing
 /coverage

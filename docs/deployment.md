@@ -1,11 +1,12 @@
 # Deployment
 
 The application is built as a multi-stage Docker image and published to GHCR by
-`.github/workflows/deploy.yml`. Dokploy runs the published image.
+`.github/workflows/deploy.yml` on pushes to `main` (production) and `develop`
+(development). Dokploy runs the published image.
 
 `.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
-lint, test) on every pull request and is reused by `deploy.yml`. On `main`,
-`checks` is followed by the `publish` job, which logs in to GHCR with the
+lint, test) on every pull request and is reused by `deploy.yml`. On `main` and
+`develop`, `checks` is followed by the `publish` job, which logs in to GHCR with the
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
 so no separate registry credential is needed. The `deploy` job then POSTs the
@@ -18,6 +19,28 @@ reports status `ok` with the new commit SHA (failing if that repo variable is
 missing), then smoke-tests that the site's home page returns `200`. The repo
 secrets this workflow uses are `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`,
 and `CF_ACCESS_CLIENT_SECRET`.
+
+## Development environment
+
+Pushes to `develop` build `ghcr.io/mvalles02/parfam-mdq:develop` (never
+`latest`) and deploy it to the `development` environment of the Dokploy
+project. It is served at https://dev.parfammdq.com behind Cloudflare Access;
+the service token `github-actions-deploy` must be allowed by that policy
+because the health check and smoke test send its headers.
+
+The `develop` run uses these extra repo settings instead of the production
+ones: variables `DEV_NEXT_PUBLIC_SITE_URL`, `DEV_R2_PUBLIC_URL`, and
+`DEV_HEALTH_URL`, and secret `DOKPLOY_WEBHOOK_URL_DEV`.
+
+The dev database is a separate PostgreSQL service (`database-dev`) with no
+backups. `parfam-dev-refresh.sh` (in the `infra` repo, `files/`, on the VPS)
+rebuilds it from a production `pg_dump`; it only reads from production. The
+script stops the dev app, drops and restores the dev database, replaces every
+`User` row with the test user `test@parfammdq.com`, sets the WhatsApp number
+to a test number, copies the product images referenced by `ProductImage` from
+the public production image URL into the dev bucket, and starts the dev app so
+its entrypoint applies any migration that `develop` has and production does
+not. Orders are kept as copied. Run it on demand or from its schedule.
 
 ## Build stages
 

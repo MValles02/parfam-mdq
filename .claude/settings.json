@@ -1,5 +1,0 @@
-{
-  "permissions": {
-    "deny": ["Read(node_modules/**)", "Read(!node_modules/next/dist/docs/**)"]
-  }
-}

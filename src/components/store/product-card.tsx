@@ -26,7 +26,7 @@ export function ProductCard({
     >
       <div className="relative isolate h-[180px] border-b bg-background sm:h-[260px]">
         {product.badge ? (
-          <span className="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1.5 text-[9px] leading-none font-bold tracking-[0.16em] text-primary-foreground">
+          <span className="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1.5 text-[11px] leading-none font-bold tracking-[0.16em] text-primary-foreground sm:text-[9px]">
             {product.badge}
           </span>
         ) : null}
@@ -38,14 +38,14 @@ export function ProductCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-3.5 sm:p-[18px]">
-        <span className="text-[9px] font-bold tracking-[0.18em] text-muted-foreground uppercase sm:text-[10px]">
+        <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground uppercase sm:text-[10px]">
           {product.brandName}
         </span>
         <Heading className="text-sm leading-tight font-bold tracking-[-0.015em] sm:text-lg">
           {product.name}
         </Heading>
         {product.metadata ? (
-          <p className="hidden text-xs text-muted-foreground sm:block">
+          <p className="line-clamp-1 text-xs text-muted-foreground sm:line-clamp-none">
             {product.metadata}
           </p>
         ) : null}
@@ -53,9 +53,7 @@ export function ProductCard({
         <div className="mt-auto flex items-baseline gap-1.5 pt-2">
           {product.startingPrice ? (
             <>
-              <span className="text-[10px] text-muted-foreground sm:text-[11px]">
-                desde
-              </span>
+              <span className="text-[11px] text-muted-foreground">desde</span>
               <span className="text-base font-bold tracking-[-0.02em] sm:text-xl">
                 {formatArsPrice(product.startingPrice)}
               </span>
@@ -66,6 +64,12 @@ export function ProductCard({
             </span>
           )}
         </div>
+
+        {product.sizes.length > 0 ? (
+          <p className="truncate text-[11px] font-semibold text-muted-foreground sm:hidden">
+            {product.sizes.join(" · ")}
+          </p>
+        ) : null}
 
         {product.sizes.length > 0 ? (
           <div className="hidden gap-1.5 pt-1 sm:flex">

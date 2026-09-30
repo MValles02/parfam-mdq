@@ -89,62 +89,28 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
 
 ## Data
 
-`new-database/perfumes.jsonl` (140,228 reference-fragrance records, ~556 MB,
-gitignored, local only) is the reference dataset; see
-`docs/modules/reference-data.md` for its shape and the import workflow. Locally
-it is imported from the developer machine with `pnpm db:import-references`;
-production imports instead run from the VPS in a temporary container attached
-to the Dokploy network — see "Updating the reference dataset in production" in
-`docs/deployment.md`. Every note display name (2,581) and accord (92,
-with a `#RRGGBB` color) is translated in `prisma/reference/notes.es.json` and
-`prisma/reference/accords.es.json`; `pnpm db:check-translations` verifies
-coverage, and the importer refuses to write if any translation is missing.
+Reference dataset (`new-database/perfumes.jsonl`, gitignored, ~556 MB): never read it directly; see
+`docs/modules/reference-data.md`. Note/accord translations live in `prisma/reference/*.es.json`;
+`pnpm db:check-translations` must pass before any import.
 
-The Fragrantica reference description is in English and **never public**; it
-is internal panel reference material. A reference picture may be published,
-but only as a single copy: when an administrator adopts a reference, the
-server downloads it from fimgs.net into R2 (`importReferencePicture` in
-`src/app/admin/(panel)/productos/image-actions.ts`). The store never
-hotlinks fimgs.net, and images are never bulk-downloaded. Public store copy
-is written in Spanish by an administrator and does not name Fragrantica.
+The Fragrantica description is internal-only and never public. A reference picture is copied once into R2
+when an admin adopts it (`importReferencePicture` in `src/app/admin/(panel)/productos/image-actions.ts`);
+never hotlink or bulk-download fimgs.net. Public copy is admin-written Spanish and never names Fragrantica.
 
-Applied migrations are historical artifacts: **do not edit them**, including
-their comments. Create a new migration for a schema change.
+Applied migrations are historical: never edit them; create a new migration.
 
 ## Commands
 
 ```bash
-pnpm dev          # development server
-pnpm build        # production build (prisma generate + next build)
-pnpm typecheck    # tsc --noEmit
-pnpm lint         # eslint
-pnpm format       # prettier --write
-pnpm db:up        # local PostgreSQL (Docker Compose, port 5433)
-pnpm db:down
-pnpm db:migrate   # prisma migrate dev
-pnpm db:seed      # admin user + singleton SiteSetting row
-pnpm db:seed:fixtures  # dev-only sample catalog (refuses non-local DATABASE_URL)
-pnpm db:import-references    # reference catalog (script: scripts/import-references.ts;
-                              # accepts file PATH, limit N, batch-size N, translations-dir DIR —
-                              # pnpm forwards `--` literally here, so pass flags without it)
-pnpm db:check-translations    # verifies note/accord translation coverage
-pnpm smoke        # headless Chromium smoke check against a running `pnpm start` (see docs/deployment.md)
+pnpm dev | build | typecheck | lint | test | format
+pnpm db:up | db:down | db:migrate | db:seed | db:seed:fixtures
+pnpm db:import-references   # flags without `--`; see docs/modules/reference-data.md
+pnpm db:check-translations
+pnpm smoke                  # optional, against `pnpm start`; see docs/deployment.md
 ```
 
-To reach `pnpm dev` from another machine, open an SSH tunnel
-(`ssh -N -L 3100:localhost:3100 user@host`) and browse `http://localhost:3100`;
-the dev server blocks non-localhost origins otherwise.
+Remote dev: `ssh -N -L 3100:localhost:3100 user@host`, then `http://localhost:3100`.
 
 ## Before declaring work complete
 
-`pnpm typecheck`, `pnpm lint`, and `pnpm test` (Vitest) must pass cleanly. The
-current test coverage covers reference record parsing, translation files,
-importer helpers, reference percentages, image type detection, R2 key
-validation, similar-products scoring, and checkout validation. Playwright
-and other end-to-end tooling are not installed. CI
-(`.github/workflows/ci.yml`) runs these checks on every pull request, and
-they are required to merge.
-
-Optionally, `pnpm smoke` (see "Local smoke check" in `docs/deployment.md`) is a
-headless-Chromium check against a running `pnpm build && pnpm start`; it is not
-required to declare work complete.
+`pnpm typecheck`, `pnpm lint`, `pnpm test` must pass (CI requires them). No Playwright/E2E installed.

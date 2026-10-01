@@ -5,22 +5,22 @@ import Link from "next/link";
 import { MessageCircle, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart, useHydrated } from "@/lib/cart";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { buildWhatsAppLink, isValidWhatsAppLink } from "@/lib/whatsapp";
 
 /**
  * `/pedido/[number]/gracias` is public and its order number is guessable:
  * "PM-0043" trivially follows "PM-0042". This page never queries the
- * database by `number`. It only uses the newly generated `link` from the
- * `/checkout` query string, so guessing an order number exposes no customer
- * details. Without the link, every order number receives the same fallback.
+ * database by `number`. It only uses the `link` that checkout stored in this
+ * tab's sessionStorage (never in the URL, which would leak the customer's name
+ * and order contents), so guessing an order number exposes no customer
+ * details. Without the link (reload in a new tab, other device), every order
+ * number receives the same fallback.
  */
 export function CustomerThanks({
   number,
-  link,
   whatsappNumber,
 }: {
   number: string;
-  link: string | null;
   /** `SiteSetting.whatsappNumber`, used by the fallback `href` below. */
   whatsappNumber: string;
 }) {
@@ -37,6 +37,13 @@ export function CustomerThanks({
   }, [hydrated]);
 
   if (!hydrated) return null;
+
+  // sessionStorage is client input: apply the same host check as any link.
+  let stored: string | null = null;
+  try {
+    stored = sessionStorage.getItem(`whatsapp-link:${number}`);
+  } catch {}
+  const link = stored && isValidWhatsAppLink(stored) ? stored : null;
 
   // Checkout already opened the popup synchronously with the click. There is
   // no user gesture here, so retrying `window.open` automatically would be

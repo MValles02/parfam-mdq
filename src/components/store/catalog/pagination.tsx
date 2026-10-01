@@ -22,11 +22,15 @@ function getPageHref(
   page: number,
   fixedBrand?: string,
 ): string {
-  return serializeCatalogFilters({
-    ...filters,
-    brand: fixedBrand ? null : filters.brand,
-    page,
-  });
+  // Page 1 with no other filters serializes to "", and `href=""` resolves to
+  // the current URL (stuck on the current page); "?" clears the query instead.
+  return (
+    serializeCatalogFilters({
+      ...filters,
+      brand: fixedBrand ? null : filters.brand,
+      page,
+    }) || "?"
+  );
 }
 
 /** Returns page numbers with ellipses where the range is discontinuous. */

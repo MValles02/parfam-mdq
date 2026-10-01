@@ -1,6 +1,7 @@
 # Image build and Dokploy redeployment for both environments: pushes to `main`
 # deploy production, pushes to `develop` deploy the development environment
-# (dev.parfammdq.com).
+# (dev.parfammdq.com). Deploy secrets live in the `production`/`development`
+# GitHub environments, not at repository level.
 #
 # The VPS has four shared vCPUs, so CI builds the image and the server only
 # pulls the completed artifact.
@@ -89,12 +90,13 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
     permissions: {}
 
     steps:
       - name: Trigger Dokploy deploy
         env:
-          WEBHOOK: ${{ github.ref == 'refs/heads/main' && secrets.DOKPLOY_WEBHOOK_URL || secrets.DOKPLOY_WEBHOOK_URL_DEV }}
+          WEBHOOK: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |

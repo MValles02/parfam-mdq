@@ -27,3 +27,25 @@ pnpm test
 ## Migrations and deploys
 
 Migration ordering and the deploy pipeline are described in [deployment.md](deployment.md).
+
+## Environments and promotion
+
+- `develop` is the integration branch. Every push deploys
+  https://dev.parfammdq.com (image tag `:develop`, `development` GitHub
+  environment).
+- `main` is production (`production` GitHub environment).
+- Feature branches merge into `develop` with a **squash** merge.
+- `develop` is promoted to `main` through a pull request with a **merge
+  commit**. Never squash the promotion: it creates a commit on `main` that
+  `develop` does not have, so the branches diverge.
+
+Open the promotion PR with the template, then paste the changelog under
+`## Changelog`:
+
+```bash
+gh pr create --base main --head develop --template .github/PULL_REQUEST_TEMPLATE/promotion.md
+git log --first-parent --format='- %s' origin/main..origin/develop
+```
+
+`gh pr create --template` takes a file path, not a template name. In the web UI
+use `?template=promotion.md` in the compare URL instead.

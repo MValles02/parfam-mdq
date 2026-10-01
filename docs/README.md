@@ -75,6 +75,7 @@ pnpm build
 pnpm typecheck
 pnpm lint
 pnpm test
+pnpm test:e2e
 pnpm format
 pnpm db:up
 pnpm db:migrate

@@ -47,3 +47,78 @@ jobs:
 
       - name: Test
         run: pnpm run test
+
+  e2e:
+    name: e2e
+    # Skipped when deploy.yml reuses this workflow on push.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: e2e
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U e2e -d e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Fixed throwaway test values; none of these are secrets.
+      DATABASE_URL: "postgresql://e2e:e2e@localhost:5432/e2e?schema=public"
+      AUTH_SECRET: "e2e-only-auth-secret-not-for-production-use"
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      R2_ACCOUNT_ID: "e2e-placeholder"
+      R2_ACCESS_KEY_ID: "e2e-placeholder"
+      R2_SECRET_ACCESS_KEY: "e2e-placeholder"
+      R2_BUCKET: "e2e-placeholder"
+      R2_PUBLIC_URL: "https://r2.invalid"
+      ADMIN_SEED_EMAIL: "e2e-admin@example.test"
+      ADMIN_SEED_PASSWORD: "e2e-throwaway-password"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      - name: Seed admin user
+        run: pnpm db:seed
+
+      - name: Seed fixtures
+        run: pnpm db:seed:fixtures
+
+      - name: E2E tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

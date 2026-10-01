@@ -51,7 +51,6 @@ const FIXTURE_PUBLISHED_SLUGS = [
 
 const STORE_PAGES: { path: string; status?: number }[] = [
   { path: "/" },
-  { path: "/catalogo" },
   { path: "/marca/fixture-brand-a" },
   ...FIXTURE_PUBLISHED_SLUGS.map((slug) => ({ path: `/producto/${slug}` })),
   { path: "/carrito" },

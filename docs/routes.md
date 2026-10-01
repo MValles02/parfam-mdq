@@ -6,8 +6,7 @@ The route group name `(store)` does not appear in public URLs.
 
 | URL                                               | Source                                     | Notes                                            |
 | ------------------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
-| `/`                                               | `src/app/(store)/page.tsx`                 | Store home and catalog preview.                  |
-| `/catalogo`                                       | `(store)/catalogo/page.tsx`                | Filtered and paginated catalog.                  |
+| `/`                                               | `src/app/(store)/page.tsx`                 | Store home: full filtered, paginated catalog.    |
 | `/producto/[slug]`                                | `(store)/producto/[slug]/page.tsx`         | Returns 404 for missing or draft products.       |
 | `/marca/[slug]`                                   | `(store)/marca/[slug]/page.tsx`            | Returns 404 when no published products remain.   |
 | `/carrito`                                        | `(store)/carrito/page.tsx`                 | Persisted cart.                                  |

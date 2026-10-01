@@ -75,7 +75,7 @@ export function CustomerThanks({
         </a>
       </Button>
       <Link
-        href="/catalogo"
+        href="/#catalogo"
         className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
       >
         Seguir viendo el catálogo

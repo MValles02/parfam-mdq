@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("catalog lists only published products with active variants", async ({
   page,
 }) => {
-  await page.goto("/catalogo");
+  await page.goto("/");
 
   for (const name of [
     "Fixture Eau de Prueba Mujer",

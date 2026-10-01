@@ -14,7 +14,7 @@ const FALLBACK_TOTAL = (
 );
 
 /**
- * Catalog body shared by the home page, `/catalogo`, and `/marca/[slug]`.
+ * Catalog body shared by the home page and `/marca/[slug]`.
  *
  * Filter options are requested once by the page and passed as props. The
  * asynchronous catalog results render inside separate Suspense boundaries so

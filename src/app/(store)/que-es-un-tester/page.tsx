@@ -100,7 +100,7 @@ export default function WhatIsATesterPage() {
         </div>
 
         <Link
-          href="/catalogo"
+          href="/#catalogo"
           className="mt-12 inline-flex items-center gap-2 text-base font-semibold hover:text-muted-foreground"
         >
           Ver el catálogo

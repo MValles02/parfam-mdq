@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Minus, MessageCircle, Plus } from "lucide-react";
@@ -63,6 +63,19 @@ export function Purchase({
   );
   const [quantity, setQuantity] = useState(1);
   const add = useCart((state) => state.add);
+  const ctaRef = useRef<HTMLButtonElement>(null);
+  // null until the observer reports, so server and first client render match.
+  const [ctaVisible, setCtaVisible] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const cta = ctaRef.current;
+    if (!cta) return;
+    const observer = new IntersectionObserver(([entry]) =>
+      setCtaVisible(entry.isIntersecting),
+    );
+    observer.observe(cta);
+    return () => observer.disconnect();
+  }, [variants.length]);
 
   if (variants.length === 0) {
     return (
@@ -219,6 +232,7 @@ export function Purchase({
 
       <div className="flex flex-col gap-2.5">
         <Button
+          ref={ctaRef}
           type="button"
           onClick={addToCart}
           className="h-auto w-full py-5 text-[15px] font-semibold"
@@ -244,6 +258,26 @@ export function Purchase({
           </a>
         </Button>
       </div>
+
+      {ctaVisible === false ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t bg-background px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-xs text-muted-foreground">
+              {selectedVariant.label}
+            </span>
+            <span className="text-lg leading-tight font-extrabold">
+              {formatArsPrice(selectedVariant.price)}
+            </span>
+          </div>
+          <Button
+            type="button"
+            onClick={addToCart}
+            className="min-h-11 shrink-0 text-[15px] font-semibold"
+          >
+            Agregar al carrito
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -41,7 +41,7 @@ Extracted: 2026-09-20 · branch `refactor/cleanup` · commit `53f5c93`.
 | Icons         | Lucide (`iconLibrary: "lucide"`)                                                                                                              | `components.json`            |
 | Root CSS      | `@import "tailwindcss"`, `tw-animate-css`, and `shadcn/tailwind.css`                                                                          | `src/app/globals.css:1-3`    |
 | Dark variant  | `@custom-variant dark (&:is(.dark *))`; retained to neutralize `dark:` utilities instead of compiling them as a system-preference media query | `src/app/globals.css:9`      |
-| Toasts        | `sonner` with `position="top-right" richColors`                                                                                               | `src/app/(store)/layout.tsx` |
+| Toasts        | `sonner` through `StoreToaster`: `bottom-center` below `lg`, `top-right` at `lg`+, `richColors`                                               | `src/app/(store)/layout.tsx` |
 | Filter state  | `nuqs`; `NuqsAdapter` is in the store layout                                                                                                  | `src/app/(store)/layout.tsx` |
 
 The `@theme inline` layer in `globals.css:7-51` exposes each `:root` variable as a Tailwind token. That is why utilities such as `bg-whatsapp` and `text-success-foreground` work without additional registration.
@@ -115,7 +115,7 @@ Observed usage: `font-bold` 62, `font-semibold` 48, `font-medium` 45, `font-extr
 
 1. **Display / logo.** `Logo` is text, not SVG: extra-bold 800 with strongly negative tracking and a widely tracked uppercase subtitle. It has header (`text-xl`), hero (`text-6xl` through `text-[132px]`), and footer (`text-2xl`, subtitle visually hidden) sizes.
 2. **Headings.** Extra-bold with `-0.015em` to `-0.035em` tracking. The product page heading reaches `text-[52px]` at `lg`; checkout uses `text-4xl sm:text-[46px]`; catalog section headings reach `text-[44px]`.
-3. **Eyebrows / uppercase labels.** `text-[9px]` through `text-[11px]`, bold, uppercase, positive 0.12–0.2em tracking, and `text-muted-foreground`. Customer examples include “Elegí tu presentación”, “Último paso”, and “VER CATÁLOGO”.
+3. **Eyebrows / uppercase labels.** `text-[9px]` through `text-[11px]` (never below 11px under `lg`, except the 10px header logo subtitle; product-card eyebrows and badge are 11px below `sm`), bold, uppercase, positive 0.12–0.2em tracking, and `text-muted-foreground`. Customer examples include “Elegí tu presentación”, “Último paso”, and “VER CATÁLOGO”.
 
 Prices are always bold or extra-bold with negative tracking. The hierarchy is card `text-base sm:text-xl`, product detail `text-[38px]`, cart subtotal `text-3xl`, and checkout total `text-[32px]`. `formatArsPrice()` in `src/lib/catalog.ts` is the sole price formatter and uses `Intl.NumberFormat("es-AR", { currency: "ARS", maximumFractionDigits: 0 })`.
 
@@ -179,11 +179,12 @@ The card is reused by grids, the home page, and related products:
 ```
 <Link> group · rounded · border · bg-card · hover:border-foreground
   ├ photo strip: h-[180px] sm:h-[260px] · border-b · bg-background
-  │  └ optional label badge: absolute top-3 left-3, primary background, 9px uppercase
+  │  └ optional label badge: absolute top-3 left-3, primary background, uppercase, 11px below `sm` and 9px from `sm`
   └ body: p-3.5 sm:p-[18px] · gap-1.5
      ├ brand eyebrow
      ├ h2|h3 product name
-     ├ muted metadata, hidden on mobile
+     ├ muted metadata, `line-clamp-1` on mobile
+     ├ one-line sizes summary (`sm:hidden`), 11px
      ├ “desde” plus bold price pushed to the bottom
      └ bordered 10px size chips, sm and above
 ```
@@ -198,17 +199,17 @@ Hover changes the border, never shadow or scale. The heading level is a `heading
 
 `accord-bars.tsx` stacks one `flex flex-col gap-1.5` row per accord inside a `flex flex-col gap-3` list: a `flex items-baseline justify-between` header pairs a `text-sm font-semibold` name with a `text-xs text-muted-foreground` percentage, above a `h-2 w-full overflow-hidden rounded-sm bg-border` track. Inside that track, a `h-full rounded-sm` fill gets an inline `width` equal to the accord's strength percentage and an inline `backgroundColor` from `getChipColor()`'s `background` value. The track carries `role="img"` and an `aria-label` stating the strength out of 100, since the fill's width and color are not otherwise exposed to assistive technology. `CartBadge` has `chip` (desktop bar) and `button` (46 px square) variants; it is informational and the header owns the Sheet trigger.
 
-The same `FilterControls` render on desktop and mobile. Only their containers differ: `filter-panel.tsx` uses a bordered box; `filter-drawer.tsx` uses a bottom `Sheet`, `rounded-t-xl`, and `max-h-[88vh]`. `useQueryStates` keeps state in the URL. The mobile trigger displays “Filtrar · N” and uses active chip styling when `N > 0`.
+The same `FilterControls` render on desktop and mobile. Only their containers differ: `filter-panel.tsx` uses a bordered box; `filter-drawer.tsx` uses a bottom `Sheet`, `rounded-t-xl`, and `max-h-[88dvh]`, bottom padding `max(1.5rem, env(safe-area-inset-bottom))`, and a store-side 44px close button (`showCloseButton={false}`, label “Cerrar”). Text search is not in the drawer: below `lg`, `catalog-section.tsx` renders `CatalogSearch` (16px font below `lg`) at the top of the catalog; `filter-panel.tsx` keeps its own search. `useQueryStates` keeps state in the URL. The mobile trigger displays “Filtrar · N” and uses active chip styling when `N > 0`.
 
 ### Product detail blocks and gallery
 
-`technical-details.tsx`, `characteristic-bars.tsx`, and each `pyramid.tsx` level share `rounded border bg-card p-[30px]` or `p-6`, with a bold `h2`. Technical details omit absent rows. Characteristics use five filled or empty steps and clearly disclose in customer text that values come from ParfamMdq's product experience, not community votes. Pyramid notes are neutral chips; only accords use dictionary colors.
+`technical-details.tsx`, `characteristic-bars.tsx`, and each `pyramid.tsx` level share `rounded border bg-card p-[30px]` or `p-6`, with a bold `h2`. Technical details omit absent rows. Characteristics use five filled or empty steps and clearly disclose in customer text that values come from ParfamMdq's product experience, not community votes. Pyramid notes are neutral chips; only accords use dictionary colors. Below `lg`, technical details, characteristics, votes, and the pyramid collapse into native `<details>` via `product/collapsible-section.tsx` (pyramid open by default); at `lg` they are always open.
 
 `product/gallery.tsx` uses shadcn Embla `Carousel`: it loops only with more than one photo, shows arrows only at desktop widths, supports mobile swipe, and renders at most four `grid-cols-4` thumbnails. The active thumbnail has `border-foreground ring-1 ring-foreground`.
 
 ### Purchase selector — `store/product/purchase.tsx`
 
-Every `RadioGroup` option sits in a fully clickable `<label>`. The border is always `border-[1.5px]`; only color switches from `border-border` to `border-foreground`, preventing a half-pixel layout shift. Quantity controls use `Minus` and `Plus` in `rounded border bg-card`. The purchase CTA remains Spanish: “Agregar al carrito · {variante}”; the secondary outline CTA is “Consultar por WhatsApp”.
+Every `RadioGroup` option sits in a fully clickable `<label>`. The border is always `border-[1.5px]`; only color switches from `border-border` to `border-foreground`, preventing a half-pixel layout shift. Quantity controls use `Minus` and `Plus` in `rounded border bg-card`. The purchase CTA remains Spanish: “Agregar al carrito · {variante}”; the secondary outline CTA is “Consultar por WhatsApp”. Below `lg`, a fixed bottom bar (price, variant label, “Agregar al carrito”) appears only while the in-page CTA is out of view (`IntersectionObserver`) and pads with `env(safe-area-inset-bottom)`; the product page wrapper uses `pb-24 lg:pb-0` to clear it.
 
 ## A.8 Loading, empty, and error states
 
@@ -221,6 +222,12 @@ Every `RadioGroup` option sits in a fully clickable `<label>`. The border is alw
 ## A.9 Responsive behavior
 
 There are no custom breakpoints: Tailwind `sm` is 640 and `lg` is 1024. `lg` is the primary split: header, footer, and filters render separate desktop and mobile branches using `hidden lg:flex` and `lg:hidden`; `sm` makes cards denser.
+
+- **Viewport:** `src/app/layout.tsx` exports `viewport` with `viewportFit: "cover"`; the cart drawer, filter sheet, and purchase bar pad the bottom with `env(safe-area-inset-bottom)`.
+- **Header:** sticky below `lg`; it hides on scroll down and shows on scroll up. Keyboard focus (`:focus-visible`) or an open cart sheet keeps it visible. Static at `lg`.
+- **Toasts:** bottom-center below `lg` with an offset clearing the purchase bar; top-right at `lg`+.
+- **Text size:** minimum 11px below `lg`; the header logo subtitle is the exception (10px on mobile, 7px at `lg`).
+- **Touch targets:** at least 44px below `lg` for cart quantity/remove, sheet close buttons, and links, breadcrumbs, and hero CTA (extended hit areas through pseudo-elements, disabled at `lg`).
 
 Cream is fixed. There is no selectable dark mode and no system-preference theme. The dark custom variant only prevents shadcn primitives from restoring `prefers-color-scheme` behavior.
 

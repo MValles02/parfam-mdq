@@ -8,6 +8,8 @@ Let a visitor select an active product variant and quantity, persist that select
 
 `/producto/[slug]` renders `Purchase` from `src/components/store/product/purchase.tsx`. Only `PUBLISHED` products with an `isActive` variant expose the cart controls. Customer copy, including the WhatsApp fallback for unavailable variants, remains in Spanish.
 
+Below `lg`, `Purchase` also renders a fixed bottom bar with the selected variant price and an add-to-cart button while the in-page CTA is out of view. Confirmation toasts come from `src/components/store/store-toaster.tsx`.
+
 ## Flow
 
 1. The server query supplies a display snapshot with `unitPriceArs` as a string. Prisma `Decimal` values never enter a Client Component.

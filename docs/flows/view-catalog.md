@@ -20,6 +20,8 @@ routes remain `/producto/[slug]` and `/marca/[slug]`.
 4. Filter controls serialize changes through the same adapter, preserving keys
    such as `genero`, `presentacion`, `marca`, `acorde`, `nota`,
    `precio`, `orden`, and `pagina`.
+   Below `lg` the text search field sits at the top of the catalog section,
+   not in the filter drawer.
 5. `getProductBySlug` returns `null` for missing, draft, or unsellable
    products, so the route returns a 404 even for a known draft slug.
 6. Product detail queries use `getSimilarProducts` for the "Se parece a"

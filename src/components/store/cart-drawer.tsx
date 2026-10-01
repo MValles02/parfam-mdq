@@ -1,6 +1,14 @@
 "use client";
 
-import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 import { useCart, useCartQuantity, useHydrated } from "@/lib/cart";
 import { CartItemList } from "@/components/store/cart/cart-item-list";
 import { CartSummary } from "@/components/store/cart/cart-summary";
@@ -17,7 +25,10 @@ export function CartDrawer({ close }: { close: () => void }) {
   const label = quantity === 1 ? "1 producto" : `${quantity} productos`;
 
   return (
-    <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[470px]">
+    <SheetContent
+      showCloseButton={false}
+      className="flex w-full flex-col gap-0 p-0 sm:max-w-[470px]"
+    >
       <SheetHeader className="flex-row items-baseline gap-2.5 space-y-0 border-b border-border px-7 py-6">
         <SheetTitle className="text-xl font-extrabold tracking-[-0.02em]">
           Tu pedido
@@ -32,10 +43,23 @@ export function CartDrawer({ close }: { close: () => void }) {
       </div>
 
       {hydrated && items.length > 0 ? (
-        <div className="border-t border-border px-7 py-6">
+        <div className="border-t border-border px-7 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <CartSummary onNavigate={close} />
         </div>
       ) : null}
+      <SheetClose asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className={cn(
+            "absolute top-1 right-1 size-11 lg:top-3 lg:right-3 lg:size-7",
+            FOCUS_VISIBLE,
+          )}
+        >
+          <XIcon />
+          <span className="sr-only">Cerrar</span>
+        </Button>
+      </SheetClose>
     </SheetContent>
   );
 }

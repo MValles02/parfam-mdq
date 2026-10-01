@@ -10,6 +10,18 @@ const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
 
 /**
+ * R2 variables are required when the server runs in production, so a deploy
+ * cannot silently boot without image storage. `next build` also runs with
+ * NODE_ENV=production but only has placeholders, so that phase, dev and test
+ * keep them optional.
+ */
+const isProdRuntime =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PHASE !== "phase-production-build";
+const r2 = <T extends z.ZodType>(schema: T) =>
+  isProdRuntime ? schema : optional(schema);
+
+/**
  * Validates environment variables at startup. Missing values fail the process
  * with a clear message instead of breaking during a request.
  */
@@ -19,11 +31,11 @@ export const env = createEnv({
     // Required for Auth.js to sign the session cookie.
     // Generate it with `openssl rand -base64 32`.
     AUTH_SECRET: z.string().min(32),
-    R2_ACCOUNT_ID: optional(z.string().min(1)),
-    R2_ACCESS_KEY_ID: optional(z.string().min(1)),
-    R2_SECRET_ACCESS_KEY: optional(z.string().min(1)),
-    R2_BUCKET: optional(z.string().min(1)),
-    R2_PUBLIC_URL: optional(z.url()),
+    R2_ACCOUNT_ID: r2(z.string().min(1)),
+    R2_ACCESS_KEY_ID: r2(z.string().min(1)),
+    R2_SECRET_ACCESS_KEY: r2(z.string().min(1)),
+    R2_BUCKET: r2(z.string().min(1)),
+    R2_PUBLIC_URL: r2(z.url()),
     ADMIN_SEED_EMAIL: optional(z.email()),
     ADMIN_SEED_PASSWORD: optional(z.string().min(8)),
   },

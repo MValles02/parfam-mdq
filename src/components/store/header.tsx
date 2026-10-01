@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/store/cart-badge";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Logo } from "@/components/store/logo";
@@ -32,6 +33,44 @@ const MOBILE_ICON_BUTTON_CLASS = cn(
   FOCUS_VISIBLE,
 );
 
+const HIDE_DELTA_PX = 8;
+const HEADER_HEIGHT_PX = 90;
+
+/**
+ * Reports whether the mobile header should be hidden: true after scrolling
+ * down more than HIDE_DELTA_PX past the header height, false on any scroll up
+ * or near the top. Starts visible so SSR and the first render match.
+ */
+function useHideOnScrollDown() {
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const y = window.scrollY;
+      if (y < HEADER_HEIGHT_PX || y < lastY) {
+        setHidden(false);
+        lastY = y;
+      } else if (y - lastY > HIDE_DELTA_PX) {
+        setHidden(true);
+        lastY = y;
+      }
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return hidden;
+}
+
 /**
  * Store header with desktop and mobile layouts. The mobile menu button and its
  * Sheet make content pages reachable on mobile.
@@ -41,6 +80,9 @@ export function Header() {
   // This component owns the cart Sheet because the drawer's "Finalizar pedido
   // por WhatsApp" CTA must close it when navigating (see cart-drawer.tsx).
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
+  const scrolledDown = useHideOnScrollDown();
+  const hidden = scrolledDown && !hasFocus && !isCartOpen;
   const quantity = useCartQuantity();
   const cartAccessibleLabel = cartLabel(quantity);
 
@@ -54,7 +96,18 @@ export function Header() {
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-      <header>
+      <header
+        // Only keyboard focus pins the header; a tap leaves focus on the
+        // button, which would otherwise disable hide-on-scroll afterwards.
+        onFocusCapture={(event) =>
+          setHasFocus(event.target.matches(":focus-visible"))
+        }
+        onBlurCapture={() => setHasFocus(false)}
+        className={cn(
+          "sticky top-0 z-30 bg-background transition-transform duration-200 motion-reduce:transition-none lg:static lg:z-auto lg:translate-y-0 lg:bg-transparent",
+          hidden && "-translate-y-full",
+        )}
+      >
         <span role="status" className="sr-only">
           {cartAccessibleLabel}
         </span>
@@ -83,7 +136,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
-                className="contents"
+                className="flex"
               >
                 <CartBadge variant="chip" />
               </button>
@@ -93,7 +146,11 @@ export function Header() {
 
         {/* Mobile */}
         <div className="flex items-center justify-between px-5 py-[18px] lg:hidden">
-          <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
+          <Link
+            href="/"
+            aria-label={`Ir al inicio de ${siteDefaults.name}`}
+            className="relative before:absolute before:inset-x-0 before:-inset-y-2"
+          >
             <Logo size="header" />
           </Link>
           <div className="flex items-center gap-2">
@@ -109,7 +166,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
-                className="contents"
+                className="flex"
               >
                 <CartBadge variant="button" />
               </button>
@@ -125,7 +182,11 @@ export function Header() {
                   <Menu className="size-[19px]" strokeWidth={1.6} />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="gap-0 px-0">
+              <SheetContent
+                side="right"
+                showCloseButton={false}
+                className="gap-0 px-0"
+              >
                 <SheetHeader>
                   {/* Hidden because Radix requires an accessible title even
                       when the panel design has no visible heading. */}
@@ -156,6 +217,19 @@ export function Header() {
                     </SheetClose>
                   ))}
                 </nav>
+                <SheetClose asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn(
+                      "absolute top-1 right-1 size-11 lg:top-3 lg:right-3 lg:size-7",
+                      FOCUS_VISIBLE,
+                    )}
+                  >
+                    <XIcon />
+                    <span className="sr-only">Cerrar</span>
+                  </Button>
+                </SheetClose>
               </SheetContent>
             </Sheet>
           </div>

@@ -16,7 +16,7 @@ const STORE_LINKS = [
 ] as const;
 
 const COLUMN_TITLE_CLASS =
-  "text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase";
+  "text-[11px] lg:text-[10px] font-bold tracking-[0.16em] text-muted-foreground uppercase";
 
 /** Store footer with desktop and mobile layouts. */
 export async function Footer() {
@@ -83,7 +83,11 @@ export async function Footer() {
 
         {/* Mobile */}
         <div className="flex flex-col gap-4 px-5 pt-7 pb-9 lg:hidden">
-          <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
+          <Link
+            href="/"
+            aria-label={`Ir al inicio de ${siteDefaults.name}`}
+            className="relative self-start before:absolute before:inset-x-0 before:-inset-y-3 lg:before:content-none"
+          >
             <span className="text-xl font-extrabold tracking-[-0.02em]">
               {siteDefaults.name}
             </span>
@@ -95,7 +99,10 @@ export async function Footer() {
               href={buildWhatsAppLink(settings.whatsappNumber)}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn("rounded-sm hover:text-foreground", FOCUS_VISIBLE)}
+              className={cn(
+                "relative rounded-sm before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground lg:before:content-none",
+                FOCUS_VISIBLE,
+              )}
             >
               {formatPhoneNumber(settings.whatsappNumber)}
             </a>{" "}
@@ -104,7 +111,10 @@ export async function Footer() {
               href={buildInstagramLink(settings.instagramHandle)}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn("rounded-sm hover:text-foreground", FOCUS_VISIBLE)}
+              className={cn(
+                "relative rounded-sm before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground lg:before:content-none",
+                FOCUS_VISIBLE,
+              )}
             >
               @{settings.instagramHandle}
             </a>

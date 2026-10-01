@@ -104,7 +104,7 @@ export function Header() {
         }
         onBlurCapture={() => setHasFocus(false)}
         className={cn(
-          "sticky top-0 z-30 bg-background transition-transform duration-200 motion-reduce:transition-none lg:static lg:translate-y-0 lg:bg-transparent",
+          "sticky top-0 z-30 bg-background transition-transform duration-200 motion-reduce:transition-none lg:static lg:z-auto lg:translate-y-0 lg:bg-transparent",
           hidden && "-translate-y-full",
         )}
       >

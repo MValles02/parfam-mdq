@@ -16,9 +16,10 @@ because `dokploy.mateovalles.cloud/api/deploy*` is protected by Cloudflare
 Access; the step fails if `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, or
 `CF_ACCESS_CLIENT_SECRET` is missing. It then waits until `vars.HEALTH_URL`
 reports status `ok` with the new commit SHA (failing if that repo variable is
-missing), then smoke-tests that the site's home page returns `200`. The repo
-secrets this workflow uses are `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`,
-and `CF_ACCESS_CLIENT_SECRET`.
+missing), then smoke-tests that the site's home page returns `200`. The
+`deploy` job runs in the `production` (main) or `development` (develop) GitHub
+environment, and the secrets it uses (`DOKPLOY_WEBHOOK_URL`,
+`CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`) are defined per environment.
 
 ## Development environment
 
@@ -28,9 +29,10 @@ project. It is served at https://dev.parfammdq.com behind Cloudflare Access;
 the service token `github-actions-deploy` must be allowed by that policy
 because the health check and smoke test send its headers.
 
-The `develop` run uses these extra repo settings instead of the production
-ones: variables `DEV_NEXT_PUBLIC_SITE_URL`, `DEV_R2_PUBLIC_URL`, and
-`DEV_HEALTH_URL`, and secret `DOKPLOY_WEBHOOK_URL_DEV`.
+The `develop` run uses these extra repo variables instead of the production
+ones: `DEV_NEXT_PUBLIC_SITE_URL`, `DEV_R2_PUBLIC_URL`, and `DEV_HEALTH_URL`.
+Its `DOKPLOY_WEBHOOK_URL` secret is set in the `development` environment, with
+the same name as the production one in the `production` environment.
 
 The dev database is a separate PostgreSQL service (`database-dev`) with no
 backups. `parfam-dev-refresh.sh` (in the `infra` repo, `files/`, on the VPS)

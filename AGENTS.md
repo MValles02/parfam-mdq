@@ -87,8 +87,9 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
 - **Use the same validation schema on both sides** (`src/lib/validations/`):
   the client provides feedback and the server is the actual boundary.
 - **Branch, commit and merge through PRs.** Feature branches (`feat/`, `fix/`,
-  `chore/`, `docs/`, `ci/`), Conventional Commits, squash merge to `main`; see
-  `docs/WORKFLOW.md`.
+  `chore/`, `docs/`, `ci/`), Conventional Commits, squash merge into `develop`;
+  `develop` is promoted to `main` by a PR with a merge commit (never squash);
+  see `docs/WORKFLOW.md`.
 
 ## Data
 

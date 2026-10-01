@@ -5,7 +5,7 @@
 The App Router provides two surfaces:
 
 - `src/app/(store)/` renders the public store. The route group name is internal;
-  public URL segments remain Spanish, for example `/catalogo` and `/producto`.
+  public URL segments remain Spanish, for example `/producto` and `/carrito`.
 - `src/app/admin/` renders the login and administrative panel.
 
 Pages orchestrate server-side queries and pass serializable data to Client

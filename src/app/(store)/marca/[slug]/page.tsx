@@ -47,13 +47,6 @@ export default async function Page(props: PageProps<"/marca/[slug]">) {
           >
             Inicio
           </Link>
-          {" · "}
-          <Link
-            href="/catalogo"
-            className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
-          >
-            Catálogo
-          </Link>
           {` · ${brand.name}`}
         </p>
         {brand.country ? (

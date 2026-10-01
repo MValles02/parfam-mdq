@@ -7,7 +7,7 @@ keeping the URL contract stable and querying only sellable products.
 
 ## Entry points
 
-The home page and `/catalogo` render `CatalogSection`. Product and brand
+The home page (`/`) renders `CatalogSection` with the filter URL keys and pagination. Product and brand
 routes remain `/producto/[slug]` and `/marca/[slug]`.
 
 ## Flow
@@ -29,13 +29,13 @@ routes remain `/producto/[slug]` and `/marca/[slug]`.
 
 ## Main files
 
-| Responsibility         | File                                               |
-| ---------------------- | -------------------------------------------------- |
-| Store queries          | `src/lib/store/queries.ts`                         |
-| URL adapter and parser | `src/lib/store/filters.ts`                         |
-| Catalog UI             | `src/components/store/catalog/`                    |
-| Product UI             | `src/components/store/product/`                    |
-| Routes                 | `src/app/(store)/catalogo/`, `producto/`, `marca/` |
+| Responsibility         | File                                              |
+| ---------------------- | ------------------------------------------------- |
+| Store queries          | `src/lib/store/queries.ts`                        |
+| URL adapter and parser | `src/lib/store/filters.ts`                        |
+| Catalog UI             | `src/components/store/catalog/`                   |
+| Product UI             | `src/components/store/product/`                   |
+| Routes                 | `src/app/(store)/page.tsx`, `producto/`, `marca/` |
 
 ## Customer and external values
 

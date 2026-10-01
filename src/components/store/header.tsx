@@ -21,7 +21,6 @@ import { siteDefaults } from "@/lib/site";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const NAVIGATION_LINKS = [
-  { href: "/catalogo", label: "Catálogo" },
   { href: "/que-es-un-tester", label: "¿Qué es un tester?" },
   { href: "/como-comprar", label: "Cómo comprar" },
   { href: "/contacto", label: "Contacto" },
@@ -155,7 +154,7 @@ export function Header() {
           </Link>
           <div className="flex items-center gap-2">
             <Link
-              href="/catalogo"
+              href="/#catalogo"
               aria-label="Buscar en el catálogo"
               className={MOBILE_ICON_BUTTON_CLASS}
             >

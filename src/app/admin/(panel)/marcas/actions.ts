@@ -24,7 +24,6 @@ async function revalidateBrand(brandId: string, slug: string) {
   });
 
   revalidatePath("/");
-  revalidatePath("/catalogo");
   revalidatePath(`/marca/${slug}`, "page");
   for (const product of products)
     revalidatePath(`/producto/${product.slug}`, "page");

@@ -21,7 +21,6 @@ const STATIC_PAGES: {
   changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
 }[] = [
   { path: "/", priority: 1, changeFrequency: "daily" },
-  { path: "/catalogo", priority: 0.9, changeFrequency: "daily" },
   { path: "/que-es-un-tester", priority: 0.7, changeFrequency: "monthly" },
   { path: "/como-comprar", priority: 0.6, changeFrequency: "monthly" },
   { path: "/contacto", priority: 0.5, changeFrequency: "yearly" },

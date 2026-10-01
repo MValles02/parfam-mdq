@@ -91,6 +91,11 @@ Next standalone server. This makes each container responsible for compatible
 schema setup. Migration files are immutable history and must already be present
 in the image.
 
+In production, `src/lib/env.ts` requires `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+`R2_SECRET_ACCESS_KEY`, `R2_BUCKET` and `R2_PUBLIC_URL`; the server fails to start
+if any is missing. They stay optional in dev, test and during `next build`
+(`NEXT_PHASE=phase-production-build`).
+
 Deploys are start-first, so the old and new containers overlap on the same
 database while the new one migrates. Every migration must therefore keep the
 previous release working (expand/contract); drops and renames ship later.

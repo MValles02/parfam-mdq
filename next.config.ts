@@ -67,6 +67,9 @@ const nextConfig: NextConfig = {
   // Docker deploys `.next/standalone`: server.js plus only traced node_modules.
   output: "standalone",
 
+  // Do not advertise the framework through the X-Powered-By header.
+  poweredByHeader: false,
+
   /**
    * src/app/icon.tsx and OG image files read fonts from disk at runtime through
    * `join(process.cwd(), "src/assets/...")`. @vercel/nft cannot trace that

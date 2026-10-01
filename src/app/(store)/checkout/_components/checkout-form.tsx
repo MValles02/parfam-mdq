@@ -110,9 +110,15 @@ export function CheckoutForm({
           if (popup) {
             popup.location.href = link;
           }
-          router.push(
-            `/pedido/${orderNumber}/gracias?link=${encodeURIComponent(link)}`,
-          );
+          // The link embeds the customer's name and order contents, so it
+          // travels via sessionStorage instead of the URL (history, logs,
+          // Referer). `_customer-thanks.tsx` reads the same key.
+          try {
+            sessionStorage.setItem(`whatsapp-link:${orderNumber}`, link);
+          } catch {
+            // Storage unavailable: the thank-you page shows its generic fallback.
+          }
+          router.push(`/pedido/${orderNumber}/gracias`);
         });
       },
       () => {

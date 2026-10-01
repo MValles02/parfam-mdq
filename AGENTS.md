@@ -110,7 +110,7 @@ drops and renames go in a later release).
 ## Commands
 
 ```bash
-pnpm dev | build | typecheck | lint | test | format
+pnpm dev | build | typecheck | lint | test | test:e2e | format
 pnpm db:up | db:down | db:migrate | db:seed | db:seed:fixtures
 pnpm db:import-references   # flags without `--`; see docs/modules/reference-data.md
 pnpm db:check-translations
@@ -123,4 +123,7 @@ Remote dev: `pnpm dev` binds to loopback only (`-H 127.0.0.1`); start it with `p
 
 ## Before declaring work complete
 
-`pnpm typecheck`, `pnpm lint`, `pnpm test` must pass (CI requires them). No Playwright/E2E installed.
+`pnpm typecheck`, `pnpm lint`, `pnpm test` must pass (CI requires them).
+Playwright E2E (`pnpm test:e2e`, needs a seeded DB; see `docs/deployment.md`)
+runs in CI on pull requests; run it locally when a change touches the store,
+checkout, or admin flows.

@@ -101,6 +101,10 @@ when an admin adopts it (`importReferencePicture` in `src/app/admin/(panel)/prod
 never hotlink or bulk-download fimgs.net. Public copy is admin-written Spanish and never names Fragrantica.
 
 Applied migrations are historical: never edit them; create a new migration.
+Migrations run at container start (`docker-entrypoint.sh`, advisory lock) and
+deploys are start-first, so old and new containers overlap on the same DB: every
+migration must be backward compatible with the previous release (expand/contract;
+drops and renames go in a later release).
 
 ## Commands
 
@@ -112,7 +116,9 @@ pnpm db:check-translations
 pnpm smoke                  # optional, against `pnpm start`; see docs/deployment.md
 ```
 
-Remote dev: `ssh -N -L 3100:localhost:3100 user@host`, then `http://localhost:3100`.
+Git hooks (husky): pre-commit runs `lint-staged` and a gitleaks staged scan via Docker (skipped with a warning if `docker` is missing).
+
+Remote dev: `pnpm dev` binds to loopback only (`-H 127.0.0.1`); start it with `pnpm dev -p 3100`, then `ssh -N -L 3100:localhost:3100 mateo@<tailscale-ip>` and open `http://localhost:3100`.
 
 ## Before declaring work complete
 

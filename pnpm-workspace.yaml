@@ -9,9 +9,11 @@ allowBuilds:
 # Pin transitive dependencies to patched versions to clear pnpm audit
 # advisories: lodash, mysql2, and deepmerge-ts come from the prisma CLI;
 # valibot comes from @t3-oss/env-nextjs and @hookform/resolvers. See the
-# "Startup" section of docs/deployment.md.
+# "Startup" section of docs/deployment.md. fast-uri comes from ajv (via
+# @hookform/resolvers and the prisma CLI).
 overrides:
   lodash: ^4.18.1
   mysql2: ^3.23.1
   valibot: ^1.4.2
   deepmerge-ts: ^8.0.0
+  fast-uri: ^3.1.8

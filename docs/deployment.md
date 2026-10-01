@@ -91,8 +91,12 @@ Next standalone server. This makes each container responsible for compatible
 schema setup. Migration files are immutable history and must already be present
 in the image.
 
+Deploys are start-first, so the old and new containers overlap on the same
+database while the new one migrates. Every migration must therefore keep the
+previous release working (expand/contract); drops and renames ship later.
+
 The `overrides` in `pnpm-workspace.yaml` pin several transitive
-dependencies (`lodash`, `mysql2`, `valibot`, `deepmerge-ts`) to versions that
+dependencies (`lodash`, `mysql2`, `valibot`, `deepmerge-ts`, `fast-uri`) to versions that
 patch `pnpm audit` advisories (`valibot` via `@t3-oss/env-nextjs` and
 `@hookform/resolvers`; the rest via the Prisma CLI). The Dockerfile's
 `migrator` stage (around line 92) installs the Prisma CLI with

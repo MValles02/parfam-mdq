@@ -17,7 +17,7 @@ export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
         Todavía no agregaste nada al carrito.
       </p>
       <Button asChild onClick={onNavigate} className="min-h-11 lg:min-h-0">
-        <Link href="/catalogo">Ir al catálogo</Link>
+        <Link href="/#catalogo">Ir al catálogo</Link>
       </Button>
     </div>
   );
@@ -46,7 +46,7 @@ export function CartItemList({ onNavigate }: { onNavigate?: () => void }) {
       ))}
 
       <Link
-        href="/catalogo"
+        href="/#catalogo"
         onClick={onNavigate}
         className="rounded border border-dashed border-border p-4 text-center text-[13px] font-medium text-muted-foreground hover:border-foreground hover:text-foreground"
       >

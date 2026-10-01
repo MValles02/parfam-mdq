@@ -32,7 +32,7 @@ docs/                         technical documentation
 ## Route code
 
 Public routes are inside the internal `(store)` group, with Spanish URL
-folders retained as public contracts: `catalogo`, `carrito`, `producto`,
+folders retained as public contracts: `carrito`, `producto`,
 `marca`, and `pedido`. Product management routes likewise retain Spanish
 public panel paths under `/admin`.
 

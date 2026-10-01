@@ -53,7 +53,6 @@ import {
  */
 function revalidateStore(slug?: string, brandSlug?: string) {
   revalidatePath("/");
-  revalidatePath("/catalogo");
   revalidateTag(TAG_SITEMAP_URLS, "max");
   revalidateTag(TAG_SIMILAR_PRODUCTS, "max");
   if (slug) revalidatePath(`/producto/${slug}`, "page");

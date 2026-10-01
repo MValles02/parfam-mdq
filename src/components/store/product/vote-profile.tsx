@@ -6,6 +6,7 @@ import {
   type DaypartKey,
   type SeasonKey,
 } from "@/lib/catalog";
+import { CollapsibleSection } from "./collapsible-section";
 
 type Seasons = Record<SeasonKey, number | null>;
 type Dayparts = Record<DaypartKey, number | null>;
@@ -53,11 +54,14 @@ export function VoteProfile({
   if (seasonKeys.length === 0 && daypartKeys.length === 0) return null;
 
   return (
-    <section className="border-t pt-11">
-      <h2 className="text-[32px] font-extrabold tracking-[-0.025em]">
-        Cuándo usarlo
-      </h2>
-
+    <CollapsibleSection
+      className="border-t pt-11"
+      title={
+        <h2 className="text-2xl font-extrabold tracking-[-0.025em] lg:text-[32px]">
+          Cuándo usarlo
+        </h2>
+      }
+    >
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         {seasonKeys.length > 0 ? (
           <div className="rounded border bg-card p-6">
@@ -93,6 +97,6 @@ export function VoteProfile({
           </div>
         ) : null}
       </div>
-    </section>
+    </CollapsibleSection>
   );
 }

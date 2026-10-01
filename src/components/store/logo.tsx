@@ -16,7 +16,10 @@ export function Logo({
   className?: string;
 }) {
   const styles = {
-    header: { name: "text-xl", subtitle: "text-[7px] tracking-[0.42em]" },
+    header: {
+      name: "text-xl",
+      subtitle: "text-[10px] lg:text-[7px] tracking-[0.42em]",
+    },
     hero: {
       name: "text-6xl sm:text-8xl lg:text-[132px]",
       subtitle:

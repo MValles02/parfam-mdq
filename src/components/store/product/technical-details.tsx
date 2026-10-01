@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Concentration, Gender } from "@/generated/prisma/enums";
 import { CONCENTRATION_LABELS, GENDER_LABELS } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "./collapsible-section";
 
 type ProductDetails = {
   brandName: string;
@@ -56,8 +57,12 @@ export function TechnicalDetails(product: ProductDetails) {
   ];
 
   return (
-    <div className="rounded border bg-card p-[30px]">
-      <h2 className="text-xl font-bold tracking-[-0.015em]">Ficha técnica</h2>
+    <CollapsibleSection
+      className="rounded border bg-card p-[30px]"
+      title={
+        <h2 className="text-xl font-bold tracking-[-0.015em]">Ficha técnica</h2>
+      }
+    >
       <dl className="mt-5 flex flex-col">
         {rows.map((row, index) => (
           <div
@@ -72,6 +77,6 @@ export function TechnicalDetails(product: ProductDetails) {
           </div>
         ))}
       </dl>
-    </div>
+    </CollapsibleSection>
   );
 }

@@ -32,7 +32,7 @@ export function CartBadge({
         {quantity > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -top-1.5 -right-1.5 flex size-[19px] items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+            className="absolute -top-1.5 -right-1.5 flex size-[19px] items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground lg:text-[10px]"
           >
             {quantity}
           </span>

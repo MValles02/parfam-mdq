@@ -62,7 +62,10 @@ export default async function ContactPage() {
         aria-label="Miga de pan"
         className="mb-8 text-sm text-muted-foreground"
       >
-        <Link href="/" className="hover:text-foreground">
+        <Link
+          href="/"
+          className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
+        >
           Inicio
         </Link>
         <span className="mx-2">·</span>
@@ -100,7 +103,7 @@ export default async function ContactPage() {
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[15px] font-medium hover:text-muted-foreground"
+            className="relative text-[15px] font-medium before:absolute before:inset-x-0 before:-inset-y-3 hover:text-muted-foreground lg:before:content-none"
           >
             {formatPhoneNumber(config.whatsappNumber)}
           </a>
@@ -111,7 +114,7 @@ export default async function ContactPage() {
             href={buildInstagramLink(config.instagramHandle)}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[15px] font-medium hover:text-muted-foreground"
+            className="relative text-[15px] font-medium before:absolute before:inset-x-0 before:-inset-y-3 hover:text-muted-foreground lg:before:content-none"
           >
             @{config.instagramHandle}
           </a>

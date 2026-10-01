@@ -7,6 +7,7 @@ import { CatalogGridSkeleton } from "./grid-skeleton";
 import { CatalogPagination } from "./pagination";
 import { FilterPanel } from "./filter-panel";
 import { OrderSelect } from "./order-select";
+import { CatalogSearch } from "./search";
 
 const FALLBACK_TOTAL = (
   <span className="inline-block h-[1em] w-40 animate-pulse rounded-sm bg-muted align-middle" />
@@ -70,6 +71,10 @@ export function CatalogSection({
 
       <div className="mb-10 hidden lg:block">
         <FilterPanel filterOptions={filterOptions} fixedBrand={fixedBrand} />
+      </div>
+
+      <div className="mb-3 lg:hidden">
+        <CatalogSearch height="h-12" />
       </div>
 
       <div className="mb-5 flex items-center gap-2.5 lg:hidden">

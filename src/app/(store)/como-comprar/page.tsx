@@ -101,7 +101,10 @@ export default async function HowToBuyPage() {
         aria-label="Miga de pan"
         className="mb-8 text-sm text-muted-foreground"
       >
-        <Link href="/" className="hover:text-foreground">
+        <Link
+          href="/"
+          className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
+        >
           Inicio
         </Link>
         <span className="mx-2">·</span>

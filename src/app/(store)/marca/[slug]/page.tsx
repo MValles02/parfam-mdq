@@ -41,11 +41,17 @@ export default async function Page(props: PageProps<"/marca/[slug]">) {
     <>
       <div className="mx-auto max-w-page px-5 lg:px-16">
         <p className="pt-5 text-xs text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">
+          <Link
+            href="/"
+            className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
+          >
             Inicio
           </Link>
           {" · "}
-          <Link href="/catalogo" className="hover:text-foreground">
+          <Link
+            href="/catalogo"
+            className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
+          >
             Catálogo
           </Link>
           {` · ${brand.name}`}

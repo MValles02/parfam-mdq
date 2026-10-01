@@ -16,7 +16,7 @@ export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
       <p className="text-sm text-muted-foreground">
         Todavía no agregaste nada al carrito.
       </p>
-      <Button asChild onClick={onNavigate}>
+      <Button asChild onClick={onNavigate} className="min-h-11 lg:min-h-0">
         <Link href="/catalogo">Ir al catálogo</Link>
       </Button>
     </div>

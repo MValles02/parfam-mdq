@@ -62,7 +62,8 @@ export function CatalogSearch({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Buscar fragancia o marca"
-        className={cn("rounded pl-9 text-sm", height)}
+        enterKeyHint="search"
+        className={cn("rounded pl-9 text-base lg:text-sm", height)}
       />
     </div>
   );

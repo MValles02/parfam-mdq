@@ -1,5 +1,6 @@
 import { LONGEVITY_LABELS, SILLAGE_LABELS } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "./collapsible-section";
 
 /**
  * Captions for the admin-entered `Product.intensity` (`prisma/schema.prisma`).
@@ -90,8 +91,12 @@ export function CharacteristicBars({
       : null;
 
   return (
-    <div className="rounded border bg-card p-[30px]">
-      <h2 className="text-xl font-bold tracking-[-0.015em]">Carácter</h2>
+    <CollapsibleSection
+      className="rounded border bg-card p-[30px]"
+      title={
+        <h2 className="text-xl font-bold tracking-[-0.015em]">Carácter</h2>
+      }
+    >
       <div className="mt-6 flex flex-col gap-6">
         {roundedLongevity !== null ? (
           <CharacteristicBar
@@ -122,6 +127,6 @@ export function CharacteristicBars({
         Duración y estela según los votos de la comunidad; intensidad,
         evaluación propia de ParfamMdq.
       </p>
-    </div>
+    </CollapsibleSection>
   );
 }

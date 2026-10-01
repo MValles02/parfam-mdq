@@ -5,7 +5,9 @@ The application is built as a multi-stage Docker image and published to GHCR by
 (development). Dokploy runs the published image.
 
 `.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
-lint, test) on every pull request and is reused by `deploy.yml`. On `main` and
+lint, test) on every pull request and is reused by `deploy.yml`. Pull requests
+also run the `e2e` job (see "E2E tests (Playwright)"), which is skipped when
+`deploy.yml` reuses the workflow. On `main` and
 `develop`, `checks` is followed by the `publish` job, which logs in to GHCR with the
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
@@ -590,3 +592,45 @@ Env vars: `SMOKE_BASE_URL` (default `http://localhost:3000`),
 `ADMIN_SEED_PASSWORD`; admin routes are skipped with a warning if neither pair
 is set), `CHROMIUM_PATH` (default `/usr/bin/chromium`), and `SMOKE_TIMEOUT_MS`
 (overall run timeout, default `180000`).
+
+## E2E tests (Playwright)
+
+`pnpm test:e2e` runs user-flow specs in Chromium: catalog, product page,
+checkout through the thank-you page, and admin login. Specs live in
+`e2e/*.e2e.ts`; `testMatch` in `playwright.config.ts` limits Playwright to that
+suffix, so Vitest ignores them.
+
+Prerequisites: a migrated and seeded database plus environment variables.
+
+```bash
+pnpm db:up && pnpm db:migrate && pnpm db:seed && pnpm db:seed:fixtures
+pnpm test:e2e
+```
+
+- `DATABASE_URL`, `AUTH_SECRET`, and `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD`
+  (used by `db:seed` and by the admin spec).
+- `R2_*` placeholders: the webServer runs `next start` in production mode, where
+  `src/lib/env.ts` requires every R2 variable. Fake values are enough because
+  the specs never touch R2.
+- Chromium: set `CHROMIUM_PATH=/usr/bin/chromium` to use the system browser,
+  otherwise run `pnpm exec playwright install chromium`.
+
+The `webServer` runs `pnpm build && pnpm start` on port 3000 and, outside CI,
+reuses a server that is already listening there.
+
+The config sends a random `cf-connecting-ip` header on every request. Login and
+checkout are rate limited in memory per client IP; without the header all
+requests share one bucket and the specs would throttle each other.
+
+The checkout specs create real `Order` rows and leave them in the database. That
+is fine for CI and local dev databases; never run them against a real one. The
+admin spec is skipped when `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are unset.
+
+In CI, the `e2e` job in `ci.yml` runs only on pull requests (not when
+`deploy.yml` reuses the workflow). It starts a throwaway Postgres service,
+applies `db:deploy`, `db:seed`, and `db:seed:fixtures`, then runs
+`pnpm test:e2e` with fixed placeholder env values, and uploads
+`playwright-report/` on failure.
+
+Relation to `pnpm smoke`: smoke visits every page looking for CSP violations
+and console errors; E2E exercises user flows. Neither replaces the other.

@@ -115,7 +115,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
         </p>
 
         <div className="flex flex-col gap-9 py-7 lg:flex-row lg:gap-14">
-          <div className="lg:w-[620px] lg:shrink-0">
+          <div className="lg:w-[520px] lg:shrink-0 xl:w-[620px]">
             <Gallery images={product.images} />
           </div>
 

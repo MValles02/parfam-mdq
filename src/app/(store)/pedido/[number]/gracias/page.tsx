@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/settings";
-import { isValidWhatsAppLink } from "@/lib/whatsapp";
 import { CustomerThanks } from "./_customer-thanks";
 
 export const metadata: Metadata = { title: "Pedido enviado" };
@@ -14,22 +13,12 @@ export const metadata: Metadata = { title: "Pedido enviado" };
 export default async function Page(
   pageProps: PageProps<"/pedido/[number]/gracias">,
 ) {
-  const [{ number }, sp, config] = await Promise.all([
+  const [{ number }, config] = await Promise.all([
     pageProps.params,
-    pageProps.searchParams,
     getSiteSettings(),
   ]);
-  // `?link=` is an external query string value. Trust it only when it is the
-  // URL shape built by `buildWhatsAppLink`; see F-05 in docs/findings.md. Any
-  // other value uses CustomerThanks' generic fallback as if no link arrived.
-  const rawLink = typeof sp.link === "string" ? sp.link : null;
-  const link = rawLink && isValidWhatsAppLink(rawLink) ? rawLink : null;
 
   return (
-    <CustomerThanks
-      number={number}
-      link={link}
-      whatsappNumber={config.whatsappNumber}
-    />
+    <CustomerThanks number={number} whatsappNumber={config.whatsappNumber} />
   );
 }

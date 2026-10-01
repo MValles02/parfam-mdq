@@ -1,4 +1,6 @@
-# Production image build and Dokploy redeployment.
+# Image build and Dokploy redeployment for both environments: pushes to `main`
+# deploy production, pushes to `develop` deploy the development environment
+# (dev.parfammdq.com).
 #
 # The VPS has four shared vCPUs, so CI builds the image and the server only
 # pulls the completed artifact.
@@ -6,7 +8,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     # Documentation-only commits do not need an image rebuild or redeployment.
     paths-ignore:
       - "**.md"
@@ -16,7 +18,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: deploy
+  group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -28,10 +30,11 @@ jobs:
   publish:
     name: Build and publish to GHCR
     needs: checks
-    # workflow_dispatch can be run from any branch; restrict to main so a
-    # manual trigger never builds or deploys non-main code to production.
-    if: github.ref == 'refs/heads/main'
+    # workflow_dispatch can be run from any branch; restrict to main and develop
+    # so a manual trigger from any other branch never builds or deploys.
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -39,6 +42,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -56,11 +61,12 @@ jobs:
         with:
           images: ghcr.io/mvalles02/parfam-mdq
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
             type=sha
 
-      # NEXT_PUBLIC_SITE_URL and R2_PUBLIC_URL are repository variables, not
-      # secrets. Next inlines them into client HTML during this build, so changing
+      # NEXT_PUBLIC_SITE_URL and R2_PUBLIC_URL (DEV_-prefixed for develop) are
+      # repository variables, not secrets. Next inlines them into client HTML during this build, so changing
       # either requires workflow_dispatch or a commit-triggered rebuild.
       - name: Build and publish
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -71,8 +77,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
-            R2_PUBLIC_URL=${{ vars.R2_PUBLIC_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ github.ref == 'refs/heads/main' && vars.NEXT_PUBLIC_SITE_URL || vars.DEV_NEXT_PUBLIC_SITE_URL }}
+            R2_PUBLIC_URL=${{ github.ref == 'refs/heads/main' && vars.R2_PUBLIC_URL || vars.DEV_R2_PUBLIC_URL }}
             GIT_SHA=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -80,14 +86,15 @@ jobs:
   deploy:
     name: Deploy to Dokploy
     needs: publish
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions: {}
 
     steps:
       - name: Trigger Dokploy deploy
         env:
-          WEBHOOK: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
+          WEBHOOK: ${{ github.ref == 'refs/heads/main' && secrets.DOKPLOY_WEBHOOK_URL || secrets.DOKPLOY_WEBHOOK_URL_DEV }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
@@ -104,21 +111,26 @@ jobs:
 
       - name: Wait for new version
         env:
-          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          HEALTH_URL: ${{ github.ref == 'refs/heads/main' && vars.HEALTH_URL || vars.DEV_HEALTH_URL }}
+          HEALTH_VAR: ${{ github.ref == 'refs/heads/main' && 'HEALTH_URL' || 'DEV_HEALTH_URL' }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           if [ -z "$HEALTH_URL" ]; then
-            echo "::error::HEALTH_URL is not configured."
+            echo "::error::$HEALTH_VAR is not configured."
             exit 1
           fi
-          for i in $(seq 30); do curl -fsS -m 10 "$HEALTH_URL" | jq -e --arg s "$GITHUB_SHA" '.status=="ok" and .sha==$s' && exit 0; sleep 10; done
+          for i in $(seq 30); do curl -fsS -m 10 -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" "$HEALTH_URL" | jq -e --arg s "$GITHUB_SHA" '.status=="ok" and .sha==$s' && exit 0; sleep 10; done
           echo "::error::Timed out waiting for the new version to become healthy."
           exit 1
 
       - name: Smoke test
         env:
-          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          HEALTH_URL: ${{ github.ref == 'refs/heads/main' && vars.HEALTH_URL || vars.DEV_HEALTH_URL }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           BASE=$(printf '%s' "$HEALTH_URL" | cut -d/ -f1-3)
-          curl -fsSL -o /dev/null -m 20 --retry 3 --retry-delay 5 "$BASE/"
-          STATUS=$(curl -fsSL -o /dev/null -w '%{http_code}' -m 20 "$BASE/")
+          curl -fsSL -o /dev/null -m 20 --retry 3 --retry-delay 5 -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" "$BASE/"
+          STATUS=$(curl -fsSL -o /dev/null -w '%{http_code}' -m 20 -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" "$BASE/")
           echo "Home page responded with HTTP $STATUS"

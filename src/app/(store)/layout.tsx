@@ -1,7 +1,7 @@
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Footer } from "@/components/store/footer";
 import { Header } from "@/components/store/header";
-import { Toaster } from "@/components/ui/sonner";
+import { StoreToaster } from "@/components/store/store-toaster";
 
 /**
  * Store layout. It wraps the catalog, brand, product, and home routes.
@@ -20,7 +20,7 @@ export default function StoreLayout({ children }: LayoutProps<"/">) {
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
-      <Toaster position="top-right" richColors />
+      <StoreToaster />
     </NuqsAdapter>
   );
 }

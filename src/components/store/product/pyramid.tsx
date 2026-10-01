@@ -1,5 +1,6 @@
 import type { NotePosition } from "@/generated/prisma/enums";
 import { PYRAMID_LEVEL_LABELS } from "@/lib/catalog";
+import { CollapsibleSection } from "./collapsible-section";
 
 /**
  * A null level means the product's notes have no top/middle/base tiers; they
@@ -27,10 +28,15 @@ export function Pyramid({ levels }: { levels: PyramidLevel[] }) {
   if (levels.length === 0) return null;
 
   return (
-    <section className="border-t pt-11">
-      <h2 className="text-[32px] font-extrabold tracking-[-0.025em]">
-        Pirámide olfativa
-      </h2>
+    <CollapsibleSection
+      className="border-t pt-11"
+      defaultOpenOnMobile
+      title={
+        <h2 className="text-2xl font-extrabold tracking-[-0.025em] lg:text-[32px]">
+          Pirámide olfativa
+        </h2>
+      }
+    >
       <p className="mt-1.5 text-sm text-muted-foreground">
         Cómo evoluciona la fragancia en la piel, de las primeras notas al fondo.
       </p>
@@ -66,6 +72,6 @@ export function Pyramid({ levels }: { levels: PyramidLevel[] }) {
           </div>
         ))}
       </div>
-    </section>
+    </CollapsibleSection>
   );
 }

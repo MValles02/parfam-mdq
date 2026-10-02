@@ -114,7 +114,7 @@ Observed usage: `font-bold` 62, `font-semibold` 48, `font-medium` 45, `font-extr
 ### The three type registers
 
 1. **Display / logo.** `Logo` is text, not SVG: extra-bold 800 with strongly negative tracking and a widely tracked uppercase subtitle. It has header (`text-xl`), hero (`text-6xl` through `text-[132px]`), and footer (`text-2xl`, subtitle visually hidden) sizes.
-2. **Headings.** Extra-bold with `-0.015em` to `-0.035em` tracking. The product page heading reaches `text-[52px]` at `lg`; checkout uses `text-4xl sm:text-[46px]`; catalog section headings reach `text-[44px]`.
+2. **Headings.** Extra-bold with `-0.015em` to `-0.035em` tracking. The product page heading reaches `text-[52px]` at `lg`; checkout uses `text-4xl sm:text-[44px]`; catalog section headings reach `text-[44px]`.
 3. **Eyebrows / uppercase labels.** `text-[9px]` through `text-[11px]` (never below 11px under `lg`, except the 10px header logo subtitle; product-card eyebrows and badge are 11px below `sm`), bold, uppercase, positive 0.12–0.2em tracking, and `text-muted-foreground`. Customer examples include “Elegí tu presentación”, “Último paso”, and “VER CATÁLOGO”.
 
 Prices are always bold or extra-bold with negative tracking. The hierarchy is card `text-base sm:text-xl`, product detail `text-[38px]`, cart subtotal `text-3xl`, and checkout total `text-[32px]`. `formatArsPrice()` in `src/lib/catalog.ts` is the sole price formatter and uses `Intl.NumberFormat("es-AR", { currency: "ARS", maximumFractionDigits: 0 })`.

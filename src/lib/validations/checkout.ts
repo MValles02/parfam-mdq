@@ -42,17 +42,25 @@ export const checkoutRequestSchema = z.object({
 });
 
 /**
- * This React Hook Form schema validates only the customer name and a minimum
- * phone length. The client input contains only the local number; the UI adds
- * the fixed "+54 9" prefix before sending it. Full AR validation therefore
- * belongs on the server, which returns field errors that CheckoutForm renders
- * with `setError`.
+ * This React Hook Form schema validates the customer name and the local phone
+ * number. The client input contains only the local number; the UI prepends the
+ * fixed "+54 9" prefix before sending it, so the phone is checked here with the
+ * same `isValidPhoneNumber(..., "AR")` rule as `phoneSchema` on the prefixed
+ * value. The server remains the real boundary and returns field errors that
+ * CheckoutForm renders with `setError`.
  *
  * `items` comes from the Zustand cart while building the request, so it does
  * not belong to this form schema.
  */
 export const checkoutCustomerSchema = z.object({
   customerName: checkoutRequestSchema.shape.customerName,
-  customerPhone: z.string().trim().min(6, "Ese teléfono no parece completo."),
+  customerPhone: z
+    .string()
+    .trim()
+    .min(6, "Ese teléfono no parece completo.")
+    .refine(
+      (v) => isValidPhoneNumber(`+54 9 ${v}`, "AR"),
+      "Revisá el teléfono: no parece un número argentino válido.",
+    ),
 });
 export type CheckoutCustomerInput = z.input<typeof checkoutCustomerSchema>;

@@ -58,6 +58,7 @@ export function TechnicalDetails(product: ProductDetails) {
 
   return (
     <CollapsibleSection
+      defaultOpenOnMobile
       className="rounded border bg-card p-[30px]"
       title={
         <h2 className="text-xl font-bold tracking-[-0.015em]">Ficha técnica</h2>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutRequestSchema } from "./checkout";
+import { checkoutCustomerSchema, checkoutRequestSchema } from "./checkout";
 
 describe("checkout request", () => {
   it("accepts English field names and normalizes an Argentine phone number", () => {
@@ -30,5 +30,21 @@ describe("checkout request", () => {
         "Ese teléfono no parece completo.",
       );
     }
+  });
+});
+
+describe("checkout customer form schema", () => {
+  const parse = (customerPhone: string) =>
+    checkoutCustomerSchema.safeParse({
+      customerName: "Mateo García",
+      customerPhone,
+    });
+
+  it("accepts a local Argentine mobile number", () => {
+    expect(parse("223 616-3910").success).toBe(true);
+  });
+
+  it("rejects a long-enough number that is not a valid Argentine mobile", () => {
+    expect(parse("1234567").success).toBe(false);
   });
 });

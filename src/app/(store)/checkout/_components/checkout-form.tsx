@@ -4,9 +4,8 @@ import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Loader2, MessageCircle, ShieldCheck } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +48,7 @@ export function CheckoutForm({
   const [isSubmitting, startSubmitting] = useTransition();
   const honeypotRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, formState, setError } =
+  const { register, handleSubmit, formState, setError, getValues } =
     useForm<CheckoutCustomerInput>({
       resolver: standardSchemaResolver(checkoutCustomerSchema),
       defaultValues: { customerName: "", customerPhone: "" },
@@ -68,7 +67,17 @@ export function CheckoutForm({
   );
   const canSubmit = changes.length === 0 && !isChecking;
 
+  const units = items.reduce((acc, i) => acc + i.qty, 0);
+
   function handleSubmitClick() {
+    // Validate before opening anything: an invalid form must not leave a
+    // blank tab behind. `handleSubmit` below renders the errors and focuses
+    // the first invalid field.
+    if (!checkoutCustomerSchema.safeParse(getValues()).success) {
+      void handleSubmit(() => {})();
+      return;
+    }
+
     // Open the popup synchronously with the click. Safari and strict Chrome
     // block it after an `await`. It starts blank and receives its destination
     // only after the Server Action responds.
@@ -95,15 +104,20 @@ export function CheckoutForm({
                 remove(invalidItem.variantId);
               }
             }
-            // Field errors such as "no parece un número argentino válido" use
-            // server-side phone validation; this form only renders them. See
-            // the comment in `checkoutCustomerSchema`.
+            // Field errors render inline and move focus to the field; the toast
+            // is reserved for errors that have no field (stock, network, etc.).
+            let hasFieldError = false;
             for (const [field, messages] of Object.entries(fieldErrors ?? {})) {
               if (field === "customerName" || field === "customerPhone") {
-                setError(field, { message: messages[0] });
+                setError(
+                  field,
+                  { message: messages[0] },
+                  { shouldFocus: !hasFieldError },
+                );
+                hasFieldError = true;
               }
             }
-            toast.error(message);
+            if (!hasFieldError) toast.error(message);
             return;
           }
 
@@ -136,21 +150,15 @@ export function CheckoutForm({
           <p className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
             Último paso
           </p>
-          <h1 className="mt-2.5 text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] sm:text-[46px]">
+          <h1 className="mt-2.5 text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] sm:text-[44px]">
             ¿A nombre de quién armamos el pedido?
           </h1>
-          <p className="mt-3.5 text-[15px] leading-relaxed text-muted-foreground">
-            Con esto generamos el pedido y abrimos WhatsApp con todo escrito. El
-            resto — envío o retiro, y cómo pagás — lo arreglás por chat.
+          <p className="mt-3.5 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
+            Con esto generamos el pedido y abrimos WhatsApp con todo escrito. No
+            pedimos datos de pago: envío o retiro y cómo pagás lo arreglás por
+            chat.
           </p>
         </div>
-
-        <Alert>
-          <ShieldCheck />
-          <AlertTitle className="text-xs font-medium text-muted-foreground">
-            No pedimos datos de pago. El pedido se cierra por WhatsApp.
-          </AlertTitle>
-        </Alert>
 
         <PriceChangeAlert changes={changes} onDiscard={discardChanges} />
 
@@ -169,12 +177,23 @@ export function CheckoutForm({
               id="checkout-customer-name"
               placeholder="Nombre y apellido"
               autoComplete="name"
+              maxLength={120}
               className="h-auto py-4 text-base"
               aria-invalid={!!formState.errors.customerName}
+              aria-required="true"
+              aria-describedby={
+                formState.errors.customerName
+                  ? "checkout-customer-name-error"
+                  : undefined
+              }
               {...register("customerName")}
             />
             {formState.errors.customerName ? (
-              <p className="text-xs text-destructive">
+              <p
+                id="checkout-customer-name-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {formState.errors.customerName.message}
               </p>
             ) : null}
@@ -187,24 +206,40 @@ export function CheckoutForm({
             >
               Tu teléfono
             </Label>
-            <div className="flex items-stretch overflow-hidden rounded-lg border border-input">
-              <span className="flex items-center border-r border-input bg-muted px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground sm:px-4">
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-input has-[[aria-invalid=true]]:border-destructive">
+              <span className="flex items-center border-r border-input bg-muted px-3 text-sm font-semibold whitespace-nowrap text-foreground sm:px-4">
                 {PHONE_PREFIX}
               </span>
               <Input
                 id="checkout-customer-phone"
-                placeholder="223 616 3910"
+                type="tel"
+                placeholder="223 123 4567"
                 autoComplete="tel-national"
                 inputMode="tel"
+                maxLength={20}
                 className="h-auto border-0 py-4 text-base"
                 aria-invalid={!!formState.errors.customerPhone}
+                aria-required="true"
+                aria-describedby="checkout-customer-phone-help"
                 {...register("customerPhone")}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {formState.errors.customerPhone?.message ??
-                "Por si se corta el chat y tenemos que escribirte."}
-            </p>
+            {formState.errors.customerPhone ? (
+              <p
+                id="checkout-customer-phone-help"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {formState.errors.customerPhone.message}
+              </p>
+            ) : (
+              <p
+                id="checkout-customer-phone-help"
+                className="text-sm text-muted-foreground"
+              >
+                Por si se corta el chat y tenemos que escribirte.
+              </p>
+            )}
           </div>
 
           {/* Honeypot: hidden from people and visible to bots that complete
@@ -224,6 +259,15 @@ export function CheckoutForm({
               autoComplete="off"
               ref={honeypotRef}
             />
+          </div>
+
+          <div className="flex items-baseline justify-between lg:hidden">
+            <span className="text-sm text-muted-foreground">
+              Total · {unitsLabel(units)}
+            </span>
+            <span className="text-xl font-extrabold tracking-[-0.03em]">
+              {formatArsPrice(total.toFixed(2))}
+            </span>
           </div>
 
           <Button
@@ -252,7 +296,7 @@ export function CheckoutForm({
             Tu pedido
           </span>
           <span className="text-xs text-muted-foreground">
-            {unitsLabel(items.reduce((total, i) => total + i.qty, 0))}
+            {unitsLabel(units)}
           </span>
         </div>
 
@@ -288,7 +332,7 @@ export function CheckoutForm({
 
         <div className="my-5 h-px bg-border" />
 
-        <ul className="flex flex-col gap-3 text-[13px] leading-relaxed text-foreground/90">
+        <ul className="flex flex-col gap-3 text-sm leading-relaxed text-foreground/90">
           <li>{shippingInfo}</li>
           <li>Todos los productos son originales.</li>
           <li>Guardamos el pedido con un número para seguirlo por chat.</li>

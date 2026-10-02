@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T18:27:15.798Z",
+  "title": "Design System: ParfamMdq",
+  "extensions": {
+    "colorMeta": {
+      "cream-paper": {
+        "role": "Page background (--background)",
+        "displayName": "Cream Paper",
+        "canonical": "oklch(0.9508 0.008 73.74)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 73.74)",
+          "oklch(0.25 0.008 73.74)",
+          "oklch(0.35 0.008 73.74)",
+          "oklch(0.45 0.008 73.74)",
+          "oklch(0.55 0.008 73.74)",
+          "oklch(0.7 0.008 73.74)",
+          "oklch(0.82 0.008 73.74)",
+          "oklch(0.95 0.008 73.74)"
+        ]
+      },
+      "ink-black": {
+        "role": "Text, primary actions, active states (--foreground, --primary)",
+        "displayName": "Ink Black",
+        "canonical": "oklch(0 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.25 0 0)",
+          "oklch(0.35 0 0)",
+          "oklch(0.45 0 0)",
+          "oklch(0.55 0 0)",
+          "oklch(0.7 0 0)",
+          "oklch(0.82 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "card-vellum": {
+        "role": "Raised surfaces (--card, --popover)",
+        "displayName": "Card Vellum",
+        "canonical": "oklch(0.9798 0.0045 78.3)",
+        "tonalRamp": [
+          "oklch(0.15 0.0045 78.3)",
+          "oklch(0.25 0.0045 78.3)",
+          "oklch(0.35 0.0045 78.3)",
+          "oklch(0.45 0.0045 78.3)",
+          "oklch(0.55 0.0045 78.3)",
+          "oklch(0.7 0.0045 78.3)",
+          "oklch(0.82 0.0045 78.3)",
+          "oklch(0.95 0.0045 78.3)"
+        ]
+      },
+      "warm-taupe-fill": {
+        "role": "Hover and placeholder fills (--secondary, --muted, --accent)",
+        "displayName": "Warm Taupe Fill",
+        "canonical": "oklch(0.915 0.0138 78.26)",
+        "tonalRamp": [
+          "oklch(0.15 0.0138 78.26)",
+          "oklch(0.25 0.0138 78.26)",
+          "oklch(0.35 0.0138 78.26)",
+          "oklch(0.45 0.0138 78.26)",
+          "oklch(0.55 0.0138 78.26)",
+          "oklch(0.7 0.0138 78.26)",
+          "oklch(0.82 0.0138 78.26)",
+          "oklch(0.95 0.0138 78.26)"
+        ]
+      },
+      "taupe-text": {
+        "role": "Secondary text and focus ring (--muted-foreground, --ring)",
+        "displayName": "Taupe Text",
+        "canonical": "oklch(0.5095 0.0158 78.18)",
+        "tonalRamp": [
+          "oklch(0.15 0.0158 78.18)",
+          "oklch(0.25 0.0158 78.18)",
+          "oklch(0.35 0.0158 78.18)",
+          "oklch(0.45 0.0158 78.18)",
+          "oklch(0.55 0.0158 78.18)",
+          "oklch(0.7 0.0158 78.18)",
+          "oklch(0.82 0.0158 78.18)",
+          "oklch(0.95 0.0158 78.18)"
+        ]
+      },
+      "ledger-line": {
+        "role": "Structural 1px borders (--border)",
+        "displayName": "Ledger Line",
+        "canonical": "oklch(0.8756 0.0168 79.34)",
+        "tonalRamp": [
+          "oklch(0.15 0.0168 79.34)",
+          "oklch(0.25 0.0168 79.34)",
+          "oklch(0.35 0.0168 79.34)",
+          "oklch(0.45 0.0168 79.34)",
+          "oklch(0.55 0.0168 79.34)",
+          "oklch(0.7 0.0168 79.34)",
+          "oklch(0.82 0.0168 79.34)",
+          "oklch(0.95 0.0168 79.34)"
+        ]
+      },
+      "field-line": {
+        "role": "Stronger borders on chips and inputs (--input)",
+        "displayName": "Field Line",
+        "canonical": "oklch(0.62 0.0168 79.34)",
+        "tonalRamp": [
+          "oklch(0.15 0.0168 79.34)",
+          "oklch(0.25 0.0168 79.34)",
+          "oklch(0.35 0.0168 79.34)",
+          "oklch(0.45 0.0168 79.34)",
+          "oklch(0.55 0.0168 79.34)",
+          "oklch(0.7 0.0168 79.34)",
+          "oklch(0.82 0.0168 79.34)",
+          "oklch(0.95 0.0168 79.34)"
+        ]
+      },
+      "counter-green": {
+        "role": "WhatsApp call to action (--whatsapp)",
+        "displayName": "Counter Green",
+        "canonical": "oklch(0.5175 0.137 149.95)",
+        "tonalRamp": [
+          "oklch(0.15 0.137 149.95)",
+          "oklch(0.25 0.137 149.95)",
+          "oklch(0.35 0.137 149.95)",
+          "oklch(0.45 0.137 149.95)",
+          "oklch(0.55 0.137 149.95)",
+          "oklch(0.7 0.137 149.95)",
+          "oklch(0.82 0.137 149.95)",
+          "oklch(0.95 0.137 149.95)"
+        ]
+      },
+      "correction-red": {
+        "role": "Errors and destructive actions (--destructive)",
+        "displayName": "Correction Red",
+        "canonical": "oklch(0.52 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(0.15 0.245 27.325)",
+          "oklch(0.25 0.245 27.325)",
+          "oklch(0.35 0.245 27.325)",
+          "oklch(0.45 0.245 27.325)",
+          "oklch(0.55 0.245 27.325)",
+          "oklch(0.7 0.245 27.325)",
+          "oklch(0.82 0.245 27.325)",
+          "oklch(0.95 0.245 27.325)"
+        ]
+      },
+      "sage-confirm-bg": {
+        "role": "Success background (--success)",
+        "displayName": "Sage Confirm Background",
+        "canonical": "oklch(0.9294 0.0219 145.6)",
+        "tonalRamp": [
+          "oklch(0.15 0.0219 145.6)",
+          "oklch(0.25 0.0219 145.6)",
+          "oklch(0.35 0.0219 145.6)",
+          "oklch(0.45 0.0219 145.6)",
+          "oklch(0.55 0.0219 145.6)",
+          "oklch(0.7 0.0219 145.6)",
+          "oklch(0.82 0.0219 145.6)",
+          "oklch(0.95 0.0219 145.6)"
+        ]
+      },
+      "sage-confirm-text": {
+        "role": "Success text (--success-foreground)",
+        "displayName": "Sage Confirm Text",
+        "canonical": "oklch(0.4258 0.0734 148.6)",
+        "tonalRamp": [
+          "oklch(0.15 0.0734 148.6)",
+          "oklch(0.25 0.0734 148.6)",
+          "oklch(0.35 0.0734 148.6)",
+          "oklch(0.45 0.0734 148.6)",
+          "oklch(0.55 0.0734 148.6)",
+          "oklch(0.7 0.0734 148.6)",
+          "oklch(0.82 0.0734 148.6)",
+          "oklch(0.95 0.0734 148.6)"
+        ]
+      },
+      "sage-confirm-border": {
+        "role": "Success border (--success-border)",
+        "displayName": "Sage Confirm Border",
+        "canonical": "oklch(0.8383 0.0433 146.7)",
+        "tonalRamp": [
+          "oklch(0.15 0.0433 146.7)",
+          "oklch(0.25 0.0433 146.7)",
+          "oklch(0.35 0.0433 146.7)",
+          "oklch(0.45 0.0433 146.7)",
+          "oklch(0.55 0.0433 146.7)",
+          "oklch(0.7 0.0433 146.7)",
+          "oklch(0.82 0.0433 146.7)",
+          "oklch(0.95 0.0433 146.7)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero logo set type"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Catalog section and product titles"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Technical-detail section headings and card titles"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default copy at 14px"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Tracked uppercase eyebrows and section tags"
+      },
+      "price": {
+        "displayName": "Price",
+        "purpose": "Product detail price"
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "Tailwind default transition-colors/transition-all (150ms, cubic-bezier(0.4, 0, 0.2, 1))",
+        "purpose": "Hover and focus changes on buttons, chips, inputs and product cards."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink on cream, hover at 80% ink.",
+      "html": "<div class=\"ds-wrap\"><button class=\"ds-btn ds-btn-primary\">Agregar al carrito</button></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:4px;font:500 14px Outfit,system-ui,sans-serif;height:32px;padding:0 10px;cursor:pointer;outline:none;transition:all 150ms cubic-bezier(0.4,0,0.2,1)}\n.ds-btn-primary{background:var(--primary);color:var(--primary-foreground)}\n.ds-btn-primary:hover{background:color-mix(in oklch,var(--primary) 80%,transparent)}\n.ds-btn:focus-visible{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 50%,transparent)}\n.ds-btn:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ledger Line border on cream, Warm Taupe Fill on hover.",
+      "html": "<div class=\"ds-wrap\"><button class=\"ds-btn ds-btn-outline\">Ver detalle</button></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:4px;font:500 14px Outfit,system-ui,sans-serif;height:32px;padding:0 10px;cursor:pointer;outline:none;transition:all 150ms cubic-bezier(0.4,0,0.2,1)}\n.ds-btn-outline{background:var(--background);color:var(--foreground);border-color:var(--border)}\n.ds-btn-outline:hover{background:var(--muted)}\n.ds-btn:focus-visible{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 50%,transparent)}\n.ds-btn:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "WhatsApp Button",
+      "kind": "button",
+      "refersTo": "button-whatsapp",
+      "description": "Counter Green with cream text, 54px high; the only green call to action.",
+      "html": "<div class=\"ds-wrap\"><button class=\"ds-btn ds-btn-wa\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z\"/></svg>&nbsp;Pedir por WhatsApp</button></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:4px;font:500 14px Outfit,system-ui,sans-serif;height:32px;padding:0 10px;cursor:pointer;outline:none;transition:all 150ms cubic-bezier(0.4,0,0.2,1)}\n.ds-btn-wa{background:var(--whatsapp);color:var(--whatsapp-foreground);height:54px;padding:0 22px;gap:8px}\n.ds-btn-wa:hover{background:color-mix(in oklch,var(--whatsapp) 90%,black)}\n.ds-btn:focus-visible{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 50%,transparent)}\n.ds-btn:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip, chip-active",
+      "description": "Inactive is bordered on cream; active is filled with ink.",
+      "html": "<div class=\"ds-wrap\"><button class=\"ds-chip\">Todos</button> <button class=\"ds-chip ds-chip-active\" aria-pressed=\"true\">Mujer</button></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-chip{height:46px;padding:0 18px;border:1px solid var(--input);border-radius:4px;background:var(--background);color:var(--foreground);font:500 13px Outfit,system-ui,sans-serif;cursor:pointer;outline:none;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1)}\n.ds-chip:hover{background:var(--muted)}\n.ds-chip-active{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}\n.ds-chip-active:hover{background:var(--primary)}\n.ds-chip:focus-visible{box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 50%,transparent)}"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "product-card",
+      "description": "Bordered Card Vellum card; photo area on cream with a bottom rule; hover shifts the border to ink.",
+      "html": "<div class=\"ds-wrap\"><a class=\"ds-card\" href=\"#\"><div class=\"ds-card-photo\"><span class=\"ds-card-badge\">NUEVO</span></div><div class=\"ds-card-body\"><span class=\"ds-card-eyebrow\">Marca</span><h3 class=\"ds-card-title\">Nombre del perfume</h3><div class=\"ds-card-price\"><span class=\"ds-card-from\">desde</span><span class=\"ds-card-amount\">$ 85.000</span></div></div></a></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-card{display:flex;flex-direction:column;overflow:hidden;width:260px;border:1px solid var(--border);border-radius:4px;background:var(--card);color:inherit;text-decoration:none;transition:border-color 150ms cubic-bezier(0.4,0,0.2,1);outline:none}\n.ds-card:hover{border-color:var(--foreground)}\n.ds-card:focus-visible{box-shadow:0 0 0 2px var(--ring)}\n.ds-card-photo{position:relative;height:180px;border-bottom:1px solid var(--border);background:var(--background)}\n.ds-card-badge{position:absolute;top:12px;left:12px;border-radius:3.2px;background:var(--primary);color:var(--primary-foreground);padding:6px 10px;font:700 11px/1 Outfit,system-ui,sans-serif;letter-spacing:0.16em}\n.ds-card-body{display:flex;flex-direction:column;gap:6px;padding:14px}\n.ds-card-eyebrow{font:700 11px Outfit,system-ui,sans-serif;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted-foreground)}\n.ds-card-title{margin:0;font:700 14px/1.25 Outfit,system-ui,sans-serif;letter-spacing:-0.015em}\n.ds-card-price{display:flex;align-items:baseline;gap:6px;padding-top:8px}\n.ds-card-from{font-size:11px;color:var(--muted-foreground)}\n.ds-card-amount{font:700 16px Outfit,system-ui,sans-serif;letter-spacing:-0.02em}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Field Line border, 4px radius; focus shows a ring-coloured border and a 3px ring.",
+      "html": "<div class=\"ds-wrap\"><input class=\"ds-input\" type=\"text\" placeholder=\"Nombre\"></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-input{height:32px;width:240px;box-sizing:border-box;border:1px solid var(--input);border-radius:4px;background:transparent;color:var(--foreground);padding:4px 10px;font:400 14px Outfit,system-ui,sans-serif;outline:none;transition:border-color 150ms cubic-bezier(0.4,0,0.2,1)}\n.ds-input::placeholder{color:var(--muted-foreground)}\n.ds-input:hover{border-color:var(--ring)}\n.ds-input:focus-visible{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklch,var(--ring) 50%,transparent)}"
+    },
+    {
+      "name": "Accord Bar",
+      "kind": "data-bar",
+      "refersTo": "accord-track",
+      "description": "8px Ledger Line track; the fill colour comes from the database.",
+      "html": "<div class=\"ds-wrap\"><div class=\"ds-accord\"><div class=\"ds-accord-head\"><span class=\"ds-accord-name\">Amaderado</span><span class=\"ds-accord-pct\">80%</span></div><div class=\"ds-accord-track\" role=\"img\" aria-label=\"Amaderado: 80 de 100\"><div class=\"ds-accord-fill\"></div></div></div></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-accord{display:flex;flex-direction:column;gap:6px;width:260px}\n.ds-accord-head{display:flex;align-items:baseline;justify-content:space-between}\n.ds-accord-name{font:600 14px Outfit,system-ui,sans-serif}\n.ds-accord-pct{font-size:12px;color:var(--muted-foreground)}\n.ds-accord-track{height:8px;width:100%;overflow:hidden;border-radius:2.4px;background:var(--border)}\n.ds-accord-fill{height:100%;width:80%;border-radius:2.4px;background:#8a6a4a}\n.ds-accord-track:hover{outline:1px solid var(--ring)}\n.ds-accord-track:focus-visible{outline:2px solid var(--ring)}"
+    },
+    {
+      "name": "Logo",
+      "kind": "brand",
+      "refersTo": "display",
+      "description": "Set type in Outfit 800 with a tracked Perfumería subtitle; never an image.",
+      "html": "<div class=\"ds-wrap\"><a class=\"ds-logo\" href=\"#\"><span class=\"ds-logo-name\">Parfam MDQ</span><span class=\"ds-logo-sub\">Perfumería</span></a></div>",
+      "css": ".ds-wrap{font-family:Outfit,system-ui,sans-serif;background:var(--background);color:var(--foreground);padding:16px}\n.ds-logo{display:inline-flex;flex-direction:column;align-items:center;gap:2px;color:var(--foreground);text-decoration:none;outline:none}\n.ds-logo-name{font:800 20px/0.9 Outfit,system-ui,sans-serif;letter-spacing:-0.03em}\n.ds-logo-sub{font:600 10px Outfit,system-ui,sans-serif;letter-spacing:0.42em;padding-left:0.42em;text-transform:uppercase;color:var(--muted-foreground)}\n.ds-logo:hover .ds-logo-sub{color:var(--foreground)}\n.ds-logo:focus-visible{box-shadow:0 0 0 2px var(--ring)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Lab Notebook",
+    "overview": "The store reads as a perfumer's notebook that happens to sell perfume: cream paper, black ink, hairline rules, and annotated technical data (a notes pyramid, accord bars, a spec list) sitting next to a shop. Nothing is decorated. Structure comes from 1px rules and from the type itself.\n\nIt is typographic (the logo is set type, and hierarchy comes from weight, size and tracking in one family), warm (taupe neutrals, not grey), precise (small radii, exact 1px rules, tabular data) and old-luxury (restraint, generous margins, tracked small labels, confidence from tight display type rather than ornament).\n\nThe system explicitly rejects luxury-gold, metallic and foil treatments, and modern luxury (glossy surfaces, dark black-and-gold, glassmorphism).",
+    "keyCharacteristics": [
+      "Cream paper surface with black ink as the only emphasis.",
+      "One typeface, Outfit, with hierarchy built from weight, size and tracking.",
+      "Flat surfaces: 1px Ledger Line borders, no box-shadows.",
+      "Tiny radii (4px base); rectangular and notebook-like.",
+      "Technical data rendered as annotated, ledger-like rows.",
+      "Mobile-first, with 44px minimum touch targets."
+    ],
+    "rules": [
+      {
+        "name": "The One Ink Rule",
+        "body": "Black is the only emphasis. Every solid call to action and every active state is ink on cream.",
+        "section": "colors"
+      },
+      {
+        "name": "The Counter Green Rule",
+        "body": "Green appears only on the call to action that leaves the store for WhatsApp, at most one per view.",
+        "section": "colors"
+      },
+      {
+        "name": "The Database Color Rule",
+        "body": "Accord colors come from data through `getChipColor`, only as bar fills and small dots, and are never promoted to theme tokens.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tracked Label Rule",
+        "body": "Uppercase bold labels of 9-11px with 0.12-0.2em tracking are for eyebrows and section tags only, never sentences.",
+        "section": "typography"
+      },
+      {
+        "name": "The Set Type Rule",
+        "body": "The logo is text in Outfit 800 with tracking -0.03em and a tracked \"Perfumería\" subtitle. Never replace it with an image or a second typeface.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "The store has no box-shadows. Separate surfaces with tone and 1px rules.",
+        "section": "elevation & depth"
+      },
+      {
+        "name": "The Cream Blend Rule",
+        "body": "Product photos use mix-blend-multiply on the paper surface so white studio backgrounds disappear.",
+        "section": "elevation & depth"
+      }
+    ],
+    "dos": [
+      "Do keep the single family and create hierarchy with weight, size and tracking.",
+      "Do keep surfaces flat and structure them with 1px rules.",
+      "Do keep ink as the one emphasis.",
+      "Do render technical data (notes, accords, specs) as annotated, ledger-like rows.",
+      "Do keep touch targets at 44px or larger.",
+      "Do pass database colours through `getChipColor`."
+    ],
+    "donts": [
+      "Don't use gold, bronze, foil, metallic gradients or any luxury-gold palette.",
+      "Don't use modern-luxury tropes: glossy surfaces, glassmorphism, a black-and-gold dark mode, or glow.",
+      "Don't add shadows or soft rounded-2xl-style corners.",
+      "Don't add dark mode.",
+      "Don't use green anywhere except the WhatsApp call to action and success confirmation states.",
+      "Don't hotlink or show reference-data imagery that is not in R2.",
+      "Don't add a second typeface without an explicit decision."
+    ]
+  }
+}

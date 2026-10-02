@@ -92,6 +92,7 @@ export function CharacteristicBars({
 
   return (
     <CollapsibleSection
+      defaultOpenOnMobile
       className="rounded border bg-card p-[30px]"
       title={
         <h2 className="text-xl font-bold tracking-[-0.015em]">Carácter</h2>

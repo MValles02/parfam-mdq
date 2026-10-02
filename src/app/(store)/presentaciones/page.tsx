@@ -6,6 +6,7 @@ import {
   buildPageMetadata,
   serializeJsonLd,
 } from "@/lib/seo";
+import { PRESENTATIONS } from "@/lib/store/presentations";
 
 const PAGE_TITLE = "Frasco, tester o decant";
 const PAGE_PATH = "/presentaciones";
@@ -20,24 +21,6 @@ export const metadata: Metadata = buildPageMetadata({
 const breadcrumbs = [
   { name: "Inicio", path: "/" },
   { name: PAGE_TITLE, path: PAGE_PATH },
-];
-
-const VARIANT_KINDS = [
-  {
-    name: "Frasco entero",
-    description:
-      "Viene sellado, con su estuche y todo el packaging original: es la presentación de siempre.",
-  },
-  {
-    name: "Tester",
-    description:
-      "El mismo perfume, en un envase simple y sin estuche. Por eso sale más barato sin perder originalidad.",
-  },
-  {
-    name: "Decant",
-    description:
-      "Una fracción del perfume pasada a un atomizador chico, ideal para probarlo antes de comprar el frasco entero.",
-  },
 ];
 
 export default function WhatIsATesterPage() {
@@ -88,7 +71,7 @@ export default function WhatIsATesterPage() {
             Frasco entero, tester o decant
           </h2>
           <dl className="mt-5 flex flex-col gap-5">
-            {VARIANT_KINDS.map((variantKind) => (
+            {PRESENTATIONS.map((variantKind) => (
               <div key={variantKind.name} className="flex flex-col gap-1">
                 <dt className="text-base font-bold">{variantKind.name}</dt>
                 <dd className="text-[15px] text-muted-foreground">

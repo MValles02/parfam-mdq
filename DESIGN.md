@@ -181,7 +181,7 @@ Accord colors are database data, not tokens.
 
 Mobile-first: the primary use is a phone. The page container is 1440px max, with 20px side padding and 64px at lg. The catalog grid is 2 columns on mobile (14px gap) and 4 columns at lg (28px gap). Breakpoints are sm 640px and lg 1024px only.
 
-Touch targets are at least 44px, achieved with pseudo-element hit areas where the visible control is smaller; mobile touch controls are 46, 50 or 54px high. The mobile header is sticky and hides on scroll down. The hero is 55svh, rising to 68svh. Technical details collapse into details/summary below lg.
+Touch targets are at least 44px, achieved with pseudo-element hit areas where the visible control is smaller; mobile touch controls are 46, 50 or 54px high. The mobile header is sticky and hides on scroll down. The hero is 40svh, rising to 68svh. Technical details collapse into details/summary below lg.
 
 ## Elevation & Depth
 

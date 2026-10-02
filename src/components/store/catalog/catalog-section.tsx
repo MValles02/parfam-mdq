@@ -1,6 +1,7 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import type { FilterOptions } from "@/lib/store/queries";
 import type { CatalogFilters } from "@/lib/store/filters";
+import { countActiveCatalogFilters } from "@/lib/store/filters";
 import { FilterDrawer } from "./filter-drawer";
 import { FraseTotal, CatalogGrid } from "./grid";
 import { CatalogGridSkeleton } from "./grid-skeleton";
@@ -25,6 +26,7 @@ export function CatalogSection({
   title,
   filterOptions,
   headingLevel: Heading = "h1",
+  mobileInsert,
 }: {
   filters: CatalogFilters;
   title: string;
@@ -34,6 +36,8 @@ export function CatalogSection({
    * from that level.
    */
   headingLevel?: "h1" | "h2";
+  /** Shown only on mobile, after the first row of the first results page. */
+  mobileInsert?: ReactNode;
 }) {
   const catalogGridKey = JSON.stringify(filters);
 
@@ -68,7 +72,12 @@ export function CatalogSection({
       </div>
 
       <div className="mb-10 hidden lg:block">
-        <FilterPanel filterOptions={filterOptions} />
+        <FilterPanel
+          filterOptions={filterOptions}
+          moreFiltersOpen={
+            countActiveCatalogFilters({ ...filters, variantKind: null }) > 0
+          }
+        />
       </div>
 
       <div className="mb-3 lg:hidden">
@@ -94,6 +103,7 @@ export function CatalogSection({
         <CatalogGrid
           filters={filters}
           headingLevel={Heading === "h1" ? "h2" : "h3"}
+          afterFirstRow={filters.page === 1 ? mobileInsert : undefined}
         />
         <CatalogPagination filters={filters} />
       </Suspense>

@@ -26,7 +26,7 @@ export function ProductCard({
     >
       <div className="relative isolate h-[180px] border-b bg-background sm:h-[260px]">
         {product.badge ? (
-          <span className="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1.5 text-[11px] leading-none font-bold tracking-[0.16em] text-primary-foreground sm:text-[9px]">
+          <span className="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1.5 text-[11px] leading-none font-bold tracking-[0.16em] text-primary-foreground sm:text-[10px]">
             {product.badge}
           </span>
         ) : null}

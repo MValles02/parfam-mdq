@@ -16,6 +16,6 @@ test("checkout creates an order and shows the thank-you page", async ({
 
   await expect(page).toHaveURL(/\/pedido\/PM-\d+\/gracias/);
   await expect(
-    page.getByRole("heading", { name: /Pedido PM-\d+ armado/ }),
+    page.getByRole("heading", { name: /Tu pedido PM-\d+ quedó guardado/ }),
   ).toBeVisible();
 });

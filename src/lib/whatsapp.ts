@@ -36,6 +36,20 @@ export function isValidWhatsAppLink(link: string): boolean {
   }
 }
 
+/** Returns the decoded `text` parameter of a wa.me link, or null if absent. */
+export function extractWhatsAppText(link: string): string | null {
+  try {
+    return new URL(link).searchParams.get("text") || null;
+  } catch {
+    return null;
+  }
+}
+
+/** True for order numbers shaped like "PM-0042". */
+export function isOrderNumber(value: string): boolean {
+  return /^PM-\d+$/.test(value);
+}
+
 /** Equivalent to `buildWhatsAppLink` for `SiteSetting.instagramHandle`. */
 export function buildInstagramLink(handle: string): string {
   return `https://instagram.com/${handle}`;

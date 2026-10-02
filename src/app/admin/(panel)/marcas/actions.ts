@@ -42,7 +42,7 @@ export async function updateBrand(
   const brand = await prisma.brand.update({
     where: { id },
     data: { name: parsed.data.name },
-    select: { id: true, slug: true },
+    select: { id: true },
   });
 
   await revalidateBrand(brand.id);

@@ -3,7 +3,10 @@ import { getSiteSettings } from "@/lib/settings";
 import { isOrderNumber } from "@/lib/whatsapp";
 import { CustomerThanks } from "./_customer-thanks";
 
-export const metadata: Metadata = { title: "Pedido guardado" };
+export const metadata: Metadata = {
+  title: "Pedido guardado",
+  robots: { index: false },
+};
 
 /**
  * This page does not query the database by `number`; see

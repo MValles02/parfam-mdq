@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight } from "lucide-react";
 import {
   buildBreadcrumbJsonLd,
   buildPageMetadata,
   serializeJsonLd,
 } from "@/lib/seo";
+import { PageCtaPair } from "@/components/store/page-cta-pair";
+import { getSiteSettings } from "@/lib/settings";
 import { PRESENTATIONS } from "@/lib/store/presentations";
 
 const PAGE_TITLE = "Frasco, tester o decant";
@@ -23,7 +24,9 @@ const breadcrumbs = [
   { name: PAGE_TITLE, path: PAGE_PATH },
 ];
 
-export default function WhatIsATesterPage() {
+export default async function PresentacionesPage() {
+  const config = await getSiteSettings();
+
   return (
     <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
       <script
@@ -52,29 +55,19 @@ export default function WhatIsATesterPage() {
           {PAGE_TITLE}
         </h1>
 
-        <div className="mt-8 flex flex-col gap-6 text-lg leading-relaxed">
-          <p>
-            Un tester de fragancia es un producto completamente nuevo, que no ha
-            sido utilizado previamente. Los testers son auténticos, frescos y
-            100% originales, con la misma fragancia que el producto comercial.
-          </p>
-          <p>
-            Los fabricantes crean estos testers, que pueden venir en envases
-            simples y, en algunos casos, sin tapa decorativa. Gracias a esto,
-            tienen un costo más bajo, y ese ahorro se traslada directamente al
-            cliente.
-          </p>
-        </div>
+        <p className="mt-8 text-lg leading-relaxed">
+          Cada perfume te lo podemos ofrecer de tres formas. Las tres son el
+          mismo perfume, nuevo y 100% original: lo que cambia es el envase y
+          cuánto llevás.
+        </p>
 
-        <div className="mt-14 rounded border border-border bg-card p-6 lg:p-8">
-          <h2 className="text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
-            Frasco entero, tester o decant
-          </h2>
-          <dl className="mt-5 flex flex-col gap-5">
+        <div className="mt-10 rounded border border-border bg-card p-6 lg:p-8">
+          <h2 className="sr-only">Las tres presentaciones</h2>
+          <dl className="flex flex-col gap-5">
             {PRESENTATIONS.map((variantKind) => (
               <div key={variantKind.name} className="flex flex-col gap-1">
                 <dt className="text-base font-bold">{variantKind.name}</dt>
-                <dd className="text-[15px] text-muted-foreground">
+                <dd className="text-base text-muted-foreground">
                   {variantKind.description}
                 </dd>
               </div>
@@ -82,13 +75,18 @@ export default function WhatIsATesterPage() {
           </dl>
         </div>
 
-        <Link
-          href="/#catalogo"
-          className="mt-12 inline-flex items-center gap-2 text-base font-semibold hover:text-muted-foreground"
-        >
-          Ver el catálogo
-          <ArrowRight className="size-4" />
-        </Link>
+        <h2 className="mt-12 text-lg font-bold">Más sobre el tester</h2>
+        <p className="mt-2 text-lg leading-relaxed">
+          El tester lo hace el mismo fabricante. Es nuevo, nunca se usó y tiene
+          la misma fragancia que el frasco de venta. Viene en un envase simple,
+          sin estuche y a veces sin la tapa decorativa. Por eso cuesta menos, y
+          esa diferencia la pagás vos de menos.
+        </p>
+
+        <PageCtaPair
+          whatsappNumber={config.whatsappNumber}
+          message="¡Hola! Tengo una duda sobre frasco, tester o decant."
+        />
       </article>
     </div>
   );

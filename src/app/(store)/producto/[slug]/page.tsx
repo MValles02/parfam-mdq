@@ -100,7 +100,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
       <div className="mx-auto max-w-page px-5 pb-24 lg:px-16 lg:pb-0">
         <p className="pt-5 text-xs text-muted-foreground">
           <Link
-            href="/"
+            href="/#catalogo"
             className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
           >
             Catálogo
@@ -123,7 +123,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
           <div className="flex flex-1 flex-col">
             <Link
               href={`/?marca=${product.brandSlug}#catalogo`}
-              className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase hover:text-foreground"
+              className="relative w-fit text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
             >
               {product.brandName}
             </Link>

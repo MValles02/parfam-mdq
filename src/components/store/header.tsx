@@ -76,8 +76,8 @@ function useHideOnScrollDown() {
  */
 export function Header() {
   const pathname = usePathname();
-  // This component owns the cart Sheet because the drawer's "Finalizar pedido
-  // por WhatsApp" CTA must close it when navigating (see cart-drawer.tsx).
+  // This component owns the cart Sheet because the drawer's "Continuar" CTA
+  // must close it when navigating (see cart-drawer.tsx).
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
   const scrolledDown = useHideOnScrollDown();

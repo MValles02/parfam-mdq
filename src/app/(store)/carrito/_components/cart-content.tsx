@@ -1,7 +1,8 @@
 "use client";
 
-import { useCartQuantity, useCart, useHydrated } from "@/lib/cart";
+import { unitsLabel, useCartQuantity, useCart, useHydrated } from "@/lib/cart";
 import { CartItemList } from "@/components/store/cart/cart-item-list";
+import { CartTotalAnnouncer } from "@/components/store/cart/cart-total-announcer";
 import { CartSummary } from "@/components/store/cart/cart-summary";
 
 /**
@@ -12,11 +13,11 @@ export function CartContent() {
   const hydrated = useHydrated();
   const quantity = useCartQuantity();
   const items = useCart((state) => state.items);
-  const productCountLabel =
-    quantity === 1 ? "1 producto" : `${quantity} productos`;
+  const productCountLabel = unitsLabel(quantity);
 
   return (
     <>
+      <CartTotalAnnouncer />
       <div className="flex items-baseline gap-2.5">
         <h1 className="text-[32px] font-extrabold tracking-[-0.025em]">
           Tu carrito
@@ -28,10 +29,14 @@ export function CartContent() {
         ) : null}
       </div>
 
-      <div className="mt-7 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px]">
-        <CartItemList />
+      <div className="mt-7 flex flex-col gap-10 lg:grid lg:grid-cols-[1fr_360px]">
+        <div>
+          <h2 className="sr-only">Productos en tu carrito</h2>
+          <CartItemList />
+        </div>
         {hydrated && items.length > 0 ? (
-          <div className="h-fit rounded border border-border bg-card p-6 lg:sticky lg:top-24">
+          <div className="h-fit rounded border border-border bg-card p-6 max-lg:sticky max-lg:bottom-0 max-lg:z-30 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:px-0 max-lg:pt-3 max-lg:pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:sticky lg:top-24">
+            <h2 className="sr-only">Resumen</h2>
             <CartSummary />
           </div>
         ) : null}

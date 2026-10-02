@@ -9,8 +9,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
-import { useCart, useCartQuantity, useHydrated } from "@/lib/cart";
+import { unitsLabel, useCart, useCartQuantity, useHydrated } from "@/lib/cart";
 import { CartItemList } from "@/components/store/cart/cart-item-list";
+import { CartTotalAnnouncer } from "@/components/store/cart/cart-total-announcer";
 import { CartSummary } from "@/components/store/cart/cart-summary";
 
 /**
@@ -22,12 +23,19 @@ export function CartDrawer({ close }: { close: () => void }) {
   const hydrated = useHydrated();
   const quantity = useCartQuantity();
   const items = useCart((state) => state.items);
-  const label = quantity === 1 ? "1 producto" : `${quantity} productos`;
+  const label = unitsLabel(quantity);
 
   return (
     <SheetContent
       showCloseButton={false}
-      className="flex w-full flex-col gap-0 p-0 sm:max-w-[470px]"
+      // The toaster lives outside the dialog, so tapping a toast action (e.g.
+      // "Deshacer" after removing a line) would count as an outside click and
+      // close the drawer.
+      onInteractOutside={(event) => {
+        if ((event.target as Element).closest("[data-sonner-toaster]"))
+          event.preventDefault();
+      }}
+      className="flex flex-col gap-0 p-0 data-[side=right]:w-full sm:max-w-[470px]"
     >
       <SheetHeader className="flex-row items-baseline gap-2.5 space-y-0 border-b border-border px-7 py-6">
         <SheetTitle className="text-xl font-extrabold tracking-[-0.02em]">
@@ -38,6 +46,7 @@ export function CartDrawer({ close }: { close: () => void }) {
         ) : null}
       </SheetHeader>
 
+      <CartTotalAnnouncer />
       <div className="flex-1 overflow-y-auto px-7 py-5">
         <CartItemList onNavigate={close} />
       </div>

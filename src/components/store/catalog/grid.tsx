@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { cache, Fragment, type ReactNode } from "react";
 import { ProductCard } from "@/components/store/product-card";
 import { listCatalog } from "@/lib/store/queries";
 import {
@@ -18,9 +18,12 @@ export const listCatalogCached = cache(listCatalog);
 export async function CatalogGrid({
   filters,
   headingLevel = "h2",
+  afterFirstRow,
 }: {
   filters: CatalogFilters;
   headingLevel?: "h2" | "h3";
+  /** Full-width item placed after the first mobile row (2 columns). */
+  afterFirstRow?: ReactNode;
 }) {
   const { cards } = await listCatalogCached(filters);
 
@@ -39,12 +42,14 @@ export async function CatalogGrid({
   return (
     <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4 lg:gap-7">
       {cards.map((product, index) => (
-        <ProductCard
-          key={product.slug}
-          product={product}
-          priority={index < 4}
-          headingLevel={headingLevel}
-        />
+        <Fragment key={product.slug}>
+          <ProductCard
+            product={product}
+            priority={index < 4}
+            headingLevel={headingLevel}
+          />
+          {index === Math.min(1, cards.length - 1) ? afterFirstRow : null}
+        </Fragment>
       ))}
     </div>
   );

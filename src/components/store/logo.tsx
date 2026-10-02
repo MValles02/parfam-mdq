@@ -18,12 +18,12 @@ export function Logo({
   const styles = {
     header: {
       name: "text-xl",
-      subtitle: "text-[10px] lg:text-[7px] tracking-[0.42em]",
+      subtitle: "text-[10px] tracking-[0.42em]",
     },
     hero: {
       name: "text-6xl sm:text-8xl lg:text-[132px]",
       subtitle:
-        "text-[11px] sm:text-[15px] lg:text-[17px] tracking-[0.5em] lg:tracking-[0.62em] mt-4 lg:mt-5",
+        "text-background text-[11px] sm:text-[15px] lg:text-[17px] tracking-[0.5em] lg:tracking-[0.62em] mt-4 lg:mt-5",
     },
     footer: { name: "text-2xl", subtitle: "sr-only" },
   }[size];

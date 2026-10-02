@@ -21,13 +21,13 @@ const STATIC_PAGES: {
   changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
 }[] = [
   { path: "/", priority: 1, changeFrequency: "daily" },
-  { path: "/que-es-un-tester", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/presentaciones", priority: 0.7, changeFrequency: "monthly" },
   { path: "/como-comprar", priority: 0.6, changeFrequency: "monthly" },
   { path: "/contacto", priority: 0.5, changeFrequency: "yearly" },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { products, brands } = await cachedSitemapUrls();
+  const { products } = await cachedSitemapUrls();
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_PAGES.map((page) => ({
     url: absoluteUrl(page.path),
@@ -42,12 +42,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const brandEntries: MetadataRoute.Sitemap = brands.map((brand) => ({
-    url: absoluteUrl(`/marca/${brand.slug}`),
-    lastModified: brand.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.4,
-  }));
-
-  return [...staticEntries, ...productEntries, ...brandEntries];
+  return [...staticEntries, ...productEntries];
 }

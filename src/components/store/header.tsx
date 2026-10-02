@@ -21,7 +21,7 @@ import { siteDefaults } from "@/lib/site";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const NAVIGATION_LINKS = [
-  { href: "/que-es-un-tester", label: "¿Qué es un tester?" },
+  { href: "/presentaciones", label: "Frasco, tester o decant" },
   { href: "/como-comprar", label: "Cómo comprar" },
   { href: "/contacto", label: "Contacto" },
 ] as const;

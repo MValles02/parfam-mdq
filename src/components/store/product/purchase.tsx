@@ -180,10 +180,10 @@ export function Purchase({
         {variants.some((variant) => variant.kind === "TESTER") ? (
           <p className="mt-3 text-xs text-muted-foreground">
             <Link
-              href="/que-es-un-tester"
+              href="/presentaciones"
               className="underline underline-offset-2 hover:text-foreground"
             >
-              ¿Qué es un tester?
+              ¿Frasco, tester o decant? Te explicamos
             </Link>
           </p>
         ) : null}

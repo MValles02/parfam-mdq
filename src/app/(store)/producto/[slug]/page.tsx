@@ -30,7 +30,9 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await props.params;
   const product = await getProductBySlug(slug);
-  if (!product) return {};
+  // Matches `not-found.tsx`; returning `{}` would let the site default title
+  // replace it once the page hydrates.
+  if (!product) return { title: { absolute: "Página no encontrada" } };
 
   const metadata = [
     product.brandName,
@@ -71,7 +73,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
 
   const breadcrumbs = [
     { name: "Inicio", path: "/" },
-    { name: product.brandName, path: `/marca/${product.brandSlug}` },
+    { name: product.brandName, path: `/?marca=${product.brandSlug}` },
     { name: product.name, path: `/producto/${product.slug}` },
   ];
 
@@ -105,7 +107,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
           </Link>
           {" · "}
           <Link
-            href={`/marca/${product.brandSlug}`}
+            href={`/?marca=${product.brandSlug}#catalogo`}
             className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
           >
             {product.brandName}
@@ -120,7 +122,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
 
           <div className="flex flex-1 flex-col">
             <Link
-              href={`/marca/${product.brandSlug}`}
+              href={`/?marca=${product.brandSlug}#catalogo`}
               className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase hover:text-foreground"
             >
               {product.brandName}

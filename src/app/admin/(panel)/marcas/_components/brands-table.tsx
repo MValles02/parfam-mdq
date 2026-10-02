@@ -72,8 +72,8 @@ function EditDialog({
           <DialogHeader>
             <DialogTitle>Editar marca</DialogTitle>
             <DialogDescription>
-              La URL <code className="font-mono">/marca/{brand.slug}</code> no
-              cambia: sólo se edita el nombre que se muestra.
+              El identificador <code className="font-mono">{brand.slug}</code>{" "}
+              no cambia: sólo se edita el nombre que se muestra.
             </DialogDescription>
           </DialogHeader>
 

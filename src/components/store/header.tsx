@@ -87,7 +87,7 @@ export function Header() {
 
   const getLinkClassName = (href: string) =>
     cn(
-      "text-foreground",
+      "flex min-h-11 items-center text-foreground",
       pathname === href
         ? "underline underline-offset-4"
         : "hover:text-muted-foreground",
@@ -112,7 +112,11 @@ export function Header() {
         </span>
         {/* Desktop */}
         <div className="mx-auto hidden max-w-page items-center justify-between px-16 py-6 lg:flex">
-          <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
+          <Link
+            href="/"
+            aria-label={`Ir al inicio de ${siteDefaults.name}`}
+            className="flex min-h-11 items-center"
+          >
             <Logo size="header" />
           </Link>
           <div className="flex items-center gap-9">
@@ -135,7 +139,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
-                className="flex"
+                className="flex min-h-11 items-center"
               >
                 <CartBadge variant="chip" />
               </button>

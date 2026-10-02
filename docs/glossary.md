@@ -30,15 +30,15 @@ These Spanish terms are customer or domain terminology; internal models and impl
 
 ## Naming and compatibility
 
-| Category          | Convention                                                             |
-| ----------------- | ---------------------------------------------------------------------- |
-| Implementation    | English names, types, comments, logs, and developer documentation.     |
-| Customer UI       | Spanish es-AR copy, including voseo and accessible labels.             |
-| Public URLs       | Existing Spanish paths such as /producto, /marca, and /carrito.        |
-| URL filters       | Existing keys such as genero, presentacion, and orden.                 |
-| Stored cart       | parfam-cart; earlier browser cart data was discarded.                  |
-| Prices            | ARS Prisma Decimal values, serialized as strings to client components. |
-| WhatsApp template | {{marca}}, {{items}}, {{total}}, {{nombre}}, and {{numero}}.           |
+| Category          | Convention                                                               |
+| ----------------- | ------------------------------------------------------------------------ |
+| Implementation    | English names, types, comments, logs, and developer documentation.       |
+| Customer UI       | Spanish es-AR copy, including voseo and accessible labels.               |
+| Public URLs       | Existing Spanish paths such as /producto, /presentaciones, and /carrito. |
+| URL filters       | Existing keys such as genero, presentacion, and orden.                   |
+| Stored cart       | parfam-cart; earlier browser cart data was discarded.                    |
+| Prices            | ARS Prisma Decimal values, serialized as strings to client components.   |
+| WhatsApp template | {{marca}}, {{items}}, {{total}}, {{nombre}}, and {{numero}}.             |
 
 ## Common abbreviations
 

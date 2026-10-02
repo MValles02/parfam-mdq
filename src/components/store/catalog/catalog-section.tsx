@@ -14,7 +14,7 @@ const FALLBACK_TOTAL = (
 );
 
 /**
- * Catalog body shared by the home page and `/marca/[slug]`.
+ * Catalog body rendered by the home page.
  *
  * Filter options are requested once by the page and passed as props. The
  * asynchronous catalog results render inside separate Suspense boundaries so
@@ -24,16 +24,14 @@ export function CatalogSection({
   filters,
   title,
   filterOptions,
-  fixedBrand,
   headingLevel: Heading = "h1",
 }: {
   filters: CatalogFilters;
   title: string;
   filterOptions: FilterOptions;
-  fixedBrand?: string;
   /**
-   * The home page uses h2 because the hero logo is h1. The catalog and brand
-   * pages use h1, and product cards continue from that level.
+   * The home page uses h2 because the hero logo is h1. Product cards continue
+   * from that level.
    */
   headingLevel?: "h1" | "h2";
 }) {
@@ -70,7 +68,7 @@ export function CatalogSection({
       </div>
 
       <div className="mb-10 hidden lg:block">
-        <FilterPanel filterOptions={filterOptions} fixedBrand={fixedBrand} />
+        <FilterPanel filterOptions={filterOptions} />
       </div>
 
       <div className="mb-3 lg:hidden">
@@ -80,7 +78,6 @@ export function CatalogSection({
       <div className="mb-5 flex items-center gap-2.5 lg:hidden">
         <FilterDrawer
           filterOptions={filterOptions}
-          fixedBrand={fixedBrand}
           applyText={
             <Suspense fallback="Ver fragancias">
               <FraseTotal
@@ -96,10 +93,9 @@ export function CatalogSection({
       <Suspense key={catalogGridKey} fallback={<CatalogGridSkeleton />}>
         <CatalogGrid
           filters={filters}
-          fixedBrand={fixedBrand}
           headingLevel={Heading === "h1" ? "h2" : "h3"}
         />
-        <CatalogPagination filters={filters} fixedBrand={fixedBrand} />
+        <CatalogPagination filters={filters} />
       </Suspense>
     </section>
   );

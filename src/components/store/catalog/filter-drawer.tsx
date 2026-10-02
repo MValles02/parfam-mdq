@@ -34,20 +34,16 @@ import {
  */
 export function FilterDrawer({
   filterOptions,
-  fixedBrand,
   applyText,
 }: {
   filterOptions: FilterOptions;
-  fixedBrand?: string;
   applyText: ReactNode;
 }) {
   const [filters] = useQueryStates(
     catalogFilterParsers,
     catalogFilterQueryOptions,
   );
-  const activeFilterCount = countActiveCatalogFilters(
-    fixedBrand ? { ...filters, brand: null } : filters,
-  );
+  const activeFilterCount = countActiveCatalogFilters(filters);
 
   return (
     <Sheet>
@@ -91,12 +87,10 @@ export function FilterDrawer({
           </div>
 
           <div className="flex flex-col gap-2.5">
-            {fixedBrand ? null : (
-              <BrandSelect
-                filterOptions={filterOptions.brands}
-                className="h-[50px] w-full"
-              />
-            )}
+            <BrandSelect
+              filterOptions={filterOptions.brands}
+              className="h-[50px] w-full"
+            />
             <AccordSelect
               filterOptions={filterOptions.accords}
               className="h-[50px] w-full"

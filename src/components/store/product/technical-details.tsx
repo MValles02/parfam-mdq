@@ -24,7 +24,7 @@ export function TechnicalDetails(product: ProductDetails) {
       label: "Marca",
       value: (
         <Link
-          href={`/marca/${product.brandSlug}`}
+          href={`/?marca=${product.brandSlug}#catalogo`}
           className="hover:text-muted-foreground"
         >
           {product.brandName}

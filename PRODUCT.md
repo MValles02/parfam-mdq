@@ -26,7 +26,7 @@ Store and technical fragrance reference in one place: the visitor can learn abou
 
 ## Capabilities and Constraints
 
-- Presentations: frasco entero, tester, decant. Pages: catalog with URL filters, product, cart, checkout, order confirmation, "¿Qué es un tester?", "Cómo comprar", contact, brand pages.
+- Presentations: frasco entero, tester, decant. Pages: catalog with URL filters, product, cart, checkout, order confirmation, "Frasco, tester o decant", "Cómo comprar", contact.
 - UI copy is Spanish (es-AR, voseo). Code and developer docs are English.
 - Only PUBLISHED products with active variants are public.
 - Stack: Next.js 16, Tailwind v4, shadcn/ui; see AGENTS.md.

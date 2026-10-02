@@ -53,7 +53,7 @@ const FAQS = [
       <>
         Si. Frascos, testers y decants son 100% originales; en{" "}
         <Link
-          href="/que-es-un-tester"
+          href="/presentaciones"
           className="underline underline-offset-2 hover:text-foreground"
         >
           ¿Qué es un tester?
@@ -69,7 +69,7 @@ const FAQS = [
         Es una fracción del perfume en un atomizador chico, para probarlo sin
         comprar el frasco entero. Más detalle en{" "}
         <Link
-          href="/que-es-un-tester"
+          href="/presentaciones"
           className="underline underline-offset-2 hover:text-foreground"
         >
           ¿Qué es un tester?

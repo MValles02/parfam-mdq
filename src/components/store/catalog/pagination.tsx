@@ -17,20 +17,10 @@ import { listCatalogCached } from "./grid";
  * Builds a page URL from current filters. The shared serializer keeps Spanish
  * query keys and URL values stable while application state stays in English.
  */
-function getPageHref(
-  filters: CatalogFilters,
-  page: number,
-  fixedBrand?: string,
-): string {
+function getPageHref(filters: CatalogFilters, page: number): string {
   // Page 1 with no other filters serializes to "", and `href=""` resolves to
   // the current URL (stuck on the current page); "?" clears the query instead.
-  return (
-    serializeCatalogFilters({
-      ...filters,
-      brand: fixedBrand ? null : filters.brand,
-      page,
-    }) || "?"
-  );
+  return serializeCatalogFilters({ ...filters, page }) || "?";
 }
 
 /** Returns page numbers with ellipses where the range is discontinuous. */
@@ -52,16 +42,14 @@ function getVisiblePages(current: number, total: number): (number | "...")[] {
  */
 export async function CatalogPagination({
   filters,
-  fixedBrand,
 }: {
   filters: CatalogFilters;
-  fixedBrand?: string;
 }) {
   const { page: currentPage, pages: totalPages } =
     await listCatalogCached(filters);
   if (totalPages <= 1) return null;
 
-  const href = (page: number) => getPageHref(filters, page, fixedBrand);
+  const href = (page: number) => getPageHref(filters, page);
   const isFirstPage = currentPage <= 1;
   const isLastPage = currentPage >= totalPages;
 

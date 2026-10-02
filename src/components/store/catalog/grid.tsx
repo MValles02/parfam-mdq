@@ -17,22 +17,15 @@ export const listCatalogCached = cache(listCatalog);
  */
 export async function CatalogGrid({
   filters,
-  fixedBrand,
   headingLevel = "h2",
 }: {
   filters: CatalogFilters;
-  fixedBrand?: string;
   headingLevel?: "h2" | "h3";
 }) {
   const { cards } = await listCatalogCached(filters);
 
   if (cards.length === 0) {
-    // The route-owned brand is not user-selected, so it does not affect the
-    // empty-state message.
-    const hasFilters =
-      countActiveCatalogFilters(
-        fixedBrand ? { ...filters, brand: null } : filters,
-      ) > 0;
+    const hasFilters = countActiveCatalogFilters(filters) > 0;
 
     return (
       <div className="rounded border border-dashed border-border p-16 text-center text-muted-foreground">

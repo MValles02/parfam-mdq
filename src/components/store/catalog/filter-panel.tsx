@@ -30,15 +30,12 @@ function FilterRow({
 }
 
 /**
- * Desktop filter controls. The brand control is hidden when the route owns
- * the active brand filter.
+ * Desktop filter controls.
  */
 export function FilterPanel({
   filterOptions,
-  fixedBrand,
 }: {
   filterOptions: FilterOptions;
-  fixedBrand?: string;
 }) {
   return (
     <div className="flex flex-col gap-[18px] rounded border border-border bg-card p-[22px_24px]">
@@ -57,12 +54,10 @@ export function FilterPanel({
       <Separator />
 
       <div className="flex flex-wrap items-center gap-3">
-        {fixedBrand ? null : (
-          <BrandSelect
-            filterOptions={filterOptions.brands}
-            className="min-w-[210px]"
-          />
-        )}
+        <BrandSelect
+          filterOptions={filterOptions.brands}
+          className="min-w-[210px]"
+        />
         <AccordSelect
           filterOptions={filterOptions.accords}
           className="min-w-[210px]"

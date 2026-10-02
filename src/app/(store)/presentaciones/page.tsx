@@ -7,8 +7,8 @@ import {
   serializeJsonLd,
 } from "@/lib/seo";
 
-const PAGE_TITLE = "¿Qué es un tester?";
-const PAGE_PATH = "/que-es-un-tester";
+const PAGE_TITLE = "Frasco, tester o decant";
+const PAGE_PATH = "/presentaciones";
 
 export const metadata: Metadata = buildPageMetadata({
   title: PAGE_TITLE,

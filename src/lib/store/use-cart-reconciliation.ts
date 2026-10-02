@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { create } from "zustand";
 import { toast } from "sonner";
 import {
   validateCartAction,
@@ -17,13 +18,23 @@ import type { InvalidReason } from "@/lib/store/server-cart";
  * database-backed total is always recalculated by createOrder.
  */
 
-type PriceChange = {
+export type PriceChange = {
   variantId: string;
   productName: string;
   variantLabel: string;
   previousPriceArs: string;
   currentPriceArs: string;
 };
+
+/**
+ * Price-change notices live in a module store, not per-hook state, so a
+ * customer who sees the cart first (drawer or /carrito) still gets the same
+ * notice at checkout until they confirm it.
+ */
+const usePriceChanges = create<{
+  changes: PriceChange[];
+  setChanges: (changes: PriceChange[]) => void;
+}>((set) => ({ changes: [], setChanges: (changes) => set({ changes }) }));
 
 const INVALID_REASON_MESSAGES: Record<InvalidReason, string> = {
   inactive: "ya no está disponible",
@@ -55,7 +66,8 @@ export function useCartReconciliation() {
   const items = useCart((state) => state.items);
   const remove = useCart((state) => state.remove);
   const updatePrice = useCart((state) => state.updatePrice);
-  const [changes, setChanges] = useState<PriceChange[]>([]);
+  const changes = usePriceChanges((state) => state.changes);
+  const setChanges = usePriceChanges((state) => state.setChanges);
   // Set this only inside the promise callback, never synchronously in the
   // effect body. React 19's react-hooks/set-state-in-effect rule forbids the
   // latter. Rendering derives isChecking from this state.
@@ -83,7 +95,7 @@ export function useCartReconciliation() {
       if (inFlightValidation === validation) inFlightValidation = null;
 
       // Only the first still-mounted instance applies shared cart effects.
-      // Every instance keeps its own change list and readiness state.
+      // Every instance keeps its own readiness state; the change list is shared.
       const shouldApply = !validation.hasApplied;
       validation.hasApplied = true;
 

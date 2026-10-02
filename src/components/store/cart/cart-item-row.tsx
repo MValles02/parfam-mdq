@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Minus, Plus, X } from "lucide-react";
 import { formatArsPrice } from "@/lib/catalog";
 import { useCart, type CartItem } from "@/lib/cart";
@@ -68,7 +69,16 @@ export function CartItemRow({
   onNavigate?: () => void;
 }) {
   const updateQuantity = useCart((state) => state.updateQuantity);
+  const add = useCart((state) => state.add);
   const remove = useCart((state) => state.remove);
+
+  function removeWithUndo() {
+    const { qty, ...snapshot } = item;
+    remove(item.variantId);
+    toast(`Quitaste ${item.productName}`, {
+      action: { label: "Deshacer", onClick: () => add(snapshot, qty) },
+    });
+  }
   const lineSubtotal = (Number(item.unitPriceArs) * item.qty).toFixed(2);
 
   return (
@@ -81,10 +91,10 @@ export function CartItemRow({
         <Thumbnail image={item.image} alt={item.productName} />
       </Link>
 
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-start justify-between gap-1 lg:gap-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground uppercase lg:text-[9px]">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground uppercase">
               {item.brandName}
             </span>
             <Link
@@ -101,8 +111,8 @@ export function CartItemRow({
           <button
             type="button"
             aria-label={`Quitar ${item.productName} del carrito`}
-            onClick={() => remove(item.variantId)}
-            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center p-1 text-muted-foreground hover:text-foreground lg:min-h-0 lg:min-w-0"
+            onClick={removeWithUndo}
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center p-1 text-muted-foreground hover:text-foreground"
           >
             <X className="size-4" />
           </button>
@@ -115,7 +125,7 @@ export function CartItemRow({
               aria-label="Quitar una unidad"
               onClick={() => updateQuantity(item.variantId, item.qty - 1)}
               disabled={item.qty <= 1}
-              className="flex min-h-11 min-w-11 items-center justify-center p-2 text-muted-foreground disabled:opacity-40 lg:min-h-0 lg:min-w-0"
+              className="flex min-h-11 min-w-11 items-center justify-center p-2 text-muted-foreground disabled:opacity-40"
             >
               <Minus className="size-3.5" />
             </button>
@@ -127,7 +137,7 @@ export function CartItemRow({
               aria-label="Agregar una unidad"
               onClick={() => updateQuantity(item.variantId, item.qty + 1)}
               disabled={item.qty >= MAX_QUANTITY}
-              className="flex min-h-11 min-w-11 items-center justify-center p-2 disabled:opacity-40 lg:min-h-0 lg:min-w-0"
+              className="flex min-h-11 min-w-11 items-center justify-center p-2 disabled:opacity-40"
             >
               <Plus className="size-3.5" />
             </button>

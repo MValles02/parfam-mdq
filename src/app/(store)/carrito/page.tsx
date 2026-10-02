@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CartContent } from "./_components/cart-content";
 
-export const metadata: Metadata = { title: "Carrito" };
+export const metadata: Metadata = {
+  title: "Carrito",
+  robots: { index: false },
+};
 
 /**
  * Matches the cart drawer but provides a direct-link route. The cart lives in

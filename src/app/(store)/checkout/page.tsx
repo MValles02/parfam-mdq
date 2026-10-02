@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/settings";
 import { CheckoutForm } from "./_components/checkout-form";
 
-export const metadata: Metadata = { title: "Checkout" };
+export const metadata: Metadata = {
+  title: "Checkout",
+  robots: { index: false },
+};
 
 /**
  * The cart lives in `localStorage`, and `CheckoutForm` builds all of its

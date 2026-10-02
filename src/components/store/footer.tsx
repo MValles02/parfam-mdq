@@ -28,7 +28,11 @@ export async function Footer() {
         {/* Desktop */}
         <div className="hidden items-start justify-between px-16 py-12 lg:flex">
           <div className="flex flex-col gap-2.5">
-            <Link href="/" aria-label={`Ir al inicio de ${siteDefaults.name}`}>
+            <Link
+              href="/"
+              aria-label={`Ir al inicio de ${siteDefaults.name}`}
+              className="flex min-h-11 items-center"
+            >
               <Logo size="footer" />
             </Link>
             <p className="text-[13px] text-muted-foreground">
@@ -37,14 +41,14 @@ export async function Footer() {
           </div>
 
           <div className="flex gap-[72px] text-[13px]">
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col">
               <span className={COLUMN_TITLE_CLASS}>Tienda</span>
               {STORE_LINKS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-sm hover:text-muted-foreground",
+                    "flex min-h-11 items-center rounded-sm hover:text-muted-foreground",
                     FOCUS_VISIBLE,
                   )}
                 >
@@ -52,14 +56,14 @@ export async function Footer() {
                 </Link>
               ))}
             </div>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col">
               <span className={COLUMN_TITLE_CLASS}>Contacto</span>
               <a
                 href={buildWhatsAppLink(settings.whatsappNumber)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "rounded-sm hover:text-muted-foreground",
+                  "flex min-h-11 items-center rounded-sm hover:text-muted-foreground",
                   FOCUS_VISIBLE,
                 )}
               >
@@ -70,7 +74,7 @@ export async function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "rounded-sm hover:text-muted-foreground",
+                  "flex min-h-11 items-center rounded-sm hover:text-muted-foreground",
                   FOCUS_VISIBLE,
                 )}
               >

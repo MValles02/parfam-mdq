@@ -18,7 +18,7 @@ customer-facing content. The action receives `customerName`, `customerPhone`,
 4. The action rejects deleted, inactive, or unpublished items. Client prices are input only: persisted prices always use `ProductVariant.priceArs`.
 5. A transaction obtains `Order_number_seq`, creates `Order` and `OrderItem` rows, and calculates totals with `Prisma.Decimal`.
 6. `buildOrderMessage` expands the configured template and `buildWhatsAppLink` produces the `wa.me` URL. The action returns `orderNumber` and `link` on success, or `message`, `fieldErrors`, and `invalidItems` on failure.
-7. Checkout stores the link in `sessionStorage` (`whatsapp-link:<number>`) and navigates to `/pedido/<number>/gracias` with no query string, so customer data never reaches the URL. The thank-you page clears the cart, reads the link (validated with `isValidWhatsAppLink`) and offers it as a manual WhatsApp button if the browser blocked the popup. After a reload in a new tab or on another device it shows a generic fallback link instead.
+7. Checkout stores the link in `sessionStorage` (`whatsapp-link:<number>`) and navigates to `/pedido/<number>/gracias` with no query string, so customer data never reaches the URL. The thank-you page clears the cart, reads the link (validated with `isValidWhatsAppLink`) and shows the decoded message with a "Copiar mensaje" button and uses the link for the WhatsApp button. The server renders a static shell (fallback button, order number only if it matches `^PM-\d+$`, `shippingInfo`); the stored link and recap appear after hydration. After a reload in a new tab or on another device only the fallback link remains.
 
 ## Invariants
 

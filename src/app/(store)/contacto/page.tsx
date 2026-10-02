@@ -87,7 +87,7 @@ export default async function ContactPage() {
         )}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-10 flex items-center justify-center gap-2.5 rounded bg-primary px-6 py-4 text-base font-semibold text-primary-foreground hover:bg-primary/80"
+        className="mt-10 flex items-center justify-center gap-2.5 rounded bg-whatsapp px-6 py-4 text-base font-semibold text-whatsapp-foreground hover:bg-whatsapp/90"
       >
         <MessageCircle className="size-5" />
         Escribinos por WhatsApp
@@ -96,17 +96,9 @@ export default async function ContactPage() {
       <div className="mt-10 flex flex-col gap-5 rounded border border-border bg-card p-6">
         <div className="flex items-center gap-3">
           <MessageCircle className="size-[18px] shrink-0 text-muted-foreground" />
-          <a
-            href={buildWhatsAppLink(
-              config.whatsappNumber,
-              "¡Hola! Quería hacerles una consulta.",
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative text-[15px] font-medium before:absolute before:inset-x-0 before:-inset-y-3 hover:text-muted-foreground lg:before:content-none"
-          >
-            {formatPhoneNumber(config.whatsappNumber)}
-          </a>
+          <span className="text-base font-medium select-text">
+            WhatsApp · {formatPhoneNumber(config.whatsappNumber)}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <AtSign className="size-[18px] shrink-0 text-muted-foreground" />
@@ -114,17 +106,32 @@ export default async function ContactPage() {
             href={buildInstagramLink(config.instagramHandle)}
             target="_blank"
             rel="noopener noreferrer"
-            className="relative text-[15px] font-medium before:absolute before:inset-x-0 before:-inset-y-3 hover:text-muted-foreground lg:before:content-none"
+            className="relative text-base font-medium before:absolute before:inset-x-0 before:-inset-y-3 hover:text-muted-foreground lg:before:content-none"
           >
             @{config.instagramHandle}
           </a>
         </div>
         <div className="flex items-center gap-3">
           <MapPin className="size-[18px] shrink-0 text-muted-foreground" />
-          <span className="text-[15px] font-medium">
+          <span className="text-base font-medium">
             {siteDefaults.city} — entregas y retiro a coordinar
           </span>
         </div>
+      </div>
+
+      <div className="mt-6 flex gap-6 text-sm text-muted-foreground">
+        <Link
+          href="/#catalogo"
+          className="relative underline underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
+        >
+          Ver el catálogo
+        </Link>
+        <Link
+          href="/como-comprar"
+          className="relative underline underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
+        >
+          Cómo comprar
+        </Link>
       </div>
     </div>
   );

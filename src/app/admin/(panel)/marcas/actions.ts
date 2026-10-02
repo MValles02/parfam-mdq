@@ -14,17 +14,16 @@ import { brandSchema } from "@/lib/validations/brand";
 
 /**
  * Invalidates every store page that displays this brand name: the grid, home,
- * each associated product page, and `/marca/[slug]`. Iterating product pages
+ * and each associated product page. Iterating product pages
  * is sufficient because each brand has relatively few store products.
  */
-async function revalidateBrand(brandId: string, slug: string) {
+async function revalidateBrand(brandId: string) {
   const products = await prisma.product.findMany({
     where: { brandId },
     select: { slug: true },
   });
 
   revalidatePath("/");
-  revalidatePath(`/marca/${slug}`, "page");
   for (const product of products)
     revalidatePath(`/producto/${product.slug}`, "page");
 }
@@ -46,6 +45,6 @@ export async function updateBrand(
     select: { id: true, slug: true },
   });
 
-  await revalidateBrand(brand.id, brand.slug);
+  await revalidateBrand(brand.id);
   return { ok: true };
 }

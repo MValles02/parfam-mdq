@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 /**
- * The `Brand` slug stays unchanged because it is the `/marca/[slug]` URL and
- * already appears in the sitemap. Only `name` can be edited.
+ * The `Brand` slug stays unchanged because it is the `marca` filter value in
+ * catalog URLs (`/?marca=<slug>`) and may be bookmarked or shared. Only `name`
+ * can be edited.
  */
 export const brandSchema = z.object({
   name: z

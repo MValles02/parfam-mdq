@@ -24,7 +24,7 @@ export function TechnicalDetails(product: ProductDetails) {
       label: "Marca",
       value: (
         <Link
-          href={`/marca/${product.brandSlug}`}
+          href={`/?marca=${product.brandSlug}#catalogo`}
           className="hover:text-muted-foreground"
         >
           {product.brandName}
@@ -58,6 +58,7 @@ export function TechnicalDetails(product: ProductDetails) {
 
   return (
     <CollapsibleSection
+      defaultOpenOnMobile
       className="rounded border bg-card p-[30px]"
       title={
         <h2 className="text-xl font-bold tracking-[-0.015em]">Ficha técnica</h2>

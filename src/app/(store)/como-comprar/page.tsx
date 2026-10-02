@@ -6,7 +6,7 @@ import {
   buildPageMetadata,
   serializeJsonLd,
 } from "@/lib/seo";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { PageCtaPair } from "@/components/store/page-cta-pair";
 
 const PAGE_TITLE = "Cómo comprar";
 const PAGE_PATH = "/como-comprar";
@@ -37,7 +37,7 @@ const STEPS = [
   {
     title: "Mandás el pedido por WhatsApp",
     description:
-      "Con un toque armamos el mensaje con el detalle de tu pedido, listo para mandar.",
+      "Dejás tu nombre y teléfono, guardamos el pedido con un número y se abre WhatsApp con el detalle listo para mandar. No pedimos datos de pago.",
   },
   {
     title: "Coordinamos entrega y pago",
@@ -49,30 +49,21 @@ const STEPS = [
 const FAQS = [
   {
     question: "¿Son originales?",
-    answer: (
-      <>
-        Si. Frascos, testers y decants son 100% originales; en{" "}
-        <Link
-          href="/que-es-un-tester"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          ¿Qué es un tester?
-        </Link>{" "}
-        contamos la diferencia entre presentaciones.
-      </>
-    ),
+    answer: "Sí. Frascos, testers y decants son 100% originales.",
   },
   {
-    question: "¿Qué es un decant?",
+    question: "¿Qué es un decant y qué es un tester?",
     answer: (
       <>
-        Es una fracción del perfume en un atomizador chico, para probarlo sin
-        comprar el frasco entero. Más detalle en{" "}
+        Un tester es el mismo perfume, nuevo y original, en un envase simple y
+        sin estuche: por eso sale más barato. Un decant es una fracción del
+        perfume en un atomizador chico, para probarlo sin comprar el frasco
+        entero. Comparamos las tres presentaciones en{" "}
         <Link
-          href="/que-es-un-tester"
-          className="underline underline-offset-2 hover:text-foreground"
+          href="/presentaciones"
+          className="relative underline underline-offset-2 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
         >
-          ¿Qué es un tester?
+          Frasco, tester o decant
         </Link>
         .
       </>
@@ -81,7 +72,7 @@ const FAQS = [
   {
     question: "¿Hacen envíos?",
     answer:
-      "Coordinamos entrega en Mar del Plata o retiro; escribinos por WhatsApp y vemos qué te queda mejor.",
+      "Sí, entregamos en Mar del Plata, o podés retirar. Lo coordinamos por WhatsApp.",
   },
 ];
 
@@ -120,13 +111,13 @@ export default async function HowToBuyPage() {
           <li key={step.title} className="flex gap-5">
             <span
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
+              className="w-8 shrink-0 text-3xl leading-none font-extrabold tracking-[-0.03em]"
             >
               {index + 1}
             </span>
-            <div className="flex flex-col gap-1 pt-1">
+            <div className="flex flex-col gap-1">
               <h2 className="text-lg font-bold">{step.title}</h2>
-              <p className="text-[15px] leading-relaxed text-muted-foreground">
+              <p className="text-base leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
             </div>
@@ -134,17 +125,10 @@ export default async function HowToBuyPage() {
         ))}
       </ol>
 
-      <a
-        href={buildWhatsAppLink(
-          config.whatsappNumber,
-          "¡Hola! Tengo una consulta antes de comprar.",
-        )}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-12 inline-flex items-center gap-2 rounded bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/80"
-      >
-        Consultar por WhatsApp
-      </a>
+      <PageCtaPair
+        whatsappNumber={config.whatsappNumber}
+        message="¡Hola! Tengo una consulta antes de comprar."
+      />
 
       <section className="mt-16 border-t border-border pt-10">
         <h2 className="text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
@@ -154,7 +138,7 @@ export default async function HowToBuyPage() {
           {FAQS.map((faq) => (
             <div key={faq.question} className="flex flex-col gap-1.5">
               <dt className="text-base font-bold">{faq.question}</dt>
-              <dd className="text-[15px] leading-relaxed text-muted-foreground">
+              <dd className="text-base leading-relaxed text-muted-foreground">
                 {faq.answer}
               </dd>
             </div>

@@ -626,14 +626,6 @@ export async function getSimilarProducts(
     .map(toProductCard);
 }
 
-/** Returns a public brand header, or null when it has no published products. */
-export async function getBrandBySlug(slug: string) {
-  return prisma.brand.findFirst({
-    where: { slug, products: { some: { status: ProductStatus.PUBLISHED } } },
-    select: { name: true, slug: true, country: true },
-  });
-}
-
 /**
  * Store actions invalidate this tag after changing product URLs. Its value is
  * an existing cache contract and must stay stable.
@@ -642,21 +634,14 @@ export const TAG_SITEMAP_URLS = "sitemap-urls";
 
 /** Returns sitemap entries with their last-modified dates. */
 export async function getSitemapUrls() {
-  const [products, brands] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        status: ProductStatus.PUBLISHED,
-        variants: { some: { isActive: true } },
-      },
-      select: { slug: true, updatedAt: true },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.brand.findMany({
-      where: { products: { some: { status: ProductStatus.PUBLISHED } } },
-      select: { slug: true, updatedAt: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const products = await prisma.product.findMany({
+    where: {
+      status: ProductStatus.PUBLISHED,
+      variants: { some: { isActive: true } },
+    },
+    select: { slug: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
 
-  return { products, brands };
+  return { products };
 }

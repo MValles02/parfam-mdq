@@ -34,8 +34,8 @@ import {
  *
  * Store routes do not read `searchParams` in every segment, so Next keeps them
  * in the route cache. Without this, a product published from the admin panel
- * remains invisible until the next deployment. `/producto` and `/marca` are
- * invalidated as pages to retain their shared layouts.
+ * remains invisible until the next deployment. `/producto` is
+ * invalidated as a page to retain its shared layouts.
  *
  * The sitemap uses tagged `unstable_cache` rather than the route cache, so it
  * needs `revalidateTag` instead of `revalidatePath` (F-04 in
@@ -51,13 +51,11 @@ import {
  * page, matching the sitemap's existing tradeoff of not walking every product
  * that could reference this one.
  */
-function revalidateStore(slug?: string, brandSlug?: string) {
+function revalidateStore(slug?: string) {
   revalidatePath("/");
-  revalidatePath("/catalogo");
   revalidateTag(TAG_SITEMAP_URLS, "max");
   revalidateTag(TAG_SIMILAR_PRODUCTS, "max");
   if (slug) revalidatePath(`/producto/${slug}`, "page");
-  if (brandSlug) revalidatePath(`/marca/${brandSlug}`, "page");
 }
 
 /**
@@ -537,7 +535,7 @@ export async function saveProduct(
 
   revalidatePath("/admin/productos");
   revalidatePath(`/admin/productos/${result.product.id}`);
-  revalidateStore(result.product.slug, result.product.brand.slug);
+  revalidateStore(result.product.slug);
   return { ok: true, data: result.product };
 }
 
@@ -580,7 +578,7 @@ export async function changeProductStatus(
     select: { slug: true, brand: { select: { slug: true } } },
   });
   revalidatePath("/admin/productos");
-  revalidateStore(updatedProduct.slug, updatedProduct.brand.slug);
+  revalidateStore(updatedProduct.slug);
   return { ok: true };
 }
 
@@ -714,6 +712,6 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   await deleteOrphanedImages(product.images.map((image) => image.storageKey));
 
   revalidatePath("/admin/productos");
-  revalidateStore(deletedProduct.slug, deletedProduct.brand.slug);
+  revalidateStore(deletedProduct.slug);
   return { ok: true };
 }

@@ -1,11 +1,10 @@
-import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { Logo } from "@/components/store/logo";
 import { siteDefaults } from "@/lib/site";
 import heroPhoto from "@/assets/images/hero.png";
 
 /**
- * Homepage hero with responsive layouts and an anchor to the catalog.
+ * Homepage hero with responsive layouts.
  * Brand typography is intentionally fixed and the logo is the homepage h1.
  *
  * The bottle photo sits behind the text, so every text element is recolored
@@ -18,7 +17,7 @@ import heroPhoto from "@/assets/images/hero.png";
  */
 export function Hero() {
   return (
-    <div className="relative flex h-[55svh] flex-col items-center justify-center overflow-hidden px-5 text-center lg:h-[68svh]">
+    <div className="relative flex h-[40svh] flex-col items-center justify-center overflow-hidden px-5 text-center lg:h-[68svh]">
       <Image
         src={heroPhoto}
         alt="Seis frascos de perfume sobre mármol"
@@ -48,14 +47,6 @@ export function Hero() {
           &ldquo;{siteDefaults.tagline}&rdquo;
         </p>
       </div>
-
-      <a
-        href="#catalogo"
-        className="absolute bottom-9 z-10 flex flex-col items-center gap-2.5 text-[11px] font-bold tracking-[0.3em] text-background underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-1 hover:underline lg:bottom-11 lg:text-[10px] lg:tracking-[0.34em] lg:before:content-none"
-      >
-        VER CATÁLOGO
-        <ChevronDown className="size-4 lg:size-[18px]" />
-      </a>
     </div>
   );
 }

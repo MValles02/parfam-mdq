@@ -10,8 +10,7 @@ import { siteDefaults } from "@/lib/site";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const STORE_LINKS = [
-  { href: "/catalogo", label: "Catálogo" },
-  { href: "/que-es-un-tester", label: "¿Qué es un tester?" },
+  { href: "/presentaciones", label: "Frasco, tester o decant" },
   { href: "/como-comprar", label: "Cómo comprar" },
 ] as const;
 

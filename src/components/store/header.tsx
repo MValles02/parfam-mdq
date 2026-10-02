@@ -21,8 +21,7 @@ import { siteDefaults } from "@/lib/site";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const NAVIGATION_LINKS = [
-  { href: "/catalogo", label: "Catálogo" },
-  { href: "/que-es-un-tester", label: "¿Qué es un tester?" },
+  { href: "/presentaciones", label: "Frasco, tester o decant" },
   { href: "/como-comprar", label: "Cómo comprar" },
   { href: "/contacto", label: "Contacto" },
 ] as const;
@@ -77,8 +76,8 @@ function useHideOnScrollDown() {
  */
 export function Header() {
   const pathname = usePathname();
-  // This component owns the cart Sheet because the drawer's "Finalizar pedido
-  // por WhatsApp" CTA must close it when navigating (see cart-drawer.tsx).
+  // This component owns the cart Sheet because the drawer's "Continuar" CTA
+  // must close it when navigating (see cart-drawer.tsx).
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
   const scrolledDown = useHideOnScrollDown();
@@ -155,7 +154,7 @@ export function Header() {
           </Link>
           <div className="flex items-center gap-2">
             <Link
-              href="/catalogo"
+              href="/#catalogo"
               aria-label="Buscar en el catálogo"
               className={MOBILE_ICON_BUTTON_CLASS}
             >

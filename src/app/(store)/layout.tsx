@@ -4,7 +4,7 @@ import { Header } from "@/components/store/header";
 import { StoreToaster } from "@/components/store/store-toaster";
 
 /**
- * Store layout. It wraps the catalog, brand, product, and home routes.
+ * Store layout. It wraps the catalog, product, and home routes.
  *
  * NuqsAdapter is otherwise mounted only in the admin-panel layout
  * (`src/app/admin/(panel)/layout.tsx`). Catalog filters live in the URL

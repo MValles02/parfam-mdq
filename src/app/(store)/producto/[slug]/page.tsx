@@ -30,7 +30,9 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await props.params;
   const product = await getProductBySlug(slug);
-  if (!product) return {};
+  // Matches `not-found.tsx`; returning `{}` would let the site default title
+  // replace it once the page hydrates.
+  if (!product) return { title: { absolute: "Página no encontrada" } };
 
   const metadata = [
     product.brandName,
@@ -71,8 +73,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
 
   const breadcrumbs = [
     { name: "Inicio", path: "/" },
-    { name: "Catálogo", path: "/catalogo" },
-    { name: product.brandName, path: `/marca/${product.brandSlug}` },
+    { name: product.brandName, path: `/?marca=${product.brandSlug}` },
     { name: product.name, path: `/producto/${product.slug}` },
   ];
 
@@ -99,14 +100,14 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
       <div className="mx-auto max-w-page px-5 pb-24 lg:px-16 lg:pb-0">
         <p className="pt-5 text-xs text-muted-foreground">
           <Link
-            href="/catalogo"
+            href="/#catalogo"
             className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
           >
             Catálogo
           </Link>
           {" · "}
           <Link
-            href={`/marca/${product.brandSlug}`}
+            href={`/?marca=${product.brandSlug}#catalogo`}
             className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
           >
             {product.brandName}
@@ -115,14 +116,14 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
         </p>
 
         <div className="flex flex-col gap-9 py-7 lg:flex-row lg:gap-14">
-          <div className="lg:w-[620px] lg:shrink-0">
+          <div className="lg:w-[520px] lg:shrink-0 xl:w-[620px]">
             <Gallery images={product.images} />
           </div>
 
           <div className="flex flex-1 flex-col">
             <Link
-              href={`/marca/${product.brandSlug}`}
-              className="text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase hover:text-foreground"
+              href={`/?marca=${product.brandSlug}#catalogo`}
+              className="relative w-fit text-[11px] font-bold tracking-[0.2em] text-muted-foreground uppercase before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
             >
               {product.brandName}
             </Link>

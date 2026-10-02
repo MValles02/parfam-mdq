@@ -8,7 +8,7 @@ Let a visitor select an active product variant and quantity, persist that select
 
 `/producto/[slug]` renders `Purchase` from `src/components/store/product/purchase.tsx`. Only `PUBLISHED` products with an `isActive` variant expose the cart controls. Customer copy, including the WhatsApp fallback for unavailable variants, remains in Spanish.
 
-Below `lg`, `Purchase` also renders a fixed bottom bar with the selected variant price and an add-to-cart button while the in-page CTA is out of view. Confirmation toasts come from `src/components/store/store-toaster.tsx`.
+Below `lg`, `Purchase` also renders a fixed bottom bar with the selected variant price and an add-to-cart button while the in-page CTA is out of view. Confirmation toasts (with a "Ver carrito" action that navigates to `/carrito`) come from `src/components/store/store-toaster.tsx`.
 
 ## Flow
 
@@ -19,6 +19,8 @@ Below `lg`, `Purchase` also renders a fixed bottom bar with the selected variant
 5. `validateCartItems` reloads variants and product publication state. It returns current display data or an invalid-item reason. The client removes invalid lines and refreshes changed prices.
 
 `useCartReconciliation` depends on hydration rather than `items`, so changing a stepper does not repeat the database request.
+
+Price-change notices from reconciliation live in a module-level zustand store inside `use-cart-reconciliation.ts`, so the drawer, `/carrito` and `/checkout` show the same notice until the customer confirms it. Removing a cart line shows an undo toast that re-adds the same variant and quantity.
 
 ## Main files
 

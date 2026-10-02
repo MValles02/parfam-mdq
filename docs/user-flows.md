@@ -7,7 +7,7 @@ The detailed flows are organized by user intent.
 1. [View the catalog](flows/view-catalog.md)
 2. [Add items to the cart](flows/add-to-cart.md)
 3. [Create a WhatsApp order](flows/create-order.md)
-4. Read product, tester, contact, and purchase guidance pages
+4. Read product, presentation, contact, and purchase guidance pages
 
 ## Administrator
 

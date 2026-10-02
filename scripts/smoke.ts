@@ -51,14 +51,12 @@ const FIXTURE_PUBLISHED_SLUGS = [
 
 const STORE_PAGES: { path: string; status?: number }[] = [
   { path: "/" },
-  { path: "/catalogo" },
-  { path: "/marca/fixture-brand-a" },
   ...FIXTURE_PUBLISHED_SLUGS.map((slug) => ({ path: `/producto/${slug}` })),
   { path: "/carrito" },
   { path: "/checkout" },
   { path: "/como-comprar" },
   { path: "/contacto" },
-  { path: "/que-es-un-tester" },
+  { path: "/presentaciones" },
   { path: "/producto/fixture-borrador", status: 404 },
   // Published, but its only variant is inactive: still viewable (it's not a
   // draft), just never offered for purchase — see FIXTURE_PRODUCTS in

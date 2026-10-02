@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Minus, MessageCircle, Plus } from "lucide-react";
 import type { VariantKind } from "@/generated/prisma/enums";
@@ -58,6 +59,7 @@ export function Purchase({
   whatsappNumber: string;
 }) {
   const idBase = useId();
+  const router = useRouter();
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     variants[0]?.id ?? null,
   );
@@ -129,11 +131,15 @@ export function Purchase({
     const unitLabel = quantity === 1 ? "unidad" : "unidades";
     toast.success("Agregado al carrito", {
       description: `${product.name} · ${selectedVariant.label} · ${quantity} ${unitLabel}`,
+      // The cart drawer's open state is local to the header, so the action
+      // navigates to the cart page instead.
+      action: { label: "Ver carrito", onClick: () => router.push("/carrito") },
     });
   }
 
   return (
     <div className="flex flex-col gap-6">
+      <h2 className="sr-only">Comprar</h2>
       <div>
         <p className="mb-3.5 text-[11px] font-bold tracking-[0.16em] text-muted-foreground uppercase">
           Elegí tu presentación
@@ -178,12 +184,12 @@ export function Purchase({
         </RadioGroup>
 
         {variants.some((variant) => variant.kind === "TESTER") ? (
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             <Link
-              href="/que-es-un-tester"
-              className="underline underline-offset-2 hover:text-foreground"
+              href="/presentaciones"
+              className="flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
             >
-              ¿Qué es un tester?
+              ¿Frasco, tester o decant? Te explicamos
             </Link>
           </p>
         ) : null}
@@ -242,8 +248,7 @@ export function Purchase({
 
         <Button
           asChild
-          variant="outline"
-          className="h-auto w-full gap-2 py-4 text-[15px]"
+          className="h-auto w-full gap-2 bg-whatsapp py-3 text-sm font-medium text-whatsapp-foreground hover:bg-whatsapp/90"
         >
           <a
             href={buildWhatsAppLink(
@@ -254,7 +259,7 @@ export function Purchase({
             rel="noopener noreferrer"
           >
             <MessageCircle className="size-4" />
-            Consultar por WhatsApp
+            ¿Dudas? Consultanos por WhatsApp
           </a>
         </Button>
       </div>

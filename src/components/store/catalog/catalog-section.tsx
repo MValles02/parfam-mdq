@@ -1,6 +1,7 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import type { FilterOptions } from "@/lib/store/queries";
 import type { CatalogFilters } from "@/lib/store/filters";
+import { countActiveCatalogFilters } from "@/lib/store/filters";
 import { FilterDrawer } from "./filter-drawer";
 import { FraseTotal, CatalogGrid } from "./grid";
 import { CatalogGridSkeleton } from "./grid-skeleton";
@@ -14,7 +15,7 @@ const FALLBACK_TOTAL = (
 );
 
 /**
- * Catalog body shared by the home page, `/catalogo`, and `/marca/[slug]`.
+ * Catalog body rendered by the home page.
  *
  * Filter options are requested once by the page and passed as props. The
  * asynchronous catalog results render inside separate Suspense boundaries so
@@ -24,18 +25,19 @@ export function CatalogSection({
   filters,
   title,
   filterOptions,
-  fixedBrand,
   headingLevel: Heading = "h1",
+  mobileInsert,
 }: {
   filters: CatalogFilters;
   title: string;
   filterOptions: FilterOptions;
-  fixedBrand?: string;
   /**
-   * The home page uses h2 because the hero logo is h1. The catalog and brand
-   * pages use h1, and product cards continue from that level.
+   * The home page uses h2 because the hero logo is h1. Product cards continue
+   * from that level.
    */
   headingLevel?: "h1" | "h2";
+  /** Shown only on mobile, after the first row of the first results page. */
+  mobileInsert?: ReactNode;
 }) {
   const catalogGridKey = JSON.stringify(filters);
 
@@ -70,7 +72,12 @@ export function CatalogSection({
       </div>
 
       <div className="mb-10 hidden lg:block">
-        <FilterPanel filterOptions={filterOptions} fixedBrand={fixedBrand} />
+        <FilterPanel
+          filterOptions={filterOptions}
+          moreFiltersOpen={
+            countActiveCatalogFilters({ ...filters, variantKind: null }) > 0
+          }
+        />
       </div>
 
       <div className="mb-3 lg:hidden">
@@ -80,7 +87,6 @@ export function CatalogSection({
       <div className="mb-5 flex items-center gap-2.5 lg:hidden">
         <FilterDrawer
           filterOptions={filterOptions}
-          fixedBrand={fixedBrand}
           applyText={
             <Suspense fallback="Ver fragancias">
               <FraseTotal
@@ -96,10 +102,10 @@ export function CatalogSection({
       <Suspense key={catalogGridKey} fallback={<CatalogGridSkeleton />}>
         <CatalogGrid
           filters={filters}
-          fixedBrand={fixedBrand}
           headingLevel={Heading === "h1" ? "h2" : "h3"}
+          afterFirstRow={filters.page === 1 ? mobileInsert : undefined}
         />
-        <CatalogPagination filters={filters} fixedBrand={fixedBrand} />
+        <CatalogPagination filters={filters} />
       </Suspense>
     </section>
   );

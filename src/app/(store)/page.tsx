@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PresentationsStrip } from "@/components/store/presentations-strip";
 import { Hero } from "@/components/store/hero";
 import { CatalogSection } from "@/components/store/catalog/catalog-section";
 import { getFilterOptions } from "@/lib/store/queries";
@@ -22,12 +23,16 @@ export default async function Page(props: PageProps<"/">) {
   return (
     <>
       <Hero />
+      <PresentationsStrip className="mx-auto hidden max-w-page px-5 pt-10 lg:block lg:px-16" />
       {/* The hero logo is the page h1, so the catalog heading starts below it. */}
       <CatalogSection
         title="Catálogo"
         headingLevel="h2"
         filters={filters}
         filterOptions={filterOptions}
+        mobileInsert={
+          <PresentationsStrip className="col-span-full lg:hidden" />
+        }
       />
     </>
   );

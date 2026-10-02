@@ -55,6 +55,7 @@ export function VoteProfile({
 
   return (
     <CollapsibleSection
+      defaultOpenOnMobile
       className="border-t pt-11"
       title={
         <h2 className="text-2xl font-extrabold tracking-[-0.025em] lg:text-[32px]">

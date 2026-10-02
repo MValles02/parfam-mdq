@@ -13,12 +13,12 @@ customer-facing content. The action receives `customerName`, `customerPhone`,
 ## Flow
 
 1. The hydrated browser cart is reconciled before submission.
-2. The click handler opens a blank popup synchronously, then runs client feedback validation. Opening it before `await` avoids browser popup blocking.
+2. The click handler first validates the form client-side with `checkoutCustomerSchema` (same AR phone rule as the server, applied to the "+54 9"-prefixed value); if invalid it opens nothing and focuses the first invalid field. If valid it opens a blank popup synchronously, before any `await`, to avoid browser popup blocking.
 3. `createOrder` checks the honeypot, applies `rateLimit`, validates the request, and reloads every `ProductVariant` from PostgreSQL.
 4. The action rejects deleted, inactive, or unpublished items. Client prices are input only: persisted prices always use `ProductVariant.priceArs`.
 5. A transaction obtains `Order_number_seq`, creates `Order` and `OrderItem` rows, and calculates totals with `Prisma.Decimal`.
 6. `buildOrderMessage` expands the configured template and `buildWhatsAppLink` produces the `wa.me` URL. The action returns `orderNumber` and `link` on success, or `message`, `fieldErrors`, and `invalidItems` on failure.
-7. The thank-you page clears the cart after navigation. It can offer a manual WhatsApp link if the browser blocked the popup.
+7. Checkout stores the link in `sessionStorage` (`whatsapp-link:<number>`) and navigates to `/pedido/<number>/gracias` with no query string, so customer data never reaches the URL. The thank-you page clears the cart, reads the link (validated with `isValidWhatsAppLink`) and shows the decoded message with a "Copiar mensaje" button and uses the link for the WhatsApp button. The server renders a static shell (fallback button, order number only if it matches `^PM-\d+$`, `shippingInfo`); the stored link and recap appear after hydration. After a reload in a new tab or on another device only the fallback link remains.
 
 ## Invariants
 

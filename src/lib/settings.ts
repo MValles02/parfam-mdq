@@ -83,7 +83,7 @@ const cachedSiteSettings = unstable_cache(readSiteSettings, ["site-settings"], {
  * With `connection()`, settings always load at runtime from the real database,
  * and builds no longer need Postgres. The tradeoff is that five previously
  * prerendered pages (`/carrito`, `/checkout`, `/contacto`, `/como-comprar`,
- * `/que-es-un-tester`) render per request. `unstable_cache` and its tag still
+ * `/presentaciones`) render per request. `unstable_cache` and its tag still
  * cache the query, so only rendering occurs per visit, not a database trip.
  *
  * See node_modules/next/dist/docs/01-app/03-api-reference/04-functions/connection.md.

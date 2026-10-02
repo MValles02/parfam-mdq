@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Query and render publicly sellable products, catalog filters, product detail, brand pages, and "Se parece a" similar products.
+Query and render publicly sellable products, catalog filters, product detail, and "Se parece a" similar products.
 
 ## API
 
@@ -10,7 +10,6 @@ Query and render publicly sellable products, catalog filters, product detail, br
 - getFilterOptions()
 - getProductBySlug(slug)
 - getSimilarProducts(productId)
-- getBrandBySlug(slug)
 - getSitemapUrls()
 
 ## Files

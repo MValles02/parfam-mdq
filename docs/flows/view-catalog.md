@@ -7,8 +7,9 @@ keeping the URL contract stable and querying only sellable products.
 
 ## Entry points
 
-The home page and `/catalogo` render `CatalogSection`. Product and brand
-routes remain `/producto/[slug]` and `/marca/[slug]`.
+The home page (`/`) renders `CatalogSection` with the filter URL keys and pagination. Brand links open the home
+catalog filtered with `/?marca=<slug>#catalogo`. The product route remains
+`/producto/[slug]`.
 
 ## Flow
 
@@ -25,17 +26,17 @@ routes remain `/producto/[slug]` and `/marca/[slug]`.
 5. `getProductBySlug` returns `null` for missing, draft, or unsellable
    products, so the route returns a 404 even for a known draft slug.
 6. Product detail queries use `getSimilarProducts` for the "Se parece a"
-   section; brand pages use `getBrandBySlug`.
+   section.
 
 ## Main files
 
-| Responsibility         | File                                               |
-| ---------------------- | -------------------------------------------------- |
-| Store queries          | `src/lib/store/queries.ts`                         |
-| URL adapter and parser | `src/lib/store/filters.ts`                         |
-| Catalog UI             | `src/components/store/catalog/`                    |
-| Product UI             | `src/components/store/product/`                    |
-| Routes                 | `src/app/(store)/catalogo/`, `producto/`, `marca/` |
+| Responsibility         | File                                    |
+| ---------------------- | --------------------------------------- |
+| Store queries          | `src/lib/store/queries.ts`              |
+| URL adapter and parser | `src/lib/store/filters.ts`              |
+| Catalog UI             | `src/components/store/catalog/`         |
+| Product UI             | `src/components/store/product/`         |
+| Routes                 | `src/app/(store)/page.tsx`, `producto/` |
 
 ## Customer and external values
 

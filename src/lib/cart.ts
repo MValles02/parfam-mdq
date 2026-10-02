@@ -118,3 +118,15 @@ export function useCartQuantity(): number {
 export function cartLabel(quantity: number): string {
   return quantity === 1 ? "Carrito: 1 unidad" : `Carrito: ${quantity} unidades`;
 }
+
+/** Visible unit count text ("1 unidad", "N unidades") shared by cart surfaces. */
+export function unitsLabel(units: number): string {
+  return units === 1 ? "1 unidad" : `${units} unidades`;
+}
+
+/** Cart subtotal as a two-decimal string, for display only. */
+export function cartSubtotal(items: CartItem[]): string {
+  return items
+    .reduce((acc, i) => acc + Number(i.unitPriceArs) * i.qty, 0)
+    .toFixed(2);
+}

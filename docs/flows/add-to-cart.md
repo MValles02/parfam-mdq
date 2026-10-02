@@ -20,6 +20,8 @@ Below `lg`, `Purchase` also renders a fixed bottom bar with the selected variant
 
 `useCartReconciliation` depends on hydration rather than `items`, so changing a stepper does not repeat the database request.
 
+Price-change notices from reconciliation live in a module-level zustand store inside `use-cart-reconciliation.ts`, so the drawer, `/carrito` and `/checkout` show the same notice until the customer confirms it. Removing a cart line shows an undo toast that re-adds the same variant and quantity.
+
 ## Main files
 
 | Responsibility         | File                                                     |

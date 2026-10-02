@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useCart, useHydrated } from "@/lib/cart";
 import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
+import { PriceChangeAlert } from "@/components/store/cart/price-change-alert";
 import { CartItemRow } from "@/components/store/cart/cart-item-row";
 
 /**
@@ -31,7 +32,7 @@ export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
 export function CartItemList({ onNavigate }: { onNavigate?: () => void }) {
   const hydrated = useHydrated();
   const items = useCart((state) => state.items);
-  useCartReconciliation();
+  const { changes, discardChanges } = useCartReconciliation();
 
   if (!hydrated) return null;
 
@@ -41,6 +42,7 @@ export function CartItemList({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex flex-col gap-3.5">
+      <PriceChangeAlert changes={changes} onDiscard={discardChanges} />
       {items.map((item) => (
         <CartItemRow key={item.variantId} item={item} onNavigate={onNavigate} />
       ))}

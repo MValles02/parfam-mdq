@@ -6,13 +6,14 @@ import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Loader2, MessageCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PriceChangeAlert } from "@/components/store/cart/price-change-alert";
 import { EmptyCart } from "@/components/store/cart/cart-item-list";
 import { formatArsPrice } from "@/lib/catalog";
-import { useCart, useHydrated } from "@/lib/cart";
+import { unitsLabel, useCart, useHydrated } from "@/lib/cart";
 import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
 import {
   checkoutCustomerSchema,
@@ -151,33 +152,7 @@ export function CheckoutForm({
           </AlertTitle>
         </Alert>
 
-        {changes.length > 0 ? (
-          <Alert variant="destructive">
-            <AlertTitle>Actualizamos algunos precios</AlertTitle>
-            <AlertDescription>
-              <ul className="flex flex-col gap-1">
-                {changes.map((change) => (
-                  <li key={change.variantId}>
-                    {change.productName} · {change.variantLabel}:{" "}
-                    <span className="line-through">
-                      {formatArsPrice(change.previousPriceArs)}
-                    </span>{" "}
-                    ahora {formatArsPrice(change.currentPriceArs)}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="mt-3"
-                onClick={discardChanges}
-              >
-                Entendido, continuar
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : null}
+        <PriceChangeAlert changes={changes} onDiscard={discardChanges} />
 
         <form
           onSubmit={(e) => e.preventDefault()}
@@ -277,7 +252,7 @@ export function CheckoutForm({
             Tu pedido
           </span>
           <span className="text-xs text-muted-foreground">
-            {items.length === 1 ? "1 producto" : `${items.length} productos`}
+            {unitsLabel(items.reduce((total, i) => total + i.qty, 0))}
           </span>
         </div>
 

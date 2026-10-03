@@ -616,7 +616,9 @@ pnpm test:e2e
   otherwise run `pnpm exec playwright install chromium`.
 
 The `webServer` runs `pnpm build && pnpm start` on port 3000 and, outside CI,
-reuses a server that is already listening there.
+reuses a server that is already listening there. A `pnpm dev -p 3100` server is
+not reused, so a local run without a server on port 3000 includes a full
+production build.
 
 The config sends a random `cf-connecting-ip` header on every request. Login and
 checkout are rate limited in memory per client IP; without the header all

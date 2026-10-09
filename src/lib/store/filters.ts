@@ -24,6 +24,7 @@ export const VARIANT_KINDS = [
 ] as const satisfies VariantKind[];
 
 export const SORT_OPTIONS = [
+  "featured",
   "latest",
   "priceAscending",
   "priceDescending",
@@ -33,9 +34,10 @@ export const SORT_OPTIONS = [
 export type SortOption = (typeof SORT_OPTIONS)[number];
 
 export const SORT_LABELS: Record<SortOption, string> = {
-  latest: "Novedades",
-  priceAscending: "Precio: menor a mayor",
-  priceDescending: "Precio: mayor a menor",
+  featured: "Destacados",
+  priceAscending: "Menor precio",
+  priceDescending: "Mayor precio",
+  latest: "Más nuevos",
   name: "Nombre (A-Z)",
 };
 
@@ -75,6 +77,7 @@ export const PRICE_RANGE_LABELS: Record<PriceRange, string> = {
  * those transport details out of the internal catalog-filter model.
  */
 const sortUrlValues = {
+  destacados: "featured",
   novedades: "latest",
   "precio-asc": "priceAscending",
   "precio-desc": "priceDescending",
@@ -102,7 +105,7 @@ function createUrlValueParser<T extends string>(urlValues: Record<string, T>) {
   });
 }
 
-const sortParser = createUrlValueParser(sortUrlValues).withDefault("latest");
+const sortParser = createUrlValueParser(sortUrlValues).withDefault("featured");
 const priceRangeParser = createUrlValueParser(priceRangeUrlValues);
 
 export const catalogFilterParsers = {
@@ -133,11 +136,13 @@ export const catalogFilterUrlKeys: UrlKeys<typeof catalogFilterParsers> = {
 /**
  * Changing a filter must request a new server-rendered grid. Default values
  * are removed so clearing filters returns to a compact, shareable URL.
+ * `scroll` is on because applying a filter collapses the home view into the
+ * catalog view, where the catalog starts at the top of the page.
  */
 export const catalogFilterQueryOptions = {
   shallow: false,
   clearOnDefault: true,
-  scroll: false,
+  scroll: true,
   urlKeys: catalogFilterUrlKeys,
 } as const;
 
@@ -173,4 +178,21 @@ export function countActiveCatalogFilters(filters: CatalogFilters): number {
     filters.note,
     filters.priceRange,
   ].filter(Boolean).length;
+}
+
+/**
+ * The home page shows the hero above the catalog only while no filter, page or
+ * non-default sort is applied; otherwise it shows the catalog alone.
+ */
+export function isCatalogView(filters: CatalogFilters): boolean {
+  return (
+    countActiveCatalogFilters(filters) > 0 ||
+    filters.page > 1 ||
+    filters.sort !== "featured"
+  );
+}
+
+/** Link to the home catalog with the given filters applied. */
+export function catalogHref(partial: Partial<CatalogFilters>): string {
+  return "/" + serializeCatalogFilters(partial) + "#catalogo";
 }

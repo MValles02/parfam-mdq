@@ -5,7 +5,7 @@ The application is built as a multi-stage Docker image and published to GHCR by
 (development). Dokploy runs the published image.
 
 `.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
-lint, test) on every pull request and is reused by `deploy.yml`. Pull requests
+lint, integration tests against a Postgres service; no unit tests) on every pull request and is reused by `deploy.yml`. Pull requests
 also run the `e2e` job (see "E2E tests (Playwright)"), which is skipped when
 `deploy.yml` reuses the workflow. On `main` and
 `develop`, `checks` is followed by the `publish` job, which logs in to GHCR with the
@@ -567,6 +567,9 @@ pnpm db:check-translations
 pnpm build
 ```
 
+`pnpm test` runs the integration tests (see "Integration tests (Vitest)"), so it
+needs a migrated local database: `pnpm db:up && pnpm db:deploy`.
+
 A build needs the public build-time values above and a generated Prisma client.
 The CI workflow (`checks` job) runs `pnpm typecheck`, `pnpm lint`, and `pnpm
 test`; it does not run `pnpm format`, `pnpm db:check-translations`, or `pnpm
@@ -593,12 +596,35 @@ Env vars: `SMOKE_BASE_URL` (default `http://localhost:3000`),
 is set), `CHROMIUM_PATH` (default `/usr/bin/chromium`), and `SMOKE_TIMEOUT_MS`
 (overall run timeout, default `180000`).
 
+## Integration tests (Vitest)
+
+The repository has integration and E2E tests only; there are no unit tests (no
+isolated function tests and no mocking of internal modules). `pnpm test` runs
+`tests/integration/*.int.test.ts` with Vitest against a real, migrated
+Postgres:
+
+```bash
+pnpm db:up && pnpm db:deploy
+pnpm test
+```
+
+The tests run the reference importer and translation-check scripts as
+subprocesses on the JSONL fixtures in `tests/integration/fixtures/` and read
+back the resulting rows (including `src/lib/admin/references.ts`). Fixture rows
+use `fixture-` slugs and pids from 990000000, and each file deletes them
+afterwards. `tests/integration/setup.ts` loads `.env` and refuses a
+`DATABASE_URL` whose host is not local. Code that needs a Next request context
+(`headers()`, `unstable_cache`, `requireAdmin`) is covered by the E2E specs
+instead. The CI `checks` job provides a `postgres:17-alpine` service and runs
+`pnpm db:deploy` before the tests.
+
 ## E2E tests (Playwright)
 
-`pnpm test:e2e` runs user-flow specs in Chromium: catalog, product page,
-checkout through the thank-you page, and admin login. Specs live in
-`e2e/*.e2e.ts`; `testMatch` in `playwright.config.ts` limits Playwright to that
-suffix, so Vitest ignores them.
+`pnpm test:e2e` runs user-flow specs in Chromium: catalog (starting price and
+sorting), product page ("Se parece a"), checkout and thank-you page, and admin
+login, throttling and image upload. Specs live in `e2e/*.e2e.ts`; `testMatch`
+in `playwright.config.ts` limits Playwright to that suffix, so Vitest ignores
+them.
 
 Prerequisites: a migrated and seeded database plus environment variables.
 
@@ -611,12 +637,14 @@ pnpm test:e2e
   (used by `db:seed` and by the admin spec).
 - `R2_*` placeholders: the webServer runs `next start` in production mode, where
   `src/lib/env.ts` requires every R2 variable. Fake values are enough because
-  the specs never touch R2.
+  the R2 host is routed in the specs and never reached.
 - Chromium: set `CHROMIUM_PATH=/usr/bin/chromium` to use the system browser,
   otherwise run `pnpm exec playwright install chromium`.
 
 The `webServer` runs `pnpm build && pnpm start` on port 3000 and, outside CI,
-reuses a server that is already listening there.
+reuses a server that is already listening there. A `pnpm dev -p 3100` server is
+not reused, so a local run without a server on port 3000 includes a full
+production build.
 
 The config sends a random `cf-connecting-ip` header on every request. Login and
 checkout are rate limited in memory per client IP; without the header all

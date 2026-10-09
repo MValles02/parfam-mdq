@@ -25,6 +25,11 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "Cancelado",
 };
 
+/** Counts orders awaiting action, shown as the sidebar badge. */
+export function countPendingOrders() {
+  return prisma.order.count({ where: { status: OrderStatus.PENDING } });
+}
+
 function buildSearchWhere(query: string): Prisma.OrderWhereInput {
   const searchTerm = query.trim();
   if (!searchTerm) return {};
@@ -65,6 +70,7 @@ export async function listOrders(options: {
           totalArs: true,
           createdAt: true,
           _count: { select: { items: true } },
+          items: { select: { productName: true }, take: 3 },
         },
       }),
       prisma.order.count({ where: { status: OrderStatus.PENDING } }),
@@ -82,6 +88,7 @@ export async function listOrders(options: {
     status: order.status,
     totalArs: order.totalArs.toString(),
     itemCount: order._count.items,
+    itemNames: order.items.map((item) => item.productName),
     createdAt: order.createdAt,
   }));
 

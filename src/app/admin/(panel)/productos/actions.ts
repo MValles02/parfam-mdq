@@ -3,8 +3,12 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
-import { ProductStatus } from "@/generated/prisma/enums";
+import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
+import {
+  findProductsByFragranceRefIds,
+  type ExistingProduct,
+} from "@/lib/admin/products";
 import { findAvailableSlug } from "@/lib/admin/slug";
 import { prisma } from "@/lib/db";
 import { toSlug } from "@/lib/slug";
@@ -21,6 +25,8 @@ import { TAG_SIMILAR_PRODUCTS, TAG_SITEMAP_URLS } from "@/lib/store/queries";
 import { fieldErrors } from "@/lib/validations/errors";
 import {
   productSchema,
+  variantActiveSchema,
+  variantPriceSchema,
   type ProductFormValues,
 } from "@/lib/validations/product";
 
@@ -100,10 +106,24 @@ async function deleteOrphanedImages(storageKeys: string[]) {
 
 export async function searchReferencesAction(
   query: string,
-): Promise<ActionResult<ReferenceSearchResult[]>> {
+): Promise<
+  ActionResult<
+    (ReferenceSearchResult & { existingProducts: ExistingProduct[] })[]
+  >
+> {
   await requireAdmin();
   const q = z.string().max(120).catch("").parse(query);
-  return { ok: true, data: await searchReferences(q) };
+  const results = await searchReferences(q);
+  const existing = await findProductsByFragranceRefIds(
+    results.map((result) => result.id),
+  );
+  return {
+    ok: true,
+    data: results.map((result) => ({
+      ...result,
+      existingProducts: existing.get(result.id) ?? [],
+    })),
+  };
 }
 
 export async function adoptReferenceAction(
@@ -556,7 +576,10 @@ export async function changeProductStatus(
       where: { id },
       select: {
         description: true,
-        variants: { where: { isActive: true }, select: { id: true } },
+        variants: {
+          where: { isActive: true, kind: { not: VariantKind.TESTER } },
+          select: { id: true },
+        },
       },
     });
     if (!product) return actionFailure("Ese producto ya no existe.");
@@ -579,6 +602,86 @@ export async function changeProductStatus(
   });
   revalidatePath("/admin/productos");
   revalidateStore(updatedProduct.slug);
+  return { ok: true };
+}
+
+const variantProductSelect = {
+  productId: true,
+  product: { select: { slug: true, status: true } },
+} as const;
+
+export async function updateVariantPrice(
+  variantId: string,
+  priceArs: string,
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = variantPriceSchema.safeParse({ variantId, priceArs });
+  if (!parsed.success) return actionFailure("Revisá el precio.");
+
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: parsed.data.variantId },
+    select: variantProductSelect,
+  });
+  if (!variant) return actionFailure("Esa presentación ya no existe.");
+
+  await prisma.productVariant.update({
+    where: { id: parsed.data.variantId },
+    data: { priceArs: parsed.data.priceArs },
+  });
+  revalidatePath("/admin/productos");
+  revalidatePath(`/admin/productos/${variant.productId}`);
+  revalidateStore(variant.product.slug);
+  return { ok: true };
+}
+
+export async function setVariantActive(
+  variantId: string,
+  isActive: boolean,
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = variantActiveSchema.safeParse({ variantId, isActive });
+  if (!parsed.success) return actionFailure("Datos inválidos.");
+
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: parsed.data.variantId },
+    select: variantProductSelect,
+  });
+  if (!variant) return actionFailure("Esa presentación ya no existe.");
+
+  // A published product must keep one purchasable variant, as in the form.
+  // The check and the write share a transaction so they cannot interleave
+  // with a concurrent deactivation of a sibling variant.
+  const isLastActive = await prisma.$transaction(async (tx) => {
+    if (
+      !parsed.data.isActive &&
+      variant.product.status === ProductStatus.PUBLISHED
+    ) {
+      const otherActive = await tx.productVariant.count({
+        where: {
+          productId: variant.productId,
+          isActive: true,
+          kind: { not: VariantKind.TESTER },
+          id: { not: parsed.data.variantId },
+        },
+      });
+      if (otherActive === 0) return true;
+    }
+    await tx.productVariant.update({
+      where: { id: parsed.data.variantId },
+      data: { isActive: parsed.data.isActive },
+    });
+    return false;
+  });
+  if (isLastActive) {
+    return actionFailure(
+      "Es la única presentación activa de un producto publicado: pasalo a borrador primero.",
+    );
+  }
+  revalidatePath("/admin/productos");
+  revalidatePath(`/admin/productos/${variant.productId}`);
+  revalidateStore(variant.product.slug);
   return { ok: true };
 }
 

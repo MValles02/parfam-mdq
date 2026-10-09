@@ -21,3 +21,5 @@ Search the imported Fragrantica reference catalog and provide a safe adoption DT
 ## Query behavior
 
 Search normalizes terms and ranks a 75/25 blend of `pg_trgm` trigram similarity and the dataset's own popularity signal. The large catalog uses PostgreSQL search capabilities instead of loading every reference into the application. Imported descriptions and images remain internal data; Spanish product copy is authored by the administrator.
+
+`searchReferencesAction` merges `existingProducts: {id, name}[]` (from `findProductsByFragranceRefIds`) into each result. It is an array because `Product.fragranceRefId` is indexed but not unique.

@@ -57,6 +57,7 @@ const STORE_PAGES: { path: string; status?: number }[] = [
   { path: "/como-comprar" },
   { path: "/contacto" },
   { path: "/presentaciones" },
+  { path: "/concentraciones" },
   { path: "/producto/fixture-borrador", status: 404 },
   // Published, but its only variant is inactive: still viewable (it's not a
   // draft), just never offered for purchase — see FIXTURE_PRODUCTS in

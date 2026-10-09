@@ -11,7 +11,8 @@ export default defineConfig({
   testDir: "e2e",
   testMatch: /.*\.e2e\.ts/,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  // html feeds the playwright-report/ artifact CI uploads on failure.
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://localhost:3000",
     extraHTTPHeaders: { "cf-connecting-ip": clientIp },

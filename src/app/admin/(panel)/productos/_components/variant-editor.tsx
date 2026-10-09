@@ -26,9 +26,8 @@ import { cn } from "@/lib/utils";
 const COLUMNS = "grid-cols-[1.4fr_0.8fr_1.2fr_1fr_1fr_60px]";
 
 /** Typical sizes for each variant, used only as datalist suggestions. */
-const SIZE_SUGGESTIONS_ML: Record<VariantKind, number[]> = {
+const SIZE_SUGGESTIONS_ML: Partial<Record<VariantKind, number[]>> = {
   FULL_BOTTLE: [30, 50, 100, 125, 200],
-  TESTER: [50, 100, 125],
   DECANT: [2, 3, 5, 10, 15],
 };
 
@@ -80,7 +79,7 @@ export function VariantEditor({
       {/* One datalist per variant kind prevents irrelevant size suggestions. */}
       {Object.entries(SIZE_SUGGESTIONS_ML).map(([kind, sizes]) => (
         <datalist key={kind} id={`${datalistId}-${kind}`}>
-          {sizes.map((size) => (
+          {sizes?.map((size) => (
             <option key={size} value={size} />
           ))}
         </datalist>
@@ -157,11 +156,18 @@ function VariantRow({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(VariantKind).map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {variantKindLabels[k]}
-                    </SelectItem>
-                  ))}
+                  {Object.values(VariantKind)
+                    // Retired kind: only a legacy row keeps showing it.
+                    .filter(
+                      (k) =>
+                        k !== VariantKind.TESTER ||
+                        kind.value === VariantKind.TESTER,
+                    )
+                    .map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {variantKindLabels[k]}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             )}

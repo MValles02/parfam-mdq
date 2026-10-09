@@ -1,11 +1,7 @@
 import { unstable_cache } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
-import { ProductStatus } from "@/generated/prisma/enums";
-import type {
-  Concentration,
-  NotePosition,
-  VariantKind,
-} from "@/generated/prisma/enums";
+import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
+import type { Concentration, NotePosition } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { getPublicUrl } from "@/lib/r2";
 import {
@@ -44,7 +40,16 @@ const SPANISH_COLLATOR = new Intl.Collator("es-AR", { sensitivity: "base" });
  */
 const MIN_COMMUNITY_VOTES = 20;
 
-type CardBadge = "NUEVO" | "DECANT" | "TESTER" | null;
+/**
+ * Testers are retired from the store, but legacy rows may still exist in the
+ * database, so every public variant read excludes them explicitly.
+ */
+const PUBLIC_VARIANT_WHERE = {
+  isActive: true,
+  kind: { not: VariantKind.TESTER },
+} satisfies Prisma.ProductVariantWhereInput;
+
+type CardBadge = "NUEVO" | "DECANT" | null;
 
 export type ProductCardData = {
   slug: string;
@@ -85,7 +90,7 @@ const CARD_SELECT = {
     select: { accord: { select: { nameEs: true } } },
   },
   variants: {
-    where: { isActive: true },
+    where: PUBLIC_VARIANT_WHERE,
     select: { kind: true, sizeMl: true, priceArs: true, isActive: true },
   },
 } satisfies Prisma.ProductSelect;
@@ -102,7 +107,7 @@ const CATALOG_SORT_SELECT = {
   createdAt: true,
   isFeatured: true,
   variants: {
-    where: { isActive: true },
+    where: PUBLIC_VARIANT_WHERE,
     select: { priceArs: true, isActive: true },
   },
 } satisfies Prisma.ProductSelect;
@@ -118,7 +123,6 @@ function getCardBadge(year: number | null, variants: RawVariant[]): CardBadge {
 
   const kinds = new Set(variants.map((variant) => variant.kind));
   if (kinds.has("DECANT")) return "DECANT";
-  if (kinds.has("TESTER") && !kinds.has("FULL_BOTTLE")) return "TESTER";
   return null;
 }
 
@@ -189,8 +193,8 @@ function whereVariant(
     : null;
 
   return {
-    isActive: true,
-    kind: filters.variantKind ?? undefined,
+    ...PUBLIC_VARIANT_WHERE,
+    kind: filters.variantKind ?? { not: VariantKind.TESTER },
     priceArs: priceLimits
       ? {
           gte: priceLimits.min ?? undefined,
@@ -381,7 +385,7 @@ export async function getProductBySlug(slug: string) {
         select: { id: true, storageKey: true, alt: true },
       },
       variants: {
-        where: { isActive: true },
+        where: PUBLIC_VARIANT_WHERE,
         orderBy: { sortOrder: "asc" },
         select: { id: true, kind: true, sizeMl: true, priceArs: true },
       },
@@ -537,7 +541,7 @@ async function computeSimilarProductIds(): Promise<Record<string, string[]>> {
   const products = await prisma.product.findMany({
     where: {
       status: ProductStatus.PUBLISHED,
-      variants: { some: { isActive: true } },
+      variants: { some: PUBLIC_VARIANT_WHERE },
     },
     select: {
       id: true,
@@ -612,7 +616,7 @@ export async function getSimilarProducts(
     where: {
       id: { in: similarIds },
       status: ProductStatus.PUBLISHED,
-      variants: { some: { isActive: true } },
+      variants: { some: PUBLIC_VARIANT_WHERE },
     },
     select: CARD_SELECT,
   });
@@ -637,7 +641,7 @@ export async function getSitemapUrls() {
   const products = await prisma.product.findMany({
     where: {
       status: ProductStatus.PUBLISHED,
-      variants: { some: { isActive: true } },
+      variants: { some: PUBLIC_VARIANT_WHERE },
     },
     select: { slug: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },

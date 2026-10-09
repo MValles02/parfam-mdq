@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Parfam MDQ
 
-Perfume store for Mar del Plata (bottles, testers, and decants), with a
+Perfume store for Mar del Plata (bottles and decants), with a
 WhatsApp checkout and an administration panel. It **does not charge**: checkout
 persists the order, assigns a sequential number (`PM-0042`), and returns a
 prewritten `wa.me` link. Payment and delivery are arranged in chat.
@@ -124,6 +124,10 @@ Remote dev: `pnpm dev` binds to loopback only (`-H 127.0.0.1`); start it with `p
 ## Before declaring work complete
 
 `pnpm typecheck`, `pnpm lint`, `pnpm test` must pass (CI requires them).
-Playwright E2E (`pnpm test:e2e`, needs a seeded DB; see `docs/deployment.md`)
+Tests are integration and E2E only; never write unit tests (no isolated
+function tests, no mocking of internal modules). `pnpm test` runs the Vitest
+integration tests in `tests/integration/*.int.test.ts` against a real, migrated
+local Postgres (`pnpm db:up && pnpm db:deploy`); they refuse a non-local
+`DATABASE_URL`. Playwright E2E (`pnpm test:e2e`, needs a seeded DB; see `docs/deployment.md`)
 runs in CI on pull requests; run it locally when a change touches the store,
 checkout, or admin flows.

@@ -6,7 +6,7 @@ Create an immutable `Order` snapshot, assign its sequential `PM-0042`-style numb
 
 ## Entry point
 
-`/checkout` renders `CheckoutForm`. The Spanish button and validation text are
+`/checkout` renders `CheckoutForm`: a two-column layout with editable `CartItemRow`s on the left and a sticky "Mandanos el pedido" aside (name, WhatsApp, summary, trust list) on the right. Below `lg` the total and the submit button sit in a fixed bottom bar and the page reserves bottom padding for it. The Spanish button and validation text are
 customer-facing content. The action receives `customerName`, `customerPhone`,
 `items`, and the hidden `company` honeypot.
 

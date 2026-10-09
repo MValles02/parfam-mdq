@@ -3,23 +3,22 @@ import { ORDER_STATUS_LABELS } from "@/lib/admin/orders";
 import { cn } from "@/lib/utils";
 
 /**
- * Matches the product status-chip treatment: PENDING is neutral; CONFIRMED
- * and DELIVERED use the success tokens, with DELIVERED borderless to distinguish
- * it from a confirmed order that is still awaiting pickup; CANCELLED uses the
- * same destructive treatment as `buttonVariants`.
+ * Order statuses use their own feedback tokens: PENDING is warning (work
+ * waiting for the admin), CONFIRMED is neutral secondary, DELIVERED is success
+ * and CANCELLED is danger. This intentionally differs from the product chip.
  */
 const STATUS_STYLES: Record<OrderStatus, string> = {
-  PENDING: "border-border bg-muted text-muted-foreground",
-  CONFIRMED: "border-success-border bg-success text-success-foreground",
-  DELIVERED: "border-transparent bg-success text-success-foreground",
-  CANCELLED: "border-transparent bg-destructive/10 text-destructive",
+  PENDING: "border-transparent bg-warning text-warning-foreground",
+  CONFIRMED: "border-border bg-secondary text-secondary-foreground",
+  DELIVERED: "border-success-border bg-success text-success-foreground",
+  CANCELLED: "border-transparent bg-danger text-danger-foreground",
 };
 
 const STATUS_DOT_STYLES: Record<OrderStatus, string> = {
-  PENDING: "bg-muted-foreground/60",
-  CONFIRMED: "bg-success-foreground",
+  PENDING: "bg-warning-foreground",
+  CONFIRMED: "bg-muted-foreground",
   DELIVERED: "bg-success-foreground",
-  CANCELLED: "bg-destructive",
+  CANCELLED: "bg-danger-foreground",
 };
 
 export function OrderStatusChip({ status }: { status: OrderStatus }) {

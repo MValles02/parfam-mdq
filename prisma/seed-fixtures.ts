@@ -1,9 +1,10 @@
 /**
  * Development-only fixture catalog: brands, products, and variants that
- * exercise real store pages for local smoke checks (a "desde" / starting
- * price product, a draft that must 404, and a published product with no
- * purchasable variant). Every row's slug is prefixed "fixture-" so it can be
- * told apart from real catalog data.
+ * exercise real store pages for local smoke checks and E2E specs (a "desde" /
+ * starting price product, a draft that must 404, and a published product with
+ * no purchasable variant). Every row's slug is prefixed "fixture-" so it can
+ * be told apart from real catalog data. The products' slugs and names live in
+ * scripts/lib/fixture-catalog.ts, shared with scripts/smoke.ts and e2e/.
  *
  *   pnpm db:seed:fixtures
  *
@@ -14,22 +15,27 @@
  * Idempotent: brands and products are upserted by slug, and each fixture
  * product's variants are deleted and recreated inside a transaction, so
  * rerunning does not duplicate rows.
- *
- * A later smoke script (GitHub issue #15, part B) reads these slugs:
  */
-export const FIXTURE_PUBLISHED_SLUGS = [
-  "fixture-eau-de-prueba-mujer",
-  "fixture-eau-de-prueba-hombre",
-  "fixture-eau-de-prueba-unisex",
-] as const;
-export const FIXTURE_DRAFT_SLUG = "fixture-borrador";
-export const FIXTURE_INACTIVE_ONLY_SLUG = "fixture-solo-inactivo";
-
 import "dotenv/config";
 import { Prisma } from "@/generated/prisma/client";
 import { Gender, ProductStatus, VariantKind } from "@/generated/prisma/enums";
+import {
+  FIXTURE_DRAFT,
+  FIXTURE_INACTIVE_ONLY,
+  FIXTURE_LISTED,
+  FIXTURE_MEN,
+  FIXTURE_UNISEX,
+  FIXTURE_WOMEN,
+} from "../scripts/lib/fixture-catalog";
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+const LOCAL_ONLY_REASON =
+  "it seeds fake catalog data for local smoke checks only.";
+
+function exitWithError(message: string): never {
+  console.error(message);
+  process.exit(1);
+}
 
 /**
  * Guards against ever seeding this fake catalog into a real deployment: it
@@ -38,24 +44,21 @@ const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
  */
 function assertLocalDatabase() {
   if (process.env.NODE_ENV === "production") {
-    console.error(
-      "db:seed:fixtures refuses to run with NODE_ENV=production; it seeds fake catalog data for local smoke checks only.",
+    exitWithError(
+      `db:seed:fixtures refuses to run with NODE_ENV=production; ${LOCAL_ONLY_REASON}`,
     );
-    process.exit(1);
   }
 
   const raw = process.env.DATABASE_URL;
   if (!raw) {
-    console.error("db:seed:fixtures: DATABASE_URL is not set.");
-    process.exit(1);
+    exitWithError("db:seed:fixtures: DATABASE_URL is not set.");
   }
 
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    console.error(`db:seed:fixtures: DATABASE_URL is not a valid URL.`);
-    process.exit(1);
+    exitWithError("db:seed:fixtures: DATABASE_URL is not a valid URL.");
   }
 
   // pg-connection-string (used by pg via @prisma/adapter-pg) takes the real
@@ -64,20 +67,18 @@ function assertLocalDatabase() {
   // "postgresql://u@localhost/db?host=prod.example.com" can't slip past the
   // hostname check below and connect elsewhere.
   if (url.searchParams.has("host") || url.searchParams.has("hostaddr")) {
-    console.error(
-      "db:seed:fixtures refuses a DATABASE_URL with a host/hostaddr query param; it seeds fake catalog data for local smoke checks only.",
+    exitWithError(
+      `db:seed:fixtures refuses a DATABASE_URL with a host/hostaddr query param; ${LOCAL_ONLY_REASON}`,
     );
-    process.exit(1);
   }
 
   // Strip IPv6 brackets ("[::1]") so it compares against LOCAL_HOSTNAMES.
   const hostname = url.hostname.replace(/^\[|\]$/g, "");
 
   if (!LOCAL_HOSTNAMES.has(hostname)) {
-    console.error(
-      `db:seed:fixtures refuses to run against a non-local DATABASE_URL host (${hostname}); it seeds fake catalog data for local smoke checks only.`,
+    exitWithError(
+      `db:seed:fixtures refuses to run against a non-local DATABASE_URL host (${hostname}); ${LOCAL_ONLY_REASON}`,
     );
-    process.exit(1);
   }
 }
 
@@ -97,18 +98,22 @@ type FixtureProduct = {
   variants: FixtureVariant[];
 };
 
-const FIXTURE_BRANDS = [
-  { slug: "fixture-brand-a", name: "Fixture Casa de Perfumes A" },
-  { slug: "fixture-brand-b", name: "Fixture Casa de Perfumes B" },
-];
+const FIXTURE_BRAND_A = {
+  slug: "fixture-brand-a",
+  name: "Fixture Casa de Perfumes A",
+};
+const FIXTURE_BRAND_B = {
+  slug: "fixture-brand-b",
+  name: "Fixture Casa de Perfumes B",
+};
+const FIXTURE_BRANDS = [FIXTURE_BRAND_A, FIXTURE_BRAND_B];
 
 const FIXTURE_PRODUCTS: FixtureProduct[] = [
   {
     // Two active variants at different prices exercise the "desde" /
     // starting-price logic in src/lib/catalog.ts (getStartingPrice).
-    slug: FIXTURE_PUBLISHED_SLUGS[0],
-    name: "Fixture Eau de Prueba Mujer",
-    brandSlug: "fixture-brand-a",
+    ...FIXTURE_WOMEN,
+    brandSlug: FIXTURE_BRAND_A.slug,
     gender: Gender.WOMEN,
     status: ProductStatus.PUBLISHED,
     variants: [
@@ -127,9 +132,8 @@ const FIXTURE_PRODUCTS: FixtureProduct[] = [
     ],
   },
   {
-    slug: FIXTURE_PUBLISHED_SLUGS[1],
-    name: "Fixture Eau de Prueba Hombre",
-    brandSlug: "fixture-brand-b",
+    ...FIXTURE_MEN,
+    brandSlug: FIXTURE_BRAND_B.slug,
     gender: Gender.MEN,
     status: ProductStatus.PUBLISHED,
     variants: [
@@ -149,9 +153,8 @@ const FIXTURE_PRODUCTS: FixtureProduct[] = [
     ],
   },
   {
-    slug: FIXTURE_PUBLISHED_SLUGS[2],
-    name: "Fixture Eau de Prueba Unisex",
-    brandSlug: "fixture-brand-a",
+    ...FIXTURE_UNISEX,
+    brandSlug: FIXTURE_BRAND_A.slug,
     gender: Gender.UNISEX,
     status: ProductStatus.PUBLISHED,
     variants: [
@@ -165,9 +168,8 @@ const FIXTURE_PRODUCTS: FixtureProduct[] = [
   },
   {
     // Draft product: the store must 404 this slug.
-    slug: FIXTURE_DRAFT_SLUG,
-    name: "Fixture Eau de Prueba Borrador",
-    brandSlug: "fixture-brand-b",
+    ...FIXTURE_DRAFT,
+    brandSlug: FIXTURE_BRAND_B.slug,
     gender: Gender.UNISEX,
     status: ProductStatus.DRAFT,
     variants: [
@@ -182,9 +184,8 @@ const FIXTURE_PRODUCTS: FixtureProduct[] = [
   {
     // Published but its only variant is inactive: the store must not offer
     // it for purchase.
-    slug: FIXTURE_INACTIVE_ONLY_SLUG,
-    name: "Fixture Eau de Prueba Sin Stock",
-    brandSlug: "fixture-brand-a",
+    ...FIXTURE_INACTIVE_ONLY,
+    brandSlug: FIXTURE_BRAND_A.slug,
     gender: Gender.WOMEN,
     status: ProductStatus.PUBLISHED,
     variants: [
@@ -238,21 +239,16 @@ async function main() {
       }
 
       await prisma.$transaction(async (tx) => {
+        const fields = {
+          name: fixture.name,
+          brandId,
+          gender: fixture.gender,
+          status: fixture.status,
+        };
         const product = await tx.product.upsert({
           where: { slug: fixture.slug },
-          create: {
-            slug: fixture.slug,
-            name: fixture.name,
-            brandId,
-            gender: fixture.gender,
-            status: fixture.status,
-          },
-          update: {
-            name: fixture.name,
-            brandId,
-            gender: fixture.gender,
-            status: fixture.status,
-          },
+          create: { slug: fixture.slug, ...fields },
+          update: fields,
         });
 
         // Replacing variants outright is simpler than diffing them and is
@@ -283,10 +279,12 @@ async function main() {
     }
 
     console.log("Fixture catalog is ready.");
-    console.log(`Published slugs: ${FIXTURE_PUBLISHED_SLUGS.join(", ")}`);
-    console.log(`Draft slug (must 404 in the store): ${FIXTURE_DRAFT_SLUG}`);
     console.log(
-      `Published, inactive-only variant slug: ${FIXTURE_INACTIVE_ONLY_SLUG}`,
+      `Published slugs: ${FIXTURE_LISTED.map((fixture) => fixture.slug).join(", ")}`,
+    );
+    console.log(`Draft slug (must 404 in the store): ${FIXTURE_DRAFT.slug}`);
+    console.log(
+      `Published, inactive-only variant slug: ${FIXTURE_INACTIVE_ONLY.slug}`,
     );
   } finally {
     await prisma.$disconnect();

@@ -14,7 +14,8 @@ Provide panel queries and controlled updates for persisted WhatsApp checkout ord
 
 | File                                       | Responsibility                                           |
 | ------------------------------------------ | -------------------------------------------------------- |
-| src/lib/admin/orders.ts                    | Prisma queries, DTOs, Spanish display labels             |
+| src/lib/admin/orders.ts                    | Prisma queries and DTOs                                  |
+| src/lib/admin/order-status.ts              | Prisma-free status order, Spanish labels, and `estado` filter values |
 | src/app/admin/(panel)/pedidos/actions.ts   | Authorized mutations and revalidation                    |
 | src/app/admin/(panel)/pedidos/             | List and detail routes                                   |
 | _components/orders-list.tsx                | Selectable order rows (split view)                       |

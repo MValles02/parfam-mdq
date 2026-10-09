@@ -31,6 +31,51 @@ flowchart LR
   PublicActions --> WhatsApp
 ```
 
+## Shared modules
+
+Values used by both surfaces have one definition in `src/lib/`. These modules
+do not import Prisma at runtime, so Client Components may use them:
+
+- `src/lib/site.ts`: brand defaults (`siteDefaults`, also the seed and fallback
+  for editable settings), `SITE_LOCALE`, `brandColors`, and `SITE_SETTINGS_ID`.
+- `src/lib/catalog.ts`: Spanish enum labels, `getVariantLabel`,
+  `formatArsPrice`, `PRICE_CURRENCY`, and `getProductPath`.
+- `src/lib/utils.ts`: `cn` (class merging, from the `cn` package) and
+  `FOCUS_VISIBLE`.
+
+Server-only shared modules: `src/lib/db.ts` (Prisma client), `src/lib/env.ts`
+(validated environment), `src/lib/settings.ts` (cached `SiteSetting`),
+`src/lib/r2.ts`, `src/lib/image-trim.ts`, `src/lib/rate-limit.ts`, and
+`src/lib/seo.ts`.
+
+## Selected libraries
+
+Reuse these before adding a dependency or writing an equivalent utility:
+
+| Need                       | Library                                               |
+| -------------------------- | ----------------------------------------------------- |
+| UI primitives              | shadcn/ui on `radix-ui` (`src/components/ui/`)        |
+| Icons                      | `lucide-react`                                        |
+| Class merging and variants | `cn` via `@/lib/utils`, `class-variance-authority`    |
+| Command palette / combobox | `cmdk`                                                |
+| Carousel                   | `embla-carousel-react`                                |
+| Toasts                     | `sonner`                                              |
+| File drop zone             | `react-dropzone`                                      |
+| URL state                  | `nuqs`                                                |
+| Client state (cart)        | `zustand`                                             |
+| Forms and validation       | `react-hook-form`, `@hookform/resolvers`, `zod`       |
+| Environment validation     | `@t3-oss/env-nextjs`                                  |
+| Phone numbers              | `libphonenumber-js`                                   |
+| Slugs                      | `slugify` via `toSlug` in `src/lib/slug.ts`           |
+| In-memory rate limiting    | `lru-cache` via `src/lib/rate-limit.ts`               |
+| Image processing           | `sharp`                                               |
+| Object storage (R2)        | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` |
+| Password hashing           | `@node-rs/argon2`                                     |
+| Database                   | Prisma with `@prisma/adapter-pg` and `pg`             |
+
+No date library is installed; `src/lib/date.ts` covers relative admin
+timestamps.
+
 ## Data and rendering
 
 Prisma access remains server-only. Client Components never import a module that

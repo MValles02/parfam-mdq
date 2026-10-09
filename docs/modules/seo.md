@@ -17,4 +17,4 @@ Build public metadata, JSON-LD, generated Open Graph images, robots directives, 
 
 ## Rules
 
-Metadata targeting customers stays in Spanish and follows es-AR content conventions. JSON-LD is serialized safely before insertion. Sitemap URLs expose only public store routes and must reflect published catalog data.
+Canonical and sitemap URLs come from `NEXT_PUBLIC_SITE_URL` through `absoluteUrl`; product paths come from `getProductPath` in `src/lib/catalog.ts`. Metadata targeting customers stays in Spanish and follows es-AR content conventions. JSON-LD is serialized safely before insertion. Sitemap URLs expose only public store routes and must reflect published catalog data.

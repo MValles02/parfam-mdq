@@ -8,8 +8,10 @@ status and internal-note updates without changing the historical order snapshot.
 ## Entry points
 
 The preserved public panel routes are `/admin/pedidos` and
-`/admin/pedidos/[id]`. URL status values remain the existing route contract;
-internal filtering uses `OrderStatusFilter`.
+`/admin/pedidos/[id]`. URL status values (`estado=pendientes`, …) remain the
+existing route contract; `ORDER_STATUS_FILTERS` in
+`src/app/admin/(panel)/pedidos/order-status.ts` maps them to the internal
+`OrderStatusFilter`.
 
 ## Flow
 
@@ -32,9 +34,10 @@ text. Product, variant, label, unit price, and quantity stay frozen in
 
 ## Main files
 
-| Responsibility         | File                                                                         |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| Queries and DTOs       | `src/lib/admin/orders.ts`                                                    |
+| Responsibility         | File |
+| ---------------------- | ---- |
+| Queries and DTOs       | `src/lib/admin/orders.ts` |
+| Status labels, filters | `src/lib/admin/order-status.ts` |
 | Mutating actions       | `src/app/admin/(panel)/pedidos/actions.ts`                                   |
 | List and detail routes | `src/app/admin/(panel)/pedidos/`                                             |
 | List controls          | `_components/orders-list.tsx`, `status-selector.tsx`                         |

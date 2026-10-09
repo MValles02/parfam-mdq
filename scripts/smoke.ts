@@ -1,11 +1,13 @@
 /**
- * Headless smoke check (GitHub issue #15, part B).
+ * Headless smoke check (`pnpm smoke`; see "Local smoke check" in
+ * docs/deployment.md).
  *
  * Loads every store and admin page in real headless Chromium, driven over
- * the Chrome DevTools Protocol (CDP) through Node's global `WebSocket` and
- * `fetch` — no Playwright/Puppeteer dependency. Fails on CSP violations
- * (reported as "Refused to ..." console/log entries), console errors,
- * uncaught exceptions, or an unexpected main-document HTTP status.
+ * the Chrome DevTools Protocol (CDP) through Node's global `WebSocket` (see
+ * scripts/lib/cdp.ts) — no Playwright/Puppeteer dependency. Fails on CSP
+ * violations (reported as "Refused to ..." console/log entries), console
+ * errors, uncaught exceptions, or an unexpected main-document HTTP status
+ * (see scripts/lib/smoke-checks.ts).
  *
  * Requires a running production server and the fixture catalog:
  *
@@ -14,7 +16,7 @@
  *   pnpm smoke
  *
  * Env vars:
- *   SMOKE_BASE_URL        base URL of the running server, default http://localhost:3000
+ *   SMOKE_BASE_URL         base URL of the running server, default http://localhost:3000
  *   SMOKE_ADMIN_EMAIL      default ADMIN_SEED_EMAIL; admin routes are skipped
  *                          with a warning (not a failure) if no credentials resolve
  *   SMOKE_ADMIN_PASSWORD   default ADMIN_SEED_PASSWORD
@@ -25,44 +27,57 @@
  *
  * Exits 0 when every visited page passes, 1 otherwise.
  */
-import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
+import { connectCdp } from "./lib/cdp";
+import {
+  evalExpression,
+  openPageSession,
+  waitForEvent,
+  type PageSession,
+} from "./lib/cdp-page";
+import { launchChromium, readBrowserWsUrl, stopChromium } from "./lib/chromium";
+import {
+  FIXTURE_DRAFT,
+  FIXTURE_INACTIVE_ONLY,
+  FIXTURE_LISTED,
+} from "./lib/fixture-catalog";
+import {
+  collectPageFailures,
+  emptyPageBuffers,
+  formatCheckResult,
+} from "./lib/smoke-checks";
 
-const BASE_URL = (
-  process.env.SMOKE_BASE_URL || "http://localhost:3000"
-).replace(/\/$/, "");
-const CHROMIUM_PATH = process.env.CHROMIUM_PATH || "/usr/bin/chromium";
-const PAGE_TIMEOUT_MS = 15000;
-const SETTLE_MS = 1500;
-const LOGIN_TIMEOUT_MS = 10000;
-const SMOKE_TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS) || 180000;
+const DEFAULT_BASE_URL = "http://localhost:3000";
+const DEFAULT_CHROMIUM_PATH = "/usr/bin/chromium";
+const DEFAULT_SMOKE_TIMEOUT_MS = 180_000;
 
-// Fixture slugs are duplicated from prisma/seed-fixtures.ts rather than
-// imported: that module seeds the database as a side effect of being
-// imported, and can even process.exit() the caller for a non-local
-// DATABASE_URL. Keep these in sync with that file by hand.
-const FIXTURE_PUBLISHED_SLUGS = [
-  "fixture-eau-de-prueba-mujer",
-  "fixture-eau-de-prueba-hombre",
-  "fixture-eau-de-prueba-unisex",
-];
+const BASE_URL = (process.env.SMOKE_BASE_URL || DEFAULT_BASE_URL).replace(
+  /\/$/,
+  "",
+);
+const CHROMIUM_PATH = process.env.CHROMIUM_PATH || DEFAULT_CHROMIUM_PATH;
+const SMOKE_TIMEOUT_MS =
+  Number(process.env.SMOKE_TIMEOUT_MS) || DEFAULT_SMOKE_TIMEOUT_MS;
+
+const PAGE_TIMEOUT_MS = 15_000;
+/** Wait after the load event so late console errors and CSP reports arrive. */
+const SETTLE_MS = 1_500;
+const LOGIN_TIMEOUT_MS = 10_000;
+const LOGIN_POLL_INTERVAL_MS = 200;
 
 const STORE_PAGES: { path: string; status?: number }[] = [
   { path: "/" },
-  ...FIXTURE_PUBLISHED_SLUGS.map((slug) => ({ path: `/producto/${slug}` })),
+  ...FIXTURE_LISTED.map(({ slug }) => ({ path: `/producto/${slug}` })),
   { path: "/carrito" },
   { path: "/checkout" },
   { path: "/como-comprar" },
   { path: "/contacto" },
   { path: "/presentaciones" },
   { path: "/concentraciones" },
-  { path: "/producto/fixture-borrador", status: 404 },
+  { path: `/producto/${FIXTURE_DRAFT.slug}`, status: 404 },
   // Published, but its only variant is inactive: still viewable (it's not a
-  // draft), just never offered for purchase — see FIXTURE_PRODUCTS in
-  // prisma/seed-fixtures.ts.
-  { path: "/producto/fixture-solo-inactivo" },
+  // draft), just never offered for purchase.
+  { path: `/producto/${FIXTURE_INACTIVE_ONLY.slug}` },
 ];
 
 const ADMIN_STATIC_PAGES = [
@@ -80,259 +95,77 @@ const EXTRACT_PRODUCT_ID_EXPR = `(function () {
   return href ? href.split("/").pop() : null;
 })()`;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Pass/fail counts for the whole run. */
+class CheckTally {
+  passed = 0;
+  failed = 0;
 
-async function launchChromium() {
-  if (!existsSync(CHROMIUM_PATH)) {
-    throw new Error(
-      `Chromium binary not found at ${CHROMIUM_PATH}; set CHROMIUM_PATH.`,
-    );
+  /** Counts one check and passes its result through. */
+  record(ok: boolean): boolean {
+    if (ok) this.passed++;
+    else this.failed++;
+    return ok;
   }
-  const userDataDir = mkdtempSync(path.join(tmpdir(), "smoke-chromium-"));
+
+  /** Prints and counts a check that is not a page visit (those print their own line). */
+  report(label: string, failures: string[]): void {
+    console.log(formatCheckResult(label, failures));
+    this.record(failures.length === 0);
+  }
+}
+
+async function main() {
+  const browser = await launchChromium(CHROMIUM_PATH);
+  let exitCode = 0;
+
+  // Watchdog for the whole run, not per-call: a single hung page load or
+  // CDP round-trip would otherwise block main() forever.
+  const watchdog = setTimeout(async () => {
+    console.error("smoke: global timeout");
+    await stopChromium(browser);
+    process.exit(1);
+  }, SMOKE_TIMEOUT_MS);
+
   try {
-    // detached: true makes Chromium the leader of its own process group, so
-    // cleanup() can kill it and every child it spawns (network service,
-    // renderers) in one signal instead of leaving them to rewrite files into
-    // the profile dir after the browser itself is gone.
-    const proc = spawn(
-      CHROMIUM_PATH,
-      [
-        "--headless=new",
-        "--no-sandbox",
-        "--disable-gpu",
-        "--remote-debugging-port=0",
-        `--user-data-dir=${userDataDir}`,
-      ],
-      { stdio: "ignore", detached: true },
-    );
-    proc.unref();
-    return { proc, userDataDir };
-  } catch (err) {
-    // spawn() failed after the temp profile dir was already created: remove
-    // it here so main()'s cleanup (which never got a proc/userDataDir back)
-    // doesn't need to.
-    await cleanup(undefined, userDataDir);
-    throw err;
-  }
-}
+    const cdp = connectCdp(await readBrowserWsUrl(browser.userDataDir));
+    await cdp.ready;
+    const session = await openPageSession(cdp);
 
-async function readBrowserWsUrl(userDataDir: string): Promise<string> {
-  const file = path.join(userDataDir, "DevToolsActivePort");
-  const deadline = Date.now() + 10000;
-  while (Date.now() < deadline) {
-    if (existsSync(file)) {
-      const [port, browserPath] = readFileSync(file, "utf8").split("\n");
-      if (port?.trim() && browserPath?.trim()) {
-        return `ws://127.0.0.1:${port.trim()}${browserPath.trim()}`;
-      }
+    const tally = new CheckTally();
+    for (const page of STORE_PAGES) {
+      tally.record(await visitPage(session, page.path, page.status));
     }
-    await sleep(100);
-  }
-  throw new Error("Timed out waiting for Chromium's DevToolsActivePort file.");
-}
 
-async function cleanup(
-  proc: ReturnType<typeof spawn> | undefined,
-  userDataDir: string,
-) {
-  if (proc?.pid) {
-    try {
-      // Negative pid targets the whole process group led by proc (see the
-      // detached: true spawn above), not just the browser's own top process.
-      process.kill(-proc.pid, "SIGKILL");
-    } catch {}
-    if (proc.exitCode === null && proc.signalCode === null) {
-      await new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, 5000);
-        proc.once("exit", () => {
-          clearTimeout(timer);
-          resolve();
-        });
-      });
-    }
-  }
-  try {
-    // maxRetries/retryDelay absorb the brief window where a just-killed
-    // child process is still releasing its file handles on the profile dir.
-    rmSync(userDataDir, {
-      recursive: true,
-      force: true,
-      maxRetries: 5,
-      retryDelay: 200,
-    });
-  } catch {}
-}
-
-// Minimal CDP client: one WebSocket, request/response matched by numeric id,
-// and a fan-out for unsolicited events (console, network, log).
-type CdpMessage = {
-  id?: number;
-  method?: string;
-  params?: unknown;
-  sessionId?: string;
-  result?: unknown;
-  error?: { message: string };
-};
-
-function connectCdp(wsUrl: string) {
-  const ws = new WebSocket(wsUrl);
-  const listeners = new Set<(msg: CdpMessage) => void>();
-  const pending = new Map<
-    number,
-    { resolve: (v: unknown) => void; reject: (e: Error) => void }
-  >();
-  let nextId = 1;
-
-  const ready = new Promise<void>((resolve, reject) => {
-    ws.addEventListener("open", () => resolve(), { once: true });
-    ws.addEventListener(
-      "error",
-      () => reject(new Error("CDP WebSocket error")),
-      { once: true },
-    );
-  });
-
-  ws.addEventListener("message", (event) => {
-    const msg: CdpMessage = JSON.parse(event.data as string);
-    if (msg.id !== undefined && pending.has(msg.id)) {
-      const { resolve, reject } = pending.get(msg.id)!;
-      pending.delete(msg.id);
-      if (msg.error) reject(new Error(msg.error.message));
-      else resolve(msg.result);
-    } else if (msg.method) {
-      for (const listener of listeners) listener(msg);
-    }
-  });
-
-  function send<T = unknown>(
-    method: string,
-    params: object = {},
-    sessionId?: string,
-  ): Promise<T> {
-    const id = nextId++;
-    const payload: CdpMessage = { id, method, params };
-    if (sessionId) payload.sessionId = sessionId;
-    ws.send(JSON.stringify(payload));
-    return new Promise<T>((resolve, reject) =>
-      pending.set(id, { resolve: resolve as (v: unknown) => void, reject }),
-    );
-  }
-
-  return {
-    ready,
-    send,
-    on: (fn: (msg: CdpMessage) => void) => listeners.add(fn),
-    off: (fn: (msg: CdpMessage) => void) => listeners.delete(fn),
-  };
-}
-
-type Cdp = ReturnType<typeof connectCdp>;
-type Buffers = {
-  logs: { source: string; text: string }[];
-  consoleErrors: string[];
-  exceptions: string[];
-  docResponses: number[];
-};
-const emptyBuffers = (): Buffers => ({
-  logs: [],
-  consoleErrors: [],
-  exceptions: [],
-  docResponses: [],
-});
-
-// One page/tab, its CDP session, and the log/console/network buffers
-// attached to it. Threaded through every helper below instead of three
-// separate parameters.
-type Session = { cdp: Cdp; sessionId: string; buffers: Buffers };
-
-function waitForEvent(
-  { cdp, sessionId }: Session,
-  method: string,
-  timeoutMs: number,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      cdp.off(handler);
-      reject(new Error(`timed out waiting for ${method}`));
-    }, timeoutMs);
-    function handler(msg: CdpMessage) {
-      if (msg.sessionId === sessionId && msg.method === method) {
-        clearTimeout(timer);
-        cdp.off(handler);
-        resolve();
-      }
-    }
-    cdp.on(handler);
-  });
-}
-
-async function evalExpression(
-  { cdp, sessionId }: Session,
-  expression: string,
-): Promise<unknown> {
-  const { result, exceptionDetails } = await cdp.send<{
-    result: { value: unknown };
-    exceptionDetails?: { text: string };
-  }>("Runtime.evaluate", { expression, returnByValue: true }, sessionId);
-  if (exceptionDetails) throw new Error(exceptionDetails.text);
-  return result.value;
-}
-
-function describeConsoleArg(arg: {
-  value?: unknown;
-  description?: string;
-  type?: string;
-}): string {
-  if (arg.value !== undefined) return String(arg.value);
-  return arg.description || arg.type || "";
-}
-
-function attachBufferedListeners({ cdp, sessionId, buffers }: Session) {
-  cdp.on((msg) => {
-    if (msg.sessionId !== sessionId) return;
-    if (msg.method === "Log.entryAdded") {
-      const { entry } = msg.params as {
-        entry: Buffers["logs"][number] & { level: string };
-      };
-      if (entry.level === "error") buffers.logs.push(entry);
-    } else if (msg.method === "Runtime.consoleAPICalled") {
-      const params = msg.params as {
-        type: string;
-        args: Parameters<typeof describeConsoleArg>[0][];
-      };
-      if (params.type === "error") {
-        buffers.consoleErrors.push(
-          params.args.map(describeConsoleArg).join(" "),
-        );
-      }
-    } else if (msg.method === "Runtime.exceptionThrown") {
-      const { exceptionDetails } = msg.params as {
-        exceptionDetails: {
-          text: string;
-          exception?: { description?: string };
-        };
-      };
-      buffers.exceptions.push(
-        exceptionDetails.exception?.description || exceptionDetails.text,
+    const credentials = readAdminCredentials();
+    if (!credentials) {
+      console.warn(
+        "warn: no admin credentials (SMOKE_ADMIN_EMAIL/SMOKE_ADMIN_PASSWORD or ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD); skipping /admin routes.",
       );
-    } else if (msg.method === "Network.responseReceived") {
-      const params = msg.params as {
-        type: string;
-        response: { status: number };
-      };
-      if (params.type === "Document")
-        buffers.docResponses.push(params.response.status);
+    } else {
+      await checkAdminPages(session, tally, credentials);
     }
-  });
+
+    console.log(`\n${tally.passed} ok, ${tally.failed} failed.`);
+    exitCode = tally.failed > 0 ? 1 : 0;
+  } catch (err) {
+    console.error(err);
+    exitCode = 1;
+  } finally {
+    clearTimeout(watchdog);
+    await stopChromium(browser);
+  }
+
+  process.exit(exitCode);
 }
 
+/** Navigates to `urlPath`, prints its ok/FAIL line, and returns whether it passed. */
 async function visitPage(
-  session: Session,
+  session: PageSession,
   urlPath: string,
   expectedStatus = 200,
 ): Promise<boolean> {
   const { cdp, sessionId, buffers } = session;
-  Object.assign(buffers, emptyBuffers());
+  Object.assign(buffers, emptyPageBuffers());
 
   const failures: string[] = [];
   try {
@@ -352,49 +185,60 @@ async function visitPage(
   }
   await sleep(SETTLE_MS);
 
-  const expectedPathname = urlPath.split("?")[0];
   const pathname = await evalExpression(session, "window.location.pathname");
-  if (pathname !== expectedPathname) {
-    failures.push(
-      `unexpected path: expected ${expectedPathname}, got ${pathname}`,
-    );
-  }
-
-  const docStatus = buffers.docResponses.at(-1);
-  if (docStatus === undefined) {
-    failures.push("no main document response observed");
-  } else if (docStatus !== expectedStatus) {
-    failures.push(
-      `unexpected status: expected ${expectedStatus}, got ${docStatus}`,
-    );
-  }
-
-  // A 404 navigation's own failed-request log (source "network") is expected
-  // noise; a CSP violation always contains "Refused to" and always fails,
-  // regardless of source.
-  for (const entry of buffers.logs) {
-    if (entry.source === "network" && !entry.text.includes("Refused to"))
-      continue;
-    failures.push(`[console] ${entry.text}`);
-  }
-  for (const message of buffers.consoleErrors)
-    failures.push(`[console.error] ${message}`);
-  for (const exception of buffers.exceptions)
-    failures.push(`[exception] ${exception}`);
-
-  const ok = failures.length === 0;
-  console.log(
-    `${ok ? "ok  " : "FAIL"} ${urlPath}${ok ? "" : ` - ${failures.join("; ")}`}`,
+  failures.push(
+    ...collectPageFailures({ urlPath, pathname, expectedStatus, buffers }),
   );
-  return ok;
+
+  console.log(formatCheckResult(urlPath, failures));
+  return failures.length === 0;
+}
+
+type AdminCredentials = { email: string; password: string };
+
+function readAdminCredentials(): AdminCredentials | null {
+  const email = process.env.SMOKE_ADMIN_EMAIL || process.env.ADMIN_SEED_EMAIL;
+  const password =
+    process.env.SMOKE_ADMIN_PASSWORD || process.env.ADMIN_SEED_PASSWORD;
+  return email && password ? { email, password } : null;
+}
+
+/** Logs in through the real form, then visits every admin page plus one product's edit page. */
+async function checkAdminPages(
+  session: PageSession,
+  tally: CheckTally,
+  credentials: AdminCredentials,
+): Promise<void> {
+  if (!tally.record(await visitPage(session, "/admin/login"))) return;
+
+  await fillAndSubmitLogin(session, credentials);
+  const login = await waitForLoginResult(session);
+  tally.report("/admin/login (submit)", login.ok ? [] : [login.error]);
+  if (!login.ok) return;
+
+  let productId: string | null = null;
+  for (const adminPath of ADMIN_STATIC_PAGES) {
+    tally.record(await visitPage(session, adminPath));
+    if (adminPath === "/admin/productos") {
+      productId = (await evalExpression(session, EXTRACT_PRODUCT_ID_EXPR)) as
+        string | null;
+    }
+  }
+
+  if (productId) {
+    tally.record(await visitPage(session, `/admin/productos/${productId}`));
+  } else {
+    tally.report("/admin/productos/<id>", [
+      "no product link found on /admin/productos",
+    ]);
+  }
 }
 
 // Fills the real /admin/login form through the native <input> value setter
 // (React ignores a plain DOM assignment) and submits it.
 async function fillAndSubmitLogin(
-  session: Session,
-  email: string,
-  password: string,
+  session: PageSession,
+  { email, password }: AdminCredentials,
 ) {
   const expression = `(function () {
     function setValue(id, value) {
@@ -412,8 +256,8 @@ async function fillAndSubmitLogin(
 }
 
 async function waitForLoginResult(
-  session: Session,
-): Promise<{ ok: boolean; error?: string }> {
+  session: PageSession,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const expression = `(function () {
     const alert = document.querySelector('[role="alert"]');
     return { pathname: window.location.pathname, error: alert ? alert.textContent : null };
@@ -426,110 +270,9 @@ async function waitForLoginResult(
     };
     if (value.pathname === "/admin") return { ok: true };
     if (value.error) return { ok: false, error: value.error };
-    await sleep(200);
+    await sleep(LOGIN_POLL_INTERVAL_MS);
   }
   return { ok: false, error: "timed out waiting for /admin/login to resolve" };
-}
-
-async function main() {
-  const { proc, userDataDir } = await launchChromium();
-  let exitCode = 0;
-
-  // Watchdog for the whole run, not per-call: a single hung page load or
-  // CDP round-trip would otherwise block main() forever.
-  const watchdog = setTimeout(async () => {
-    console.error("smoke: global timeout");
-    await cleanup(proc, userDataDir);
-    process.exit(1);
-  }, SMOKE_TIMEOUT_MS);
-
-  try {
-    const wsUrl = await readBrowserWsUrl(userDataDir);
-    const cdp = connectCdp(wsUrl);
-    await cdp.ready;
-
-    const { targetId } = await cdp.send<{ targetId: string }>(
-      "Target.createTarget",
-      { url: "about:blank" },
-    );
-    const { sessionId } = await cdp.send<{ sessionId: string }>(
-      "Target.attachToTarget",
-      { targetId, flatten: true },
-    );
-    await cdp.send("Page.enable", {}, sessionId);
-    await cdp.send("Runtime.enable", {}, sessionId);
-    await cdp.send("Log.enable", {}, sessionId);
-    await cdp.send("Network.enable", {}, sessionId);
-
-    const session: Session = { cdp, sessionId, buffers: emptyBuffers() };
-    attachBufferedListeners(session);
-
-    let passCount = 0;
-    let failCount = 0;
-    const record = (ok: boolean) => (ok ? passCount++ : failCount++);
-    const visit = (urlPath: string, status?: number) =>
-      visitPage(session, urlPath, status);
-
-    for (const page of STORE_PAGES) record(await visit(page.path, page.status));
-
-    const adminEmail =
-      process.env.SMOKE_ADMIN_EMAIL || process.env.ADMIN_SEED_EMAIL;
-    const adminPassword =
-      process.env.SMOKE_ADMIN_PASSWORD || process.env.ADMIN_SEED_PASSWORD;
-
-    if (!adminEmail || !adminPassword) {
-      console.warn(
-        "warn: no admin credentials (SMOKE_ADMIN_EMAIL/SMOKE_ADMIN_PASSWORD or ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD); skipping /admin routes.",
-      );
-    } else {
-      const loginPageOk = await visit("/admin/login");
-      record(loginPageOk);
-
-      if (loginPageOk) {
-        await fillAndSubmitLogin(session, adminEmail, adminPassword);
-        const result = await waitForLoginResult(session);
-
-        if (!result.ok) {
-          console.log(`FAIL /admin/login (submit) - ${result.error}`);
-          failCount++;
-        } else {
-          console.log("ok   /admin/login (submit)");
-          passCount++;
-
-          let productId: string | null = null;
-          for (const adminPath of ADMIN_STATIC_PAGES) {
-            record(await visit(adminPath));
-            if (adminPath === "/admin/productos") {
-              productId = (await evalExpression(
-                session,
-                EXTRACT_PRODUCT_ID_EXPR,
-              )) as string | null;
-            }
-          }
-
-          if (productId) {
-            record(await visit(`/admin/productos/${productId}`));
-          } else {
-            console.log(
-              "FAIL /admin/productos/<id> - no product link found on /admin/productos",
-            );
-            failCount++;
-          }
-        }
-      }
-    }
-
-    console.log(`\n${passCount} ok, ${failCount} failed.`);
-    exitCode = failCount > 0 ? 1 : 0;
-  } catch (err) {
-    console.error(err);
-    exitCode = 1;
-  } finally {
-    clearTimeout(watchdog);
-    await cleanup(proc, userDataDir);
-  }
-
-  process.exit(exitCode);
 }
 
 main();

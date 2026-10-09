@@ -1,17 +1,18 @@
 import { expect, test } from "@playwright/test";
+import { FIXTURE_DRAFT, FIXTURE_WOMEN } from "../scripts/lib/fixture-catalog";
 
 test("published product page renders its name", async ({ page }) => {
-  await page.goto("/producto/fixture-eau-de-prueba-mujer");
+  await page.goto(`/producto/${FIXTURE_WOMEN.slug}`);
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Fixture Eau de Prueba Mujer",
+      name: FIXTURE_WOMEN.name,
     }),
   ).toBeVisible();
 });
 
 test("draft product slug returns 404", async ({ page }) => {
-  const response = await page.goto("/producto/fixture-borrador");
+  const response = await page.goto(`/producto/${FIXTURE_DRAFT.slug}`);
   expect(response?.status()).toBe(404);
 });
 

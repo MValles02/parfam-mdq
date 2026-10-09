@@ -1,4 +1,5 @@
 import { LONGEVITY_LABELS, SILLAGE_LABELS } from "@/lib/catalog";
+import { roundLongevity, roundSillage } from "@/lib/store/key-facts";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "./collapsible-section";
 
@@ -78,13 +79,8 @@ export function CharacteristicBars({
   }
 
   const roundedLongevity =
-    longevity !== null
-      ? (Math.min(Math.max(Math.round(longevity), 1), 5) as 1 | 2 | 3 | 4 | 5)
-      : null;
-  const roundedSillage =
-    sillage !== null
-      ? (Math.min(Math.max(Math.round(sillage), 1), 4) as 1 | 2 | 3 | 4)
-      : null;
+    longevity !== null ? roundLongevity(longevity) : null;
+  const roundedSillage = sillage !== null ? roundSillage(sillage) : null;
   const boundedIntensity =
     intensity !== null
       ? (Math.min(Math.max(intensity, 1), 5) as 1 | 2 | 3 | 4 | 5)

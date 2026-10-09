@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Parfam MDQ
 
-Perfume store for Mar del Plata (bottles, testers, and decants), with a
+Perfume store for Mar del Plata (bottles and decants), with a
 WhatsApp checkout and an administration panel. It **does not charge**: checkout
 persists the order, assigns a sequential number (`PM-0042`), and returns a
 prewritten `wa.me` link. Payment and delivery are arranged in chat.

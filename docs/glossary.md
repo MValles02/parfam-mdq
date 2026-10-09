@@ -5,7 +5,7 @@
 | Customer term | Technical model | Meaning                                          |
 | ------------- | --------------- | ------------------------------------------------ |
 | Frasco entero | FULL_BOTTLE     | Sealed original bottle.                          |
-| Tester        | TESTER          | Original fragrance in simpler retail packaging.  |
+| Tester        | TESTER          | Retired; legacy rows only, never sold.           |
 | Decant        | DECANT          | Small transferred sample for trying a fragrance. |
 | Nota          | Note            | An olfactory ingredient.                         |
 | Acorde        | Accord          | A colored olfactory family.                      |

@@ -26,7 +26,7 @@ export function ProductCards({ rows }: { rows: ProductRow[] }) {
             </span>
             <StatusChip isPublished={row.status === "PUBLISHED"} />
           </Link>
-          {/* Testers are going away, so the mobile cards do not edit them. */}
+          {/* Testers are retired, so the mobile cards do not edit legacy rows. */}
           {row.variants
             .filter((variant) => variant.kind !== "TESTER")
             .map((variant) => (

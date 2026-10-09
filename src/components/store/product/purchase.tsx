@@ -30,9 +30,8 @@ type PurchaseProduct = {
 
 const MAX_QUANTITY = 99;
 
-const VARIANT_DESCRIPTIONS: Record<VariantKind, string> = {
+const VARIANT_DESCRIPTIONS: Partial<Record<VariantKind, string>> = {
   FULL_BOTTLE: "Sellado, con estuche",
-  TESTER: "Nuevo, envase simple",
   DECANT: "Fraccionado en atomizador",
 };
 
@@ -229,7 +228,8 @@ export function Purchase({
           ))}
         </RadioGroup>
         <p className="mt-2 text-sm text-muted-foreground">
-          {VARIANT_DESCRIPTIONS[selectedVariant.kind]}.{" "}
+          {VARIANT_DESCRIPTIONS[selectedVariant.kind] &&
+            `${VARIANT_DESCRIPTIONS[selectedVariant.kind]}. `}
           <Link
             href="/presentaciones"
             className="inline-flex min-h-11 items-center text-foreground underline underline-offset-2"

@@ -14,7 +14,7 @@ Prisma schema source: `prisma/schema.prisma`. PostgreSQL is accessed through
 | `Accord`                                    | Olfactory accord; `nameEs` and `color` come from `prisma/reference/accords.es.json`.                                                           |
 | `FragranceRef` and related reference models | Read-only reference catalog imported from a third-party dataset; panel-only, never queried by the store. See `docs/modules/reference-data.md`. |
 | `Product`                                   | Store product with publication status and optional reference link.                                                                             |
-| `ProductVariant`                            | Sellable bottle, tester, or decant and its ARS price.                                                                                          |
+| `ProductVariant`                            | Sellable bottle or decant and its ARS price (legacy `TESTER` rows may remain; the store hides them).                                           |
 | `ProductImage`                              | R2 storage key and display order.                                                                                                              |
 | `Order`, `OrderItem`                        | Checkout record and immutable commercial snapshot.                                                                                             |
 

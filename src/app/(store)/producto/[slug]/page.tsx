@@ -152,9 +152,12 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
                 </p>
               ) : null}
               {product.concentration ? (
-                <span className="mt-2 w-fit rounded border bg-card px-2.5 py-1 text-xs font-bold tracking-[0.04em]">
+                <Link
+                  href="/concentraciones"
+                  className="mt-2 inline-flex min-h-11 w-fit items-center rounded border bg-card px-2.5 py-1 text-xs font-bold tracking-[0.04em] hover:bg-muted lg:min-h-0"
+                >
                   {CONCENTRATION_LABELS[product.concentration]}
-                </span>
+                </Link>
               ) : null}
             </div>
 

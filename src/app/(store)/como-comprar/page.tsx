@@ -23,61 +23,65 @@ const breadcrumbs = [
   { name: PAGE_TITLE, path: PAGE_PATH },
 ];
 
-const STEPS = [
-  {
-    title: "Elegís la fragancia y la presentación",
-    description:
-      "Recorré el catálogo y elegí entre frasco entero, tester o decant, en el tamaño que quieras probar.",
-  },
-  {
-    title: "La agregás al carrito",
-    description:
-      "Sumá una o varias fragancias. Podés seguir mirando el catálogo antes de cerrar el pedido.",
-  },
-  {
-    title: "Mandás el pedido por WhatsApp",
-    description:
-      "Dejás tu nombre y teléfono, guardamos el pedido con un número y se abre WhatsApp con el detalle listo para mandar. No pedimos datos de pago.",
-  },
-  {
-    title: "Coordinamos entrega y pago",
-    description:
-      "Por WhatsApp vemos entrega en Mar del Plata o retiro, y coordinamos cómo pagás.",
-  },
-];
+function buildSteps(shippingInfo: string) {
+  return [
+    {
+      title: "Elegís tus fragancias",
+      description:
+        "Recorré el catálogo y elegí: decant para probar o frasco entero.",
+    },
+    {
+      title: "Las sumás al carrito",
+      description:
+        "Sumá una o varias fragancias. Podés seguir mirando el catálogo antes de cerrar el pedido.",
+    },
+    {
+      title: "Mandás el pedido por WhatsApp",
+      description:
+        "Dejás tu nombre y teléfono, guardamos el pedido con un número y se abre WhatsApp con el detalle listo para mandar. No pedimos datos de pago.",
+    },
+    {
+      title: "Coordinamos entrega y pago",
+      description: shippingInfo,
+    },
+  ];
+}
 
-const FAQS = [
-  {
-    question: "¿Son originales?",
-    answer: "Sí. Frascos, testers y decants son 100% originales.",
-  },
-  {
-    question: "¿Qué es un decant y qué es un tester?",
-    answer: (
-      <>
-        Un tester es el mismo perfume, nuevo y original, en un envase simple y
-        sin estuche: por eso sale más barato. Un decant es una fracción del
-        perfume en un atomizador chico, para probarlo sin comprar el frasco
-        entero. Comparamos las tres presentaciones en{" "}
-        <Link
-          href="/presentaciones"
-          className="relative underline underline-offset-2 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
-        >
-          Frasco, tester o decant
-        </Link>
-        .
-      </>
-    ),
-  },
-  {
-    question: "¿Hacen envíos?",
-    answer:
-      "Sí, entregamos en Mar del Plata, o podés retirar. Lo coordinamos por WhatsApp.",
-  },
-];
+function buildFaqs(shippingInfo: string) {
+  return [
+    { question: "¿Son originales?", answer: "Sí, todos." },
+    {
+      question: "¿Qué es un decant?",
+      answer: (
+        <>
+          Una porción del perfume original en un atomizador chico. Lo comparamos
+          con el frasco entero en{" "}
+          <Link
+            href="/presentaciones"
+            className="relative underline underline-offset-2 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
+          >
+            Frasco o decant
+          </Link>
+          .
+        </>
+      ),
+    },
+    { question: "¿Hacen envíos?", answer: shippingInfo },
+    {
+      question: "¿La web cobra?",
+      answer: "No. La web no cobra nada: el pago lo coordinamos por WhatsApp.",
+    },
+    {
+      question: "¿Puedo cambiar el pedido?",
+      answer: "Escribinos con tu número de pedido (por ejemplo, PM-0042).",
+    },
+  ];
+}
 
 export default async function HowToBuyPage() {
   const config = await getSiteSettings();
+  const steps = buildSteps(config.shippingInfo);
+  const faqs = buildFaqs(config.shippingInfo);
 
   return (
     <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
@@ -105,13 +109,16 @@ export default async function HowToBuyPage() {
       <h1 className="text-4xl font-extrabold tracking-[-0.03em] lg:text-6xl">
         {PAGE_TITLE}
       </h1>
+      <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+        Sin pagar online: armás el pedido acá y lo cerramos por WhatsApp.
+      </p>
 
       <ol className="mt-10 flex flex-col gap-8">
-        {STEPS.map((step, index) => (
+        {steps.map((step, index) => (
           <li key={step.title} className="flex gap-5">
             <span
               aria-hidden="true"
-              className="w-8 shrink-0 text-3xl leading-none font-extrabold tracking-[-0.03em]"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground"
             >
               {index + 1}
             </span>
@@ -135,7 +142,7 @@ export default async function HowToBuyPage() {
           Preguntas frecuentes
         </h2>
         <dl className="mt-6 flex flex-col gap-6">
-          {FAQS.map((faq) => (
+          {faqs.map((faq) => (
             <div key={faq.question} className="flex flex-col gap-1.5">
               <dt className="text-base font-bold">{faq.question}</dt>
               <dd className="text-base leading-relaxed text-muted-foreground">

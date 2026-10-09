@@ -57,13 +57,27 @@ describe("compareCatalogRows", () => {
       row({ name: "New featured", isFeatured: true, createdAt: 4 }),
     ];
 
-    rows.sort((left, right) => compareCatalogRows("latest", left, right));
+    rows.sort((left, right) => compareCatalogRows("featured", left, right));
 
     expect(rows.map((item) => item.name)).toEqual([
       "New featured",
       "Old featured",
       "New plain",
       "Old plain",
+    ]);
+  });
+
+  it("sorts latest by createdAt only, ignoring isFeatured", () => {
+    const rows = [
+      row({ name: "Old featured", isFeatured: true, createdAt: 1 }),
+      row({ name: "New plain", isFeatured: false, createdAt: 3 }),
+    ];
+
+    rows.sort((left, right) => compareCatalogRows("latest", left, right));
+
+    expect(rows.map((item) => item.name)).toEqual([
+      "New plain",
+      "Old featured",
     ]);
   });
 });

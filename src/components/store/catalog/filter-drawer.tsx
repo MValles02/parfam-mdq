@@ -20,7 +20,6 @@ import {
 import type { FilterOptions } from "@/lib/store/queries";
 import {
   GenderChips,
-  VariantKindChips,
   ClearFilters,
   AccordSelect,
   BrandSelect,
@@ -51,14 +50,14 @@ export function FilterDrawer({
         <button
           type="button"
           className={cn(
-            "flex h-12 flex-1 items-center justify-center gap-2.5 rounded border text-sm font-semibold transition-colors",
+            "flex h-11 shrink-0 items-center justify-center gap-2.5 rounded border px-4 text-sm font-semibold transition-colors",
             activeFilterCount > 0
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border bg-card text-foreground hover:bg-muted",
           )}
         >
           <SlidersHorizontal className="size-4" />
-          {activeFilterCount > 0 ? `Filtrar · ${activeFilterCount}` : "Filtrar"}
+          {activeFilterCount > 0 ? `Filtros · ${activeFilterCount}` : "Filtros"}
         </button>
       </SheetTrigger>
 
@@ -74,16 +73,9 @@ export function FilterDrawer({
         <div className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto">
           <div className="flex flex-col gap-[11px]">
             <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Género
+              Para quién
             </span>
             <GenderChips />
-          </div>
-
-          <div className="flex flex-col gap-[11px]">
-            <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Presentación
-            </span>
-            <VariantKindChips />
           </div>
 
           <div className="flex flex-col gap-2.5">

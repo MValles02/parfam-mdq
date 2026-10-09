@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   changeProductStatus,
@@ -30,15 +31,38 @@ import {
 } from "../actions";
 
 /**
- * The status chip and action menu render in non-adjacent table columns, so
- * they remain separate components in this file.
+ * The status chip, publish switch and action menu render in non-adjacent table
+ * columns, so they remain separate components in this file.
  */
 
-export function StatusChip({
+export function StatusChip({ isPublished }: { isPublished: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-semibold",
+        isPublished
+          ? "border-success-border bg-success text-success-foreground"
+          : "border-border bg-muted text-muted-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          isPublished ? "bg-success-foreground" : "bg-muted-foreground/60",
+        )}
+      />
+      {isPublished ? "Publicado" : "Borrador"}
+    </span>
+  );
+}
+
+export function VisibleSwitch({
   id,
+  name,
   isPublished,
 }: {
   id: string;
+  name: string;
   isPublished: boolean;
 }) {
   const router = useRouter();
@@ -56,25 +80,12 @@ export function StatusChip({
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggleStatus}
+    <Switch
+      checked={isPublished}
+      onCheckedChange={toggleStatus}
       disabled={isPending}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-semibold disabled:opacity-50",
-        isPublished
-          ? "border-success-border bg-success text-success-foreground"
-          : "border-border bg-muted text-muted-foreground",
-      )}
-    >
-      <span
-        className={cn(
-          "size-1.5 rounded-full",
-          isPublished ? "bg-success-foreground" : "bg-muted-foreground/60",
-        )}
-      />
-      {isPublished ? "Publicado" : "Borrador"}
-    </button>
+      aria-label={`Visible en la tienda: ${name}`}
+    />
   );
 }
 

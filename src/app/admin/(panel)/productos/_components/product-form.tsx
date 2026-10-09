@@ -4,7 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ExternalLink, Loader2, Save, Send, Star, X } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, Eye, Loader2, Save, Send, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/admin/field";
@@ -58,6 +59,15 @@ import {
   type Accord,
   type SelectedAccord,
 } from "./accord-selector";
+
+const SECTION_LINKS = [
+  ["#basicos", "Datos básicos"],
+  ["#fotos", "Fotos"],
+  ["#precios", "Precios"],
+  ["#descripcion", "Descripción"],
+  ["#perfil", "Perfil"],
+  ["#mas-datos", "Más datos"],
+] as const;
 
 /** Maps each `SeasonKey` (used for shared labels) to its form field. */
 const SEASON_FIELD_NAMES: Record<
@@ -278,6 +288,28 @@ export function ProductForm({
   const brandId = useWatch({ control, name: "brandId" });
   const variants = useWatch({ control, name: "variants" }) ?? [];
   const activeVariants = variants.filter((variant) => variant.isActive).length;
+  const description = useWatch({ control, name: "description" }) ?? "";
+  const productName = useWatch({ control, name: "name" }) ?? "";
+  const isPublished = product?.status === ProductStatus.PUBLISHED;
+  // Mirrors the publish rule enforced by `productSchema` and
+  // `changeProductStatus`: an active variant and a description.
+  const checklist = [
+    {
+      label: "Nombre y marca",
+      done: productName.trim() !== "" && Boolean(brandName?.trim()),
+      href: "#basicos",
+    },
+    {
+      label: "Una presentación activa",
+      done: activeVariants > 0,
+      href: "#precios",
+    },
+    {
+      label: "Descripción",
+      done: description.trim() !== "",
+      href: "#descripcion",
+    },
+  ];
 
   // Single source of truth for adding an image: it reads the form's current
   // `images` value and writes the appended result in the same synchronous
@@ -480,632 +512,807 @@ export function ProductForm({
   const errors = formState.errors;
 
   return (
-    <form
-      onSubmit={(e) => e.preventDefault()}
-      className="flex flex-col gap-5 px-8 pt-6 pb-32"
-    >
-      <ReferenceStep
-        adoptedReference={adoptedReference}
-        onAdopt={adoptReference}
-        onUnlink={unlinkReference}
-        onManualEntry={() => setIsManual(true)}
-        isManual={isManual}
-      />
-
-      {isManual ? (
-        <>
-          <Step
-            number={2}
-            title="Ficha de la fragancia"
-            description={
-              adoptedReference
-                ? `Precargada desde «${adoptedReference.name}». Revisá y corregí lo que haga falta.`
-                : "Cargala a mano: ningún campo viene precargado."
-            }
-          >
-            <div className="grid gap-4 md:grid-cols-3">
-              <Field
-                label="Nombre"
-                htmlFor="name"
-                isAutofilled={Boolean(adoptedReference)}
-                error={errors.name?.message}
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col pb-16">
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b bg-card/95 px-4 py-3 backdrop-blur sm:px-8">
+        {product ? (
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <p className="text-xs text-muted-foreground">
+              <Link href="/admin/productos" className="hover:text-foreground">
+                Productos
+              </Link>
+              {` / ${product.brand.name}`}
+            </p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="truncate text-xl font-extrabold tracking-tight">
+                {product.name}
+              </h1>
+              <span
+                className={cn(
+                  "rounded border px-2 py-0.5 text-xs font-semibold",
+                  isPublished
+                    ? "border-success-border bg-success text-success-foreground"
+                    : "border-border bg-muted text-muted-foreground",
+                )}
               >
-                <Controller
-                  control={control}
-                  name="name"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="name"
-                      value={field.value ?? ""}
-                      className="bg-background"
-                      placeholder="Sauvage Elixir"
-                    />
-                  )}
-                />
-              </Field>
+                {isPublished ? "Publicado" : "Borrador"}
+              </span>
+              {formState.isDirty ? (
+                <span className="text-xs text-muted-foreground">
+                  Cambios sin guardar
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground">
+            {formState.isDirty ? "Cambios sin guardar" : ""}
+          </span>
+        )}
 
-              <Field
-                label="Marca"
-                isAutofilled={Boolean(adoptedReference)}
-                error={errors.brandName?.message}
-                hint={
-                  brandName && !brandId
-                    ? `Se va a crear la marca «${brandName}».`
-                    : undefined
-                }
+        {isManual ? (
+          <div className="flex flex-wrap items-center gap-2.5">
+            {product && isPublished ? (
+              <Button type="button" variant="ghost" asChild>
+                <Link
+                  href={`/producto/${product.slug}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <Eye className="size-4" />
+                  Vista previa
+                </Link>
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSaving || isImportingReferencePicture}
+              onClick={() =>
+                submit(
+                  isPublished ? ProductStatus.PUBLISHED : ProductStatus.DRAFT,
+                )
+              }
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              Guardar
+            </Button>
+            {isPublished ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSaving || isImportingReferencePicture}
+                onClick={() => submit(ProductStatus.DRAFT)}
               >
-                <RemoteCombobox
-                  value={
-                    brandName ? { id: brandId ?? "", label: brandName } : null
+                Pasar a borrador
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                disabled={isSaving || isImportingReferencePicture}
+                onClick={() => submit(ProductStatus.PUBLISHED)}
+              >
+                {isSaving ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
+                Publicar
+              </Button>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="grid gap-5 px-4 pt-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <ReferenceStep
+            adoptedReference={adoptedReference}
+            onAdopt={adoptReference}
+            onUnlink={unlinkReference}
+            onManualEntry={() => setIsManual(true)}
+            isManual={isManual}
+          />
+
+          {isManual ? (
+            <>
+              <div id="basicos" className="scroll-mt-24">
+                <Step
+                  number={2}
+                  title="Ficha de la fragancia"
+                  description={
+                    adoptedReference
+                      ? `Precargada desde «${adoptedReference.name}». Revisá y corregí lo que haga falta.`
+                      : "Cargala a mano: ningún campo viene precargado."
                   }
-                  placeholder="Buscar o escribir la marca"
-                  emptyText="Ninguna marca con ese nombre. Escribila entera para crearla."
-                  search={async (query) => {
-                    const result = await searchBrandsAction(query);
-                    return result.ok
-                      ? result.data.map((brand) => ({
-                          id: brand.id,
-                          label: brand.name,
-                        }))
-                      : [];
-                  }}
-                  // Persistence finds or creates manual brands by slug when
-                  // this form submits without a brand ID.
-                  onCreate={async (name) => ({ id: "", label: name })}
-                  onSelect={(option) => {
-                    setValue("brandId", option.id === "" ? null : option.id);
-                    setValue("brandName", option.label, {
-                      shouldValidate: true,
-                    });
-                  }}
-                />
-              </Field>
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Field
+                      label="Nombre"
+                      htmlFor="name"
+                      isAutofilled={Boolean(adoptedReference)}
+                      error={errors.name?.message}
+                    >
+                      <Controller
+                        control={control}
+                        name="name"
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            id="name"
+                            value={field.value ?? ""}
+                            className="bg-background"
+                            placeholder="Sauvage Elixir"
+                          />
+                        )}
+                      />
+                    </Field>
 
-              <Field
-                label="Año"
-                htmlFor="year"
-                isAutofilled={Boolean(adoptedReference)}
-                error={errors.year?.message}
-              >
-                <Controller
-                  control={control}
-                  name="year"
-                  render={({ field }) => (
-                    <Input
-                      id="year"
-                      inputMode="numeric"
-                      placeholder="2021"
-                      className="bg-background"
-                      value={field.value ?? ""}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        field.onChange(v === "" ? null : Number(v));
-                      }}
-                    />
-                  )}
-                />
-              </Field>
-
-              <Field
-                label="Concentración"
-                error={errors.concentration?.message}
-                hint="El dataset no la trae: va a mano."
-              >
-                <Controller
-                  control={control}
-                  name="concentration"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ?? "__ninguna"}
-                      onValueChange={(v) =>
-                        field.onChange(v === "__ninguna" ? null : v)
+                    <Field
+                      label="Marca"
+                      isAutofilled={Boolean(adoptedReference)}
+                      error={errors.brandName?.message}
+                      hint={
+                        brandName && !brandId
+                          ? `Se va a crear la marca «${brandName}».`
+                          : undefined
                       }
                     >
-                      <SelectTrigger className="w-full bg-background">
-                        <SelectValue placeholder="Elegir" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__ninguna">
-                          Sin especificar
-                        </SelectItem>
-                        {Object.values(Concentration).map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {concentrationLabels[c]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </Field>
-
-              <Field
-                label="Género"
-                isAutofilled={Boolean(adoptedReference)}
-                error={errors.gender?.message}
-              >
-                <Controller
-                  control={control}
-                  name="gender"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ?? "__ninguno"}
-                      onValueChange={(v) =>
-                        field.onChange(v === "__ninguno" ? null : v)
-                      }
-                    >
-                      <SelectTrigger className="w-full bg-background">
-                        <SelectValue placeholder="Elegir" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__ninguno">
-                          Sin especificar
-                        </SelectItem>
-                        {Object.values(Gender).map((g) => (
-                          <SelectItem key={g} value={g}>
-                            {genderLabels[g]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </Field>
-
-              <Field
-                label="Perfumista"
-                isAutofilled={Boolean(adoptedReference)}
-              >
-                <Controller
-                  control={control}
-                  name="perfumerIds"
-                  render={({ field }) => (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {(field.value ?? []).map((id) => (
-                        <span
-                          key={id}
-                          className="flex items-center gap-1.5 rounded-sm border bg-background py-1.5 pr-1.5 pl-2.5 text-xs font-medium"
-                        >
-                          {names[id] ?? "—"}
-                          <button
-                            type="button"
-                            aria-label={`Quitar a ${names[id] ?? "este perfumista"}`}
-                            onClick={() =>
-                              field.onChange(
-                                (field.value ?? []).filter((x) => x !== id),
-                              )
-                            }
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <X className="size-3" />
-                          </button>
-                        </span>
-                      ))}
                       <RemoteCombobox
-                        placeholder="Buscar perfumista…"
-                        emptyText="Ninguno con ese nombre."
+                        value={
+                          brandName
+                            ? { id: brandId ?? "", label: brandName }
+                            : null
+                        }
+                        placeholder="Buscar o escribir la marca"
+                        emptyText="Ninguna marca con ese nombre. Escribila entera para crearla."
                         search={async (query) => {
-                          const result = await searchPerfumersAction(query);
+                          const result = await searchBrandsAction(query);
                           return result.ok
-                            ? result.data.map((perfumer) => ({
-                                id: perfumer.id,
-                                label: perfumer.name,
+                            ? result.data.map((brand) => ({
+                                id: brand.id,
+                                label: brand.name,
                               }))
                             : [];
                         }}
-                        onCreate={async (name) => {
-                          const result = await createPerfumerAction(name);
-                          if (!result.ok) {
-                            toast.error(result.message);
-                            return null;
-                          }
-                          return {
-                            id: result.data.id,
-                            label: result.data.name,
-                          };
-                        }}
+                        // Persistence finds or creates manual brands by slug when
+                        // this form submits without a brand ID.
+                        onCreate={async (name) => ({ id: "", label: name })}
                         onSelect={(option) => {
-                          setNames((previousNames) => ({
-                            ...previousNames,
-                            [option.id]: option.label,
-                          }));
-                          const currentIds = field.value ?? [];
-                          if (!currentIds.includes(option.id)) {
-                            field.onChange([...currentIds, option.id]);
-                          }
+                          setValue(
+                            "brandId",
+                            option.id === "" ? null : option.id,
+                          );
+                          setValue("brandName", option.label, {
+                            shouldValidate: true,
+                          });
                         }}
-                      >
-                        <button
-                          type="button"
-                          className="rounded-sm border border-dashed px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
-                        >
-                          + Agregar
-                        </button>
-                      </RemoteCombobox>
-                    </div>
-                  )}
-                />
-              </Field>
-            </div>
+                      />
+                    </Field>
 
-            <div className="mt-4">
-              <Field
-                label="Descripción para el cliente"
-                htmlFor="description"
-                error={errors.description?.message}
-                hint="Escribila vos: el texto del catálogo de referencia está en inglés y no se publica."
-              >
-                <Controller
-                  control={control}
-                  name="description"
-                  render={({ field }) => (
-                    <Textarea
-                      {...field}
-                      id="description"
-                      rows={4}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      className="min-h-24 bg-background text-sm leading-relaxed"
-                      placeholder="Cómo huele, cuánto dura, cuándo usarlo…"
-                    />
-                  )}
-                />
-              </Field>
-              {referenceText ? (
-                <details className="mt-2 rounded-md border bg-background px-3 py-2">
-                  <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">
-                    Ver el texto en inglés de la referencia (interno, no se
-                    publica)
-                  </summary>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    {referenceText}
-                  </p>
-                </details>
-              ) : null}
-            </div>
-
-            <div className="mt-5">
-              <Controller
-                control={control}
-                name="notes"
-                render={({ field }) => (
-                  <PyramidEditor
-                    value={(field.value ?? []).map((n) => ({
-                      noteId: n.noteId,
-                      position: n.position,
-                      weight: n.weight ?? 0,
-                      name: names[n.noteId] ?? "—",
-                    }))}
-                    onChange={(notes: SelectedNote[]) => {
-                      setNames((previousNames) => {
-                        const nextNames = { ...previousNames };
-                        for (const note of notes)
-                          nextNames[note.noteId] = note.name;
-                        return nextNames;
-                      });
-                      field.onChange(
-                        notes.map((note) => ({
-                          noteId: note.noteId,
-                          position: note.position,
-                          weight: note.weight,
-                        })),
-                      );
-                    }}
-                  />
-                )}
-              />
-            </div>
-
-            <div className="mt-5">
-              <Field label="Acordes" isAutofilled={Boolean(adoptedReference)}>
-                <Controller
-                  control={control}
-                  name="accords"
-                  render={({ field }) => (
-                    <AccordSelector
-                      accords={accords}
-                      value={(field.value ?? []) as SelectedAccord[]}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-              </Field>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-4">
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
-                  Perfil
-                </span>
-                {product?.communityVotes ? (
-                  <span className="text-xs text-muted-foreground">
-                    Votos de la comunidad: {product.communityVotes}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-4">
-                {seasonKeys.map((key) => {
-                  const fieldName = SEASON_FIELD_NAMES[key];
-                  return (
                     <Field
-                      key={key}
-                      label={seasonLabels[key]}
-                      htmlFor={fieldName}
+                      label="Año"
+                      htmlFor="year"
+                      isAutofilled={Boolean(adoptedReference)}
+                      error={errors.year?.message}
                     >
                       <Controller
                         control={control}
-                        name={fieldName}
+                        name="year"
                         render={({ field }) => (
-                          <PercentageInput
-                            id={fieldName}
-                            value={field.value}
+                          <Input
+                            id="year"
+                            inputMode="numeric"
+                            placeholder="2021"
+                            className="bg-background"
+                            value={field.value ?? ""}
+                            onChange={(e) => {
+                              const v = e.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, 4);
+                              field.onChange(v === "" ? null : Number(v));
+                            }}
+                          />
+                        )}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Concentración"
+                      error={errors.concentration?.message}
+                      hint="El dataset no la trae: va a mano."
+                    >
+                      <Controller
+                        control={control}
+                        name="concentration"
+                        render={({ field }) => (
+                          <Select
+                            value={field.value ?? "__ninguna"}
+                            onValueChange={(v) =>
+                              field.onChange(v === "__ninguna" ? null : v)
+                            }
+                          >
+                            <SelectTrigger className="w-full bg-background">
+                              <SelectValue placeholder="Elegir" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__ninguna">
+                                Sin especificar
+                              </SelectItem>
+                              {Object.values(Concentration).map((c) => (
+                                <SelectItem key={c} value={c}>
+                                  {concentrationLabels[c]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Género"
+                      isAutofilled={Boolean(adoptedReference)}
+                      error={errors.gender?.message}
+                    >
+                      <Controller
+                        control={control}
+                        name="gender"
+                        render={({ field }) => (
+                          <Select
+                            value={field.value ?? "__ninguno"}
+                            onValueChange={(v) =>
+                              field.onChange(v === "__ninguno" ? null : v)
+                            }
+                          >
+                            <SelectTrigger className="w-full bg-background">
+                              <SelectValue placeholder="Elegir" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__ninguno">
+                                Sin especificar
+                              </SelectItem>
+                              {Object.values(Gender).map((g) => (
+                                <SelectItem key={g} value={g}>
+                                  {genderLabels[g]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Perfumista"
+                      isAutofilled={Boolean(adoptedReference)}
+                    >
+                      <Controller
+                        control={control}
+                        name="perfumerIds"
+                        render={({ field }) => (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {(field.value ?? []).map((id) => (
+                              <span
+                                key={id}
+                                className="flex items-center gap-1.5 rounded-sm border bg-background py-1.5 pr-1.5 pl-2.5 text-xs font-medium"
+                              >
+                                {names[id] ?? "—"}
+                                <button
+                                  type="button"
+                                  aria-label={`Quitar a ${names[id] ?? "este perfumista"}`}
+                                  onClick={() =>
+                                    field.onChange(
+                                      (field.value ?? []).filter(
+                                        (x) => x !== id,
+                                      ),
+                                    )
+                                  }
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <X className="size-3" />
+                                </button>
+                              </span>
+                            ))}
+                            <RemoteCombobox
+                              placeholder="Buscar perfumista…"
+                              emptyText="Ninguno con ese nombre."
+                              search={async (query) => {
+                                const result =
+                                  await searchPerfumersAction(query);
+                                return result.ok
+                                  ? result.data.map((perfumer) => ({
+                                      id: perfumer.id,
+                                      label: perfumer.name,
+                                    }))
+                                  : [];
+                              }}
+                              onCreate={async (name) => {
+                                const result = await createPerfumerAction(name);
+                                if (!result.ok) {
+                                  toast.error(result.message);
+                                  return null;
+                                }
+                                return {
+                                  id: result.data.id,
+                                  label: result.data.name,
+                                };
+                              }}
+                              onSelect={(option) => {
+                                setNames((previousNames) => ({
+                                  ...previousNames,
+                                  [option.id]: option.label,
+                                }));
+                                const currentIds = field.value ?? [];
+                                if (!currentIds.includes(option.id)) {
+                                  field.onChange([...currentIds, option.id]);
+                                }
+                              }}
+                            >
+                              <button
+                                type="button"
+                                className="rounded-sm border border-dashed px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground"
+                              >
+                                + Agregar
+                              </button>
+                            </RemoteCombobox>
+                          </div>
+                        )}
+                      />
+                    </Field>
+                  </div>
+
+                  <div id="descripcion" className="mt-4 scroll-mt-24">
+                    <Field
+                      label="Descripción para el cliente"
+                      htmlFor="description"
+                      error={errors.description?.message}
+                      hint="Escribila vos: el texto del catálogo de referencia está en inglés y no se publica."
+                    >
+                      <Controller
+                        control={control}
+                        name="description"
+                        render={({ field }) => (
+                          <Textarea
+                            {...field}
+                            id="description"
+                            rows={4}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="min-h-24 bg-background text-sm leading-relaxed"
+                            placeholder="Cómo huele, cuánto dura, cuándo usarlo…"
+                          />
+                        )}
+                      />
+                    </Field>
+                    {referenceText ? (
+                      <details className="mt-2 rounded-md border bg-background px-3 py-2">
+                        <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">
+                          Ver el texto en inglés de la referencia (interno, no
+                          se publica)
+                        </summary>
+                        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                          {referenceText}
+                        </p>
+                      </details>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-5">
+                    <Controller
+                      control={control}
+                      name="notes"
+                      render={({ field }) => (
+                        <PyramidEditor
+                          value={(field.value ?? []).map((n) => ({
+                            noteId: n.noteId,
+                            position: n.position,
+                            weight: n.weight ?? 0,
+                            name: names[n.noteId] ?? "—",
+                          }))}
+                          onChange={(notes: SelectedNote[]) => {
+                            setNames((previousNames) => {
+                              const nextNames = { ...previousNames };
+                              for (const note of notes)
+                                nextNames[note.noteId] = note.name;
+                              return nextNames;
+                            });
+                            field.onChange(
+                              notes.map((note) => ({
+                                noteId: note.noteId,
+                                position: note.position,
+                                weight: note.weight,
+                              })),
+                            );
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="mt-5">
+                    <Field
+                      label="Acordes"
+                      isAutofilled={Boolean(adoptedReference)}
+                    >
+                      <Controller
+                        control={control}
+                        name="accords"
+                        render={({ field }) => (
+                          <AccordSelector
+                            accords={accords}
+                            value={(field.value ?? []) as SelectedAccord[]}
                             onChange={field.onChange}
                           />
                         )}
                       />
                     </Field>
-                  );
-                })}
-              </div>
+                  </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {daypartKeys.map((key) => {
-                  const fieldName = DAYPART_FIELD_NAMES[key];
-                  return (
-                    <Field
-                      key={key}
-                      label={daypartLabels[key]}
-                      htmlFor={fieldName}
-                    >
-                      <Controller
-                        control={control}
-                        name={fieldName}
-                        render={({ field }) => (
-                          <PercentageInput
-                            id={fieldName}
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        )}
-                      />
-                    </Field>
-                  );
-                })}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <Field
-                  label="Colección"
-                  htmlFor="collection"
-                  isAutofilled={Boolean(adoptedReference)}
-                  error={errors.collection?.message}
-                >
-                  <Controller
-                    control={control}
-                    name="collection"
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="collection"
-                        value={field.value ?? ""}
-                        className="bg-background"
-                        placeholder="Sauvage"
-                      />
-                    )}
-                  />
-                </Field>
-
-                <Field
-                  label="Duración (longevidad)"
-                  htmlFor="longevity"
-                  isAutofilled={Boolean(adoptedReference)}
-                  error={errors.longevity?.message}
-                  hint={LONGEVITY_HINT}
-                >
-                  <Controller
-                    control={control}
-                    name="longevity"
-                    render={({ field }) => (
-                      <Input
-                        id="longevity"
-                        type="number"
-                        step={0.01}
-                        min={1}
-                        max={5}
-                        className="bg-background"
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          field.onChange(v === "" ? null : Number(v));
-                        }}
-                      />
-                    )}
-                  />
-                </Field>
-
-                <Field
-                  label="Estela (sillage)"
-                  htmlFor="sillage"
-                  isAutofilled={Boolean(adoptedReference)}
-                  error={errors.sillage?.message}
-                  hint={SILLAGE_HINT}
-                >
-                  <Controller
-                    control={control}
-                    name="sillage"
-                    render={({ field }) => (
-                      <Input
-                        id="sillage"
-                        type="number"
-                        step={0.01}
-                        min={1}
-                        max={4}
-                        className="bg-background"
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          field.onChange(v === "" ? null : Number(v));
-                        }}
-                      />
-                    )}
-                  />
-                </Field>
-              </div>
-
-              <Field label="Intensidad">
-                <Controller
-                  control={control}
-                  name="intensity"
-                  render={({ field }) => (
-                    <CharacteristicBar
-                      label="Intensidad"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-              </Field>
-            </div>
-          </Step>
-
-          <Step
-            number={3}
-            title="Presentaciones y precios"
-            description="No hay stock: si algo no está disponible, lo desactivás y deja de verse en la tienda."
-          >
-            <VariantEditor
-              control={control}
-              errorGeneral={
-                errors.variants?.message ?? errors.variants?.root?.message
-              }
-            />
-          </Step>
-
-          <Step
-            number={4}
-            title="Fotos"
-            description="Fotos propias. Las imágenes de Fragrantica son referencia interna y no se publican."
-          >
-            <Controller
-              control={control}
-              name="images"
-              render={({ field }) => (
-                <ImagePanel
-                  isR2Configured={isR2Configured}
-                  publicBaseUrl={publicBaseUrl}
-                  value={(field.value ?? []) as ProductImageItem[]}
-                  onChange={field.onChange}
-                  onUploadComplete={appendImage}
-                  isImportingReferencePicture={isImportingReferencePicture}
-                />
-              )}
-            />
-            {(errors.images?.message ?? errors.images?.root?.message) ? (
-              <p className="mt-2 text-xs font-medium text-destructive">
-                {errors.images?.message ?? errors.images?.root?.message}
-              </p>
-            ) : null}
-          </Step>
-
-          <Step
-            number={5}
-            title="SEO y enlace"
-            description="Si los dejás vacíos, la tienda usa el nombre y la descripción del producto."
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field
-                label="Dirección del producto"
-                htmlFor="slug"
-                error={errors.slug?.message}
-                hint="Se arma sola con la marca y el nombre si la dejás vacía."
-              >
-                <Controller
-                  control={control}
-                  name="slug"
-                  render={({ field }) => (
-                    <div className="flex items-center rounded-md border bg-background pl-3 text-sm">
-                      <span className="shrink-0 text-muted-foreground">
-                        /producto/
+                  <div
+                    id="perfil"
+                    className="mt-5 flex scroll-mt-24 flex-col gap-4"
+                  >
+                    <div className="flex items-baseline justify-between gap-4">
+                      <span className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
+                        Perfil
                       </span>
-                      <Input
-                        {...field}
-                        id="slug"
-                        value={field.value ?? ""}
-                        placeholder="dior-sauvage-elixir"
-                        className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-                      />
+                      {product?.communityVotes ? (
+                        <span className="text-xs text-muted-foreground">
+                          Votos de la comunidad: {product.communityVotes}
+                        </span>
+                      ) : null}
                     </div>
-                  )}
-                />
-              </Field>
 
-              <Field
-                label="Link de Fragrantica"
-                htmlFor="sourceUrl"
-                error={errors.sourceUrl?.message}
-                hint="Referencia interna, por si hay que volver a mirar la ficha original."
-              >
-                <Controller
-                  control={control}
-                  name="sourceUrl"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="sourceUrl"
-                      value={field.value ?? ""}
-                      placeholder="https://www.fragrantica.com/perfume/…"
-                      className="bg-background"
-                    />
-                  )}
-                />
-              </Field>
+                    <div className="grid gap-4 md:grid-cols-4">
+                      {seasonKeys.map((key) => {
+                        const fieldName = SEASON_FIELD_NAMES[key];
+                        return (
+                          <Field
+                            key={key}
+                            label={seasonLabels[key]}
+                            htmlFor={fieldName}
+                          >
+                            <Controller
+                              control={control}
+                              name={fieldName}
+                              render={({ field }) => (
+                                <PercentageInput
+                                  id={fieldName}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              )}
+                            />
+                          </Field>
+                        );
+                      })}
+                    </div>
 
-              <Field
-                label="Título SEO"
-                htmlFor="seoTitle"
-                error={errors.seoTitle?.message}
-              >
-                <Controller
-                  control={control}
-                  name="seoTitle"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      id="seoTitle"
-                      value={field.value ?? ""}
-                      className="bg-background"
-                    />
-                  )}
-                />
-              </Field>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {daypartKeys.map((key) => {
+                        const fieldName = DAYPART_FIELD_NAMES[key];
+                        return (
+                          <Field
+                            key={key}
+                            label={daypartLabels[key]}
+                            htmlFor={fieldName}
+                          >
+                            <Controller
+                              control={control}
+                              name={fieldName}
+                              render={({ field }) => (
+                                <PercentageInput
+                                  id={fieldName}
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              )}
+                            />
+                          </Field>
+                        );
+                      })}
+                    </div>
 
-              <Field
-                label="Descripción SEO"
-                htmlFor="seoDescription"
-                error={errors.seoDescription?.message}
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Field
+                        label="Colección"
+                        htmlFor="collection"
+                        isAutofilled={Boolean(adoptedReference)}
+                        error={errors.collection?.message}
+                      >
+                        <Controller
+                          control={control}
+                          name="collection"
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              id="collection"
+                              value={field.value ?? ""}
+                              className="bg-background"
+                              placeholder="Sauvage"
+                            />
+                          )}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Duración (longevidad)"
+                        htmlFor="longevity"
+                        isAutofilled={Boolean(adoptedReference)}
+                        error={errors.longevity?.message}
+                        hint={LONGEVITY_HINT}
+                      >
+                        <Controller
+                          control={control}
+                          name="longevity"
+                          render={({ field }) => (
+                            <Input
+                              id="longevity"
+                              type="number"
+                              step={0.01}
+                              min={1}
+                              max={5}
+                              className="bg-background"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                field.onChange(v === "" ? null : Number(v));
+                              }}
+                            />
+                          )}
+                        />
+                      </Field>
+
+                      <Field
+                        label="Estela (sillage)"
+                        htmlFor="sillage"
+                        isAutofilled={Boolean(adoptedReference)}
+                        error={errors.sillage?.message}
+                        hint={SILLAGE_HINT}
+                      >
+                        <Controller
+                          control={control}
+                          name="sillage"
+                          render={({ field }) => (
+                            <Input
+                              id="sillage"
+                              type="number"
+                              step={0.01}
+                              min={1}
+                              max={4}
+                              className="bg-background"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                field.onChange(v === "" ? null : Number(v));
+                              }}
+                            />
+                          )}
+                        />
+                      </Field>
+                    </div>
+
+                    <Field label="Intensidad">
+                      <Controller
+                        control={control}
+                        name="intensity"
+                        render={({ field }) => (
+                          <CharacteristicBar
+                            label="Intensidad"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </Field>
+                  </div>
+                </Step>
+              </div>
+
+              <div id="precios" className="scroll-mt-24">
+                <Step
+                  number={3}
+                  title="Presentaciones y precios"
+                  description="No hay stock: si algo no está disponible, lo desactivás y deja de verse en la tienda."
+                >
+                  <VariantEditor
+                    control={control}
+                    errorGeneral={
+                      errors.variants?.message ?? errors.variants?.root?.message
+                    }
+                  />
+                </Step>
+              </div>
+
+              <div id="fotos" className="scroll-mt-24">
+                <Step
+                  number={4}
+                  title="Fotos"
+                  description="Fotos propias. Las imágenes de Fragrantica son referencia interna y no se publican."
+                >
+                  <Controller
+                    control={control}
+                    name="images"
+                    render={({ field }) => (
+                      <ImagePanel
+                        isR2Configured={isR2Configured}
+                        publicBaseUrl={publicBaseUrl}
+                        value={(field.value ?? []) as ProductImageItem[]}
+                        onChange={field.onChange}
+                        onUploadComplete={appendImage}
+                        isImportingReferencePicture={
+                          isImportingReferencePicture
+                        }
+                      />
+                    )}
+                  />
+                  {(errors.images?.message ?? errors.images?.root?.message) ? (
+                    <p className="mt-2 text-xs font-medium text-destructive">
+                      {errors.images?.message ?? errors.images?.root?.message}
+                    </p>
+                  ) : null}
+                </Step>
+              </div>
+
+              <div id="mas-datos" className="scroll-mt-24">
+                <Step
+                  number={5}
+                  title="SEO y enlace"
+                  description="Si los dejás vacíos, la tienda usa el nombre y la descripción del producto."
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field
+                      label="Dirección del producto"
+                      htmlFor="slug"
+                      error={errors.slug?.message}
+                      hint="Se arma sola con la marca y el nombre si la dejás vacía."
+                    >
+                      <Controller
+                        control={control}
+                        name="slug"
+                        render={({ field }) => (
+                          <div className="flex items-center rounded-md border bg-background pl-3 text-sm">
+                            <span className="shrink-0 text-muted-foreground">
+                              /producto/
+                            </span>
+                            <Input
+                              {...field}
+                              id="slug"
+                              value={field.value ?? ""}
+                              placeholder="dior-sauvage-elixir"
+                              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+                            />
+                          </div>
+                        )}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Link de Fragrantica"
+                      htmlFor="sourceUrl"
+                      error={errors.sourceUrl?.message}
+                      hint="Referencia interna, por si hay que volver a mirar la ficha original."
+                    >
+                      <Controller
+                        control={control}
+                        name="sourceUrl"
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            id="sourceUrl"
+                            value={field.value ?? ""}
+                            placeholder="https://www.fragrantica.com/perfume/…"
+                            className="bg-background"
+                          />
+                        )}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Título SEO"
+                      htmlFor="seoTitle"
+                      error={errors.seoTitle?.message}
+                    >
+                      <Controller
+                        control={control}
+                        name="seoTitle"
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            id="seoTitle"
+                            value={field.value ?? ""}
+                            className="bg-background"
+                          />
+                        )}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Descripción SEO"
+                      htmlFor="seoDescription"
+                      error={errors.seoDescription?.message}
+                    >
+                      <Controller
+                        control={control}
+                        name="seoDescription"
+                        render={({ field }) => (
+                          <Textarea
+                            {...field}
+                            id="seoDescription"
+                            rows={2}
+                            value={field.value ?? ""}
+                            className="bg-background"
+                          />
+                        )}
+                      />
+                    </Field>
+                  </div>
+                </Step>
+              </div>
+            </>
+          ) : (
+            <p className={cn("text-sm text-muted-foreground")}>
+              Buscá la fragancia arriba para arrancar, o cargala a mano.
+            </p>
+          )}
+        </div>
+
+        {isManual ? (
+          <aside className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:self-start">
+            <div className="flex flex-col gap-3 rounded-md border bg-card p-5">
+              <h2 className="text-sm font-bold tracking-[-0.01em]">
+                Para publicar
+              </h2>
+              <div
+                role="img"
+                aria-label={`Requisitos: ${checklist.filter((item) => item.done).length} de ${checklist.length}`}
+                className="flex gap-0.5"
               >
-                <Controller
-                  control={control}
-                  name="seoDescription"
-                  render={({ field }) => (
-                    <Textarea
-                      {...field}
-                      id="seoDescription"
-                      rows={2}
-                      value={field.value ?? ""}
-                      className="bg-background"
-                    />
-                  )}
-                />
-              </Field>
+                {checklist.map((item) => (
+                  <span
+                    key={item.label}
+                    className={cn(
+                      "h-1.5 flex-1 rounded-full",
+                      item.done ? "bg-success-foreground" : "bg-border",
+                    )}
+                  />
+                ))}
+              </div>
+              <ul className="flex flex-col gap-1.5 text-sm">
+                {checklist.map((item) => (
+                  <li key={item.label}>
+                    <a
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2",
+                        item.done
+                          ? "text-foreground"
+                          : "text-warning-foreground",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "size-1.5 shrink-0 rounded-full",
+                          item.done
+                            ? "bg-success-foreground"
+                            : "bg-warning-foreground",
+                        )}
+                      />
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                {description.length} caracteres de descripción
+              </p>
             </div>
-          </Step>
 
-          {/* Keep controls visible because the form extends beyond one screen. */}
-          <div className="sticky bottom-0 -mx-8 flex items-center justify-between gap-4 border-t bg-card/95 px-8 py-4 backdrop-blur">
-            <div className="flex flex-col gap-0.5 text-[13px] text-muted-foreground">
+            <div className="flex flex-col gap-3 rounded-md border bg-card p-5 text-[13px] text-muted-foreground">
               <span>
                 {variants.length === 0
                   ? "Todavía no cargaste presentaciones."
@@ -1128,68 +1335,51 @@ export function ProductForm({
                   <ExternalLink className="size-3" />
                 </a>
               ) : null}
-            </div>
-
-            <Controller
-              control={control}
-              name="isFeatured"
-              render={({ field }) => (
-                <label className="flex cursor-pointer items-center gap-2.5">
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  <span
-                    className={cn(
-                      "flex items-center gap-1.5 text-sm font-medium",
-                      !field.value && "text-muted-foreground",
-                    )}
-                  >
-                    <Star
-                      className={cn("size-3.5", field.value && "fill-current")}
+              <Controller
+                control={control}
+                name="isFeatured"
+                render={({ field }) => (
+                  <label className="flex cursor-pointer items-center gap-2.5">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
-                    Destacado
-                  </span>
-                </label>
-              )}
-            />
-
-            <div className="flex items-center gap-2.5">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isSaving || isImportingReferencePicture}
-                onClick={() => submit(ProductStatus.DRAFT)}
-              >
-                {isSaving ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
+                    <span
+                      className={cn(
+                        "flex items-center gap-1.5 text-sm font-medium",
+                        !field.value && "text-muted-foreground",
+                      )}
+                    >
+                      <Star
+                        className={cn(
+                          "size-3.5",
+                          field.value && "fill-current",
+                        )}
+                      />
+                      Destacado
+                    </span>
+                  </label>
                 )}
-                Guardar borrador
-              </Button>
-              <Button
-                type="button"
-                disabled={isSaving || isImportingReferencePicture}
-                onClick={() => submit(ProductStatus.PUBLISHED)}
-              >
-                {isSaving ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Send className="size-4" />
-                )}
-                {product?.status === ProductStatus.PUBLISHED
-                  ? "Guardar publicado"
-                  : "Publicar producto"}
-              </Button>
+              />
             </div>
-          </div>
-        </>
-      ) : (
-        <p className={cn("text-sm text-muted-foreground")}>
-          Buscá la fragancia arriba para arrancar, o cargala a mano.
-        </p>
-      )}
+
+            <nav
+              aria-label="Secciones"
+              className="flex flex-col gap-1 rounded-md border bg-card p-3 text-sm"
+            >
+              {SECTION_LINKS.map(([href, label]) => (
+                <a
+                  key={href}
+                  href={href}
+                  className="rounded px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+          </aside>
+        ) : null}
+      </div>
     </form>
   );
 }

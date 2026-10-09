@@ -36,12 +36,12 @@ export async function updateBrand(
 
   const parsed = brandSchema.safeParse(input);
   if (!parsed.success) {
-    return actionFailure("Revisá el nombre.", fieldErrors(parsed.error));
+    return actionFailure("Revisá los datos.", fieldErrors(parsed.error));
   }
 
   const brand = await prisma.brand.update({
     where: { id },
-    data: { name: parsed.data.name },
+    data: { name: parsed.data.name, country: parsed.data.country },
     select: { id: true },
   });
 

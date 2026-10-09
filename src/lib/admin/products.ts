@@ -51,6 +51,8 @@ export async function listProducts(options: {
         slug: true,
         name: true,
         status: true,
+        concentration: true,
+        description: true,
         updatedAt: true,
         brand: { select: { name: true } },
         images: {
@@ -59,7 +61,13 @@ export async function listProducts(options: {
           select: { storageKey: true, alt: true },
         },
         variants: {
-          select: { priceArs: true, isActive: true },
+          orderBy: { sortOrder: "asc" },
+          select: {
+            priceArs: true,
+            isActive: true,
+            kind: true,
+            sizeMl: true,
+          },
         },
       },
     }),
@@ -78,6 +86,7 @@ export async function listProducts(options: {
       slug: product.slug,
       name: product.name,
       brandName: product.brand.name,
+      concentration: product.concentration,
       status: product.status,
       updatedAt: product.updatedAt,
       // Build the URL from the key here so components do not need to know the
@@ -91,6 +100,13 @@ export async function listProducts(options: {
       variantCount: product.variants.length,
       activeVariantCount,
       startingPrice,
+      variants: product.variants.map(({ kind, sizeMl, isActive }) => ({
+        kind,
+        sizeMl,
+        isActive,
+      })),
+      hasPrimaryImage: product.images.length > 0,
+      hasDescription: Boolean(product.description?.trim()),
     };
   });
 
@@ -226,4 +242,27 @@ export function listAccords() {
     orderBy: { nameEs: "asc" },
     select: { id: true, nameEs: true, nameEn: true, color: true },
   });
+}
+
+export type ExistingProduct = { id: string; name: string };
+
+/**
+ * Store products already linked to the given reference ids. `fragranceRefId`
+ * is indexed but not unique, so one reference can map to several products.
+ */
+export async function findProductsByFragranceRefIds(ids: string[]) {
+  if (ids.length === 0) return new Map<string, ExistingProduct[]>();
+  const products = await prisma.product.findMany({
+    where: { fragranceRefId: { in: ids } },
+    select: { id: true, name: true, fragranceRefId: true },
+  });
+  const byRef = new Map<string, ExistingProduct[]>();
+  for (const { id, name, fragranceRefId } of products) {
+    if (!fragranceRefId) continue;
+    byRef.set(fragranceRefId, [
+      ...(byRef.get(fragranceRefId) ?? []),
+      { id, name },
+    ]);
+  }
+  return byRef;
 }

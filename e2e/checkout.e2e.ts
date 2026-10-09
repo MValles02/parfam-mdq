@@ -56,7 +56,12 @@ test("checkout and thanks pages do not overflow at 390px", async ({ page }) => {
   const overflows = () =>
     page.evaluate(() => document.documentElement.scrollWidth > 390);
   await page.goto("/producto/fixture-eau-de-prueba-unisex");
-  await page.getByRole("button", { name: /^Agregar al carrito/ }).click();
+  // At 390px the sticky bottom bar can render a second add-to-cart button
+  // while the main one is off-screen; either adds the same variant.
+  await page
+    .getByRole("button", { name: /^Agregar al carrito/ })
+    .first()
+    .click();
   await page.goto("/checkout");
   await expect(page.getByLabel("Tu WhatsApp")).toBeVisible();
   expect(await overflows()).toBe(false);

@@ -80,7 +80,7 @@ test("checkout validates name and phone before sending", async ({ page }) => {
   await page.getByRole("button", { name: /^Agregar al carrito/ }).click();
 
   await page.goto("/checkout");
-  await page.getByLabel("Tu teléfono").fill("123");
+  await page.getByLabel("Tu WhatsApp").fill("123");
   await page
     .getByRole("button", { name: "Enviar pedido por WhatsApp" })
     .click();
@@ -99,8 +99,8 @@ test("thank-you page recaps the WhatsApp message with order number and product",
   await page.getByRole("button", { name: /^Agregar al carrito/ }).click();
 
   await page.goto("/checkout");
-  await page.getByLabel("Tu nombre").fill("E2E Prueba");
-  await page.getByLabel("Tu teléfono").fill("223 555 0100");
+  await page.getByLabel("Nombre y apellido").fill("E2E Prueba");
+  await page.getByLabel("Tu WhatsApp").fill("223 555 0100");
   await page
     .getByRole("button", { name: "Enviar pedido por WhatsApp" })
     .click();

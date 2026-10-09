@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
 import { getEditableSettings } from "@/lib/admin/settings";
+import { SITE_URL } from "@/lib/seo";
+import { siteDefaults } from "@/lib/site";
 import { SettingsForm } from "./_components/settings-form";
 
 export const metadata: Metadata = { title: "Configuración" };
@@ -14,8 +16,12 @@ export default async function Page() {
         title="Configuración"
         description="Número de WhatsApp, textos de la marca y redes."
       />
-      <div className="max-w-2xl p-8">
-        <SettingsForm settings={settings} />
+      <div className="p-4 sm:p-8">
+        <SettingsForm
+          settings={settings}
+          brandName={siteDefaults.name}
+          siteHost={new URL(SITE_URL).host}
+        />
       </div>
     </>
   );

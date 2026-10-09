@@ -114,3 +114,5 @@ products are created by adopting reference catalog entries from the panel
 checks, `pnpm db:seed:fixtures` (`prisma/seed-fixtures.ts`) additionally
 upserts a small `fixture-`-prefixed catalog; it refuses to run outside a
 local database.
+
+`Brand.country` is editable from `/admin/marcas` (inline row form, `brandSchema`); the slug stays immutable.

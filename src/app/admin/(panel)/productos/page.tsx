@@ -3,33 +3,18 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
-import { listProducts, type ProductStatusFilter } from "@/lib/admin/products";
+import { listProducts } from "@/lib/admin/products";
+import { loadProductListParams } from "@/lib/admin/product-list-params";
 import { AdminSearch } from "@/components/admin/admin-search";
 import { FilterTabs } from "@/components/admin/filter-tabs";
 import { ProductsTable } from "./_components/products-table";
 
 export const metadata: Metadata = { title: "Productos" };
 
-const VALID_STATUS_FILTERS: ProductStatusFilter[] = [
-  "todos",
-  "publicados",
-  "borradores",
-];
-
-function isProductStatusFilter(
-  value: string | undefined,
-): value is ProductStatusFilter {
-  return VALID_STATUS_FILTERS.includes(value as ProductStatusFilter);
-}
-
 export default async function Page(props: PageProps<"/admin/productos">) {
-  const searchParams = await props.searchParams;
-  const query = typeof searchParams.q === "string" ? searchParams.q : "";
-  const statusParameter =
-    typeof searchParams.estado === "string" ? searchParams.estado : undefined;
-  const status = isProductStatusFilter(statusParameter)
-    ? statusParameter
-    : "todos";
+  const { q: query, estado: status } = await loadProductListParams(
+    props.searchParams,
+  );
 
   const { rows, published, drafts, total } = await listProducts({
     query,
@@ -44,20 +29,17 @@ export default async function Page(props: PageProps<"/admin/productos">) {
         title="Productos"
         description={`${published} publicados · ${drafts} en borrador`}
         action={
-          <div className="flex items-center gap-2.5">
-            <AdminSearch placeholder="Buscar producto o marca" />
-            <Button asChild>
-              <Link href="/admin/productos/nuevo">
-                <Plus />
-                Nuevo producto
-              </Link>
-            </Button>
-          </div>
+          <Button asChild>
+            <Link href="/admin/productos/nuevo">
+              <Plus />
+              Nuevo producto
+            </Link>
+          </Button>
         }
       />
 
       <div className="p-8 pt-6">
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <FilterTabs
             options={[
               { id: "todos", label: "Todos" },
@@ -65,10 +47,14 @@ export default async function Page(props: PageProps<"/admin/productos">) {
               { id: "borradores", label: "Borradores" },
             ]}
             defaultValue="todos"
+            counts={{ todos: total, publicados: published, borradores: drafts }}
           />
-          <span className="ml-auto text-sm text-muted-foreground">
-            {rows.length} de {total}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {rows.length} de {total}
+            </span>
+            <AdminSearch placeholder="Buscar producto o marca" />
+          </div>
         </div>
 
         {rows.length === 0 ? (

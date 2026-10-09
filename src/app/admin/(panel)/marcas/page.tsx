@@ -1,16 +1,20 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/page-header";
-import { listBrands } from "@/lib/admin/brands";
+import { countUncorrectedBrands, listBrands } from "@/lib/admin/brands";
+import { loadBrandListParams } from "@/lib/admin/brand-list-params";
 import { AdminSearch } from "@/components/admin/admin-search";
 import { BrandsTable } from "./_components/brands-table";
 
 export const metadata: Metadata = { title: "Marcas" };
 
 export default async function Page(props: PageProps<"/admin/marcas">) {
-  const sp = await props.searchParams;
-  const q = typeof sp.q === "string" ? sp.q : "";
+  const { q, filtro } = await loadBrandListParams(props.searchParams);
 
-  const brands = await listBrands(q);
+  const [brands, uncorrected] = await Promise.all([
+    listBrands(q, filtro),
+    countUncorrectedBrands(),
+  ]);
 
   return (
     <>
@@ -20,11 +24,31 @@ export default async function Page(props: PageProps<"/admin/marcas">) {
         action={<AdminSearch placeholder="Buscar marca o slug" />}
       />
 
-      <div className="p-8 pt-6">
+      <div className="flex flex-col gap-4 p-8 pt-6">
+        {uncorrected > 0 || filtro === "sin-corregir" ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-warning-foreground/30 bg-warning px-4 py-3 text-sm text-warning-foreground">
+            <span>
+              {uncorrected}{" "}
+              {uncorrected === 1 ? "marca muestra" : "marcas muestran"} el slug
+              en lugar del nombre.
+            </span>
+            <Link
+              href={
+                filtro === "sin-corregir"
+                  ? "/admin/marcas"
+                  : "/admin/marcas?filtro=sin-corregir"
+              }
+              className="font-semibold underline"
+            >
+              {filtro === "sin-corregir" ? "Ver todas" : "Ver solo esas"}
+            </Link>
+          </div>
+        ) : null}
+
         {brands.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded border border-dashed p-16 text-center">
             <p className="text-sm text-muted-foreground">
-              {q.trim()
+              {q.trim() || filtro === "sin-corregir"
                 ? "No hay marcas que coincidan con la búsqueda."
                 : "Todavía no hay productos con marca asignada."}
             </p>

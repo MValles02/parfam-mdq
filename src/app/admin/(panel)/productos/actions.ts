@@ -5,6 +5,10 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
+import {
+  findProductsByFragranceRefIds,
+  type ExistingProduct,
+} from "@/lib/admin/products";
 import { findAvailableSlug } from "@/lib/admin/slug";
 import { prisma } from "@/lib/db";
 import { toSlug } from "@/lib/slug";
@@ -100,10 +104,24 @@ async function deleteOrphanedImages(storageKeys: string[]) {
 
 export async function searchReferencesAction(
   query: string,
-): Promise<ActionResult<ReferenceSearchResult[]>> {
+): Promise<
+  ActionResult<
+    (ReferenceSearchResult & { existingProducts: ExistingProduct[] })[]
+  >
+> {
   await requireAdmin();
   const q = z.string().max(120).catch("").parse(query);
-  return { ok: true, data: await searchReferences(q) };
+  const results = await searchReferences(q);
+  const existing = await findProductsByFragranceRefIds(
+    results.map((result) => result.id),
+  );
+  return {
+    ok: true,
+    data: results.map((result) => ({
+      ...result,
+      existingProducts: existing.get(result.id) ?? [],
+    })),
+  };
 }
 
 export async function adoptReferenceAction(

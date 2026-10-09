@@ -60,3 +60,23 @@ test("product page does not overflow at 390px", async ({ page }) => {
   );
   expect(overflows).toBe(false);
 });
+
+test("Se parece a lists gender-compatible products sharing an accord", async ({
+  page,
+}) => {
+  await page.goto("/producto/fixture-eau-de-prueba-mujer");
+  const similar = page.locator("section", {
+    has: page.getByRole("heading", { name: "Se parece a" }),
+  });
+  await expect(
+    similar.getByRole("heading", { name: "Fixture Eau de Prueba Unisex" }),
+  ).toBeVisible();
+  // A men's fragrance never matches a women's one, and a product is never
+  // similar to itself.
+  await expect(
+    similar.getByRole("heading", { name: "Fixture Eau de Prueba Hombre" }),
+  ).toHaveCount(0);
+  await expect(
+    similar.getByRole("heading", { name: "Fixture Eau de Prueba Mujer" }),
+  ).toHaveCount(0);
+});

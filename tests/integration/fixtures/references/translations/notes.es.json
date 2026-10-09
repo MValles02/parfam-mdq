@@ -1,0 +1,14 @@
+{
+  "fixture-import-rose": {
+    "en": "Fixture Import Rose",
+    "es": "rosa de prueba"
+  },
+  "fixture-import-musk": {
+    "en": "Fixture Import Musk",
+    "es": "almizcle de prueba"
+  },
+  "fixture-import-cedar": {
+    "en": "Fixture Import Cedar",
+    "es": "cedro de prueba"
+  }
+}

@@ -12,7 +12,7 @@ Refs #  (partial fix: the issue stays open) -->
 
 - [ ] `pnpm typecheck`
 - [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [ ] `pnpm test` (integration tests; needs a migrated local DB)
 
 ## Migration
 

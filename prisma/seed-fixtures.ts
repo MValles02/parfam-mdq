@@ -198,6 +198,15 @@ const FIXTURE_PRODUCTS: FixtureProduct[] = [
   },
 ];
 
+// One accord shared by the published fixtures, so the "Se parece a" ranking has
+// something to match on; the gender rule then decides which products qualify.
+const FIXTURE_ACCORD = {
+  slug: "fixture-amaderado",
+  nameEn: "Fixture Woody",
+  nameEs: "Fixture Amaderado",
+  color: "#8B5A2B",
+};
+
 async function main() {
   assertLocalDatabase();
 
@@ -215,6 +224,12 @@ async function main() {
       });
       brandIdBySlug.set(brand.slug, row.id);
     }
+
+    const accord = await prisma.accord.upsert({
+      where: { slug: FIXTURE_ACCORD.slug },
+      create: FIXTURE_ACCORD,
+      update: FIXTURE_ACCORD,
+    });
 
     for (const fixture of FIXTURE_PRODUCTS) {
       const brandId = brandIdBySlug.get(fixture.brandSlug);
@@ -255,6 +270,15 @@ async function main() {
             sortOrder: index,
           })),
         });
+
+        await tx.productAccord.deleteMany({ where: { productId: product.id } });
+        if (
+          (FIXTURE_PUBLISHED_SLUGS as readonly string[]).includes(fixture.slug)
+        ) {
+          await tx.productAccord.create({
+            data: { productId: product.id, accordId: accord.id, strength: 100 },
+          });
+        }
       });
     }
 

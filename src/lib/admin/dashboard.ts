@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import { OrderStatus } from "@/generated/prisma/enums";
+import { OrderStatus, VariantKind } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -36,7 +36,9 @@ export async function getDashboardStats() {
     prisma.product.count({
       where: {
         status: "PUBLISHED",
-        variants: { none: { isActive: true } },
+        variants: {
+          none: { isActive: true, kind: { not: VariantKind.TESTER } },
+        },
       },
     }),
     prisma.order.count({ where: { createdAt: { gte: since } } }),

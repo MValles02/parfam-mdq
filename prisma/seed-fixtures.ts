@@ -134,6 +134,13 @@ const FIXTURE_PRODUCTS: FixtureProduct[] = [
     status: ProductStatus.PUBLISHED,
     variants: [
       {
+        kind: VariantKind.FULL_BOTTLE,
+        sizeMl: 100,
+        priceArs: "30000.00",
+        isActive: true,
+      },
+      {
+        // Legacy row: the store must hide it and refuse to sell it.
         kind: VariantKind.TESTER,
         sizeMl: 100,
         priceArs: "30000.00",

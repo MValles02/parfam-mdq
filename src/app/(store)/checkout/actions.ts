@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { Prisma } from "@/generated/prisma/client";
-import { ProductStatus } from "@/generated/prisma/enums";
+import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
 import { getSiteSettings } from "@/lib/settings";
 import { getVariantLabel } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
@@ -130,7 +130,8 @@ export async function createOrder(input: {
         variantId: item.variantId,
         reason: "deleted",
       });
-    } else if (!variant.isActive) {
+    } else if (!variant.isActive || variant.kind === VariantKind.TESTER) {
+      // Legacy testers may still exist in the database but are no longer sold.
       invalidItems.push({
         variantId: item.variantId,
         reason: "inactive",

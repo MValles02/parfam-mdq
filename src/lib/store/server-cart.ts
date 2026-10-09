@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/generated/prisma/enums";
+import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { getVariantLabel } from "@/lib/catalog";
 
@@ -62,7 +62,9 @@ export async function validateCartItems(
   return items.map((item) => {
     const variant = variantsById.get(item.variantId);
     if (!variant) return { ...item, ok: false, reason: "deleted" };
-    if (!variant.isActive) return { ...item, ok: false, reason: "inactive" };
+    // Legacy testers may still exist in the database but are no longer sold.
+    if (!variant.isActive || variant.kind === VariantKind.TESTER)
+      return { ...item, ok: false, reason: "inactive" };
     if (variant.product.status !== ProductStatus.PUBLISHED)
       return { ...item, ok: false, reason: "unpublished" };
     return {

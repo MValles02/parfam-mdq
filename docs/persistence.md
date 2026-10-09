@@ -57,7 +57,9 @@ a rolled-back transaction are acceptable and preserve concurrency safety.
 
 ## Publication and relationships
 
-Public store queries include only `PUBLISHED` products with active variants.
+Public store queries include only `PUBLISHED` products and their active
+variants. Listings (catalog, similar products, sitemap) also require at least
+one active variant; the product page (`getProductBySlug`) does not.
 Product notes, accords, perfumers, variants, and images are validated against
 the product action's input before they are synchronized. Variants are diffed
 rather than wholesale deleted because order items can reference them.

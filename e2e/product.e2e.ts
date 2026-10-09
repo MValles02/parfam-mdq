@@ -66,7 +66,7 @@ test("Se parece a lists gender-compatible products sharing an accord", async ({
 }) => {
   await page.goto("/producto/fixture-eau-de-prueba-mujer");
   const similar = page.locator("section", {
-    has: page.getByRole("heading", { name: "Se parece a" }),
+    has: page.getByRole("heading", { name: "Si te gusta, probá también" }),
   });
   await expect(
     similar.getByRole("heading", { name: "Fixture Eau de Prueba Unisex" }),

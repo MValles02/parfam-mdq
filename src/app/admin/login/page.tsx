@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { siteDefaults } from "@/lib/site";
 import { LoginForm } from "./login-form";
 
@@ -19,17 +20,26 @@ export default async function LoginPage(props: PageProps<"/admin/login">) {
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm">
-        <div className="mb-10 flex flex-col items-center gap-1">
+      <div className="flex w-full max-w-sm flex-col gap-7">
+        <div className="flex flex-col items-center gap-1">
           <span className="text-3xl font-extrabold tracking-tight">
             {siteDefaults.name}
           </span>
-          <span className="text-[10px] font-semibold tracking-[0.42em] text-muted-foreground">
-            PANEL
+          <span className="pl-[0.42em] text-xs font-semibold tracking-[0.42em] text-muted-foreground uppercase">
+            Panel
           </span>
         </div>
 
-        <LoginForm returnTo={returnTo} />
+        <div className="rounded border bg-card p-7">
+          <LoginForm returnTo={returnTo} />
+        </div>
+
+        <Link
+          href="/"
+          className="text-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Volver a la tienda
+        </Link>
       </div>
     </main>
   );

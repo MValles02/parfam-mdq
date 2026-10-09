@@ -29,6 +29,10 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
   --color-whatsapp: var(--whatsapp);
   --color-whatsapp-foreground: var(--whatsapp-foreground);
   --color-accent-foreground: var(--accent-foreground);
@@ -74,6 +78,12 @@
   --success: oklch(0.9294 0.0219 145.6); /* #E4EDE4 */
   --success-foreground: oklch(0.4258 0.0734 148.6); /* #2C5E34 */
   --success-border: oklch(0.8383 0.0433 146.7); /* #B9D2BC */
+  /* Panel feedback colors: warning marks pending work and danger marks
+     cancelled orders and form errors. Muted like success to stay in palette. */
+  --warning: oklch(0.932 0.0439 85.24); /* #F6E7C8 */
+  --warning-foreground: oklch(0.4564 0.0994 69.14); /* #7A4B00 */
+  --danger: oklch(0.9162 0.0223 24.45); /* #F2DEDC */
+  --danger-foreground: oklch(0.4255 0.1479 29.05); /* #8E1F17 */
   /* The original WhatsApp CTA used hardcoded #1DA851. #107D3A has a 4.53:1
      contrast ratio with the cream button text, compared with the mockup's
      2.68:1 ratio. It still reads as WhatsApp green. This solid button follows

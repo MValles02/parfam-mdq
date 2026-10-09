@@ -7,6 +7,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { countPendingOrders } from "@/lib/admin/orders";
 import { auth } from "@/lib/auth";
 import { AdminSidebar } from "./admin-sidebar";
 import { UserMenu } from "./user-menu";
@@ -21,6 +22,8 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
     redirect("/admin/login");
   }
 
+  const pendingCount = await countPendingOrders();
+
   return (
     // The collapsed sidebar shows tooltips, which Radix requires under a
     // TooltipProvider. Keeping it here avoids loading that client JavaScript
@@ -30,7 +33,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
           this panel is the only current consumer of URL state. */}
       <NuqsAdapter>
         <SidebarProvider>
-          <AdminSidebar>
+          <AdminSidebar pendingCount={pendingCount}>
             <UserMenu
               name={session.user.name ?? "Admin"}
               email={session.user.email ?? ""}

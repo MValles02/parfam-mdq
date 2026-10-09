@@ -63,6 +63,7 @@ export async function listProducts(options: {
         variants: {
           orderBy: { sortOrder: "asc" },
           select: {
+            id: true,
             priceArs: true,
             isActive: true,
             kind: true,
@@ -100,11 +101,16 @@ export async function listProducts(options: {
       variantCount: product.variants.length,
       activeVariantCount,
       startingPrice,
-      variants: product.variants.map(({ kind, sizeMl, isActive }) => ({
-        kind,
-        sizeMl,
-        isActive,
-      })),
+      variants: product.variants.map(
+        ({ id, kind, sizeMl, isActive, priceArs }) => ({
+          id,
+          kind,
+          sizeMl,
+          isActive,
+          // Decimal is not serializable to Client Components.
+          priceArs: priceArs.toString(),
+        }),
+      ),
       hasPrimaryImage: product.images.length > 0,
       hasDescription: Boolean(product.description?.trim()),
     };

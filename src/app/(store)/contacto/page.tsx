@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { AtSign, MapPin, MessageCircle } from "lucide-react";
+import { ArrowRight, AtSign, MapPin, MessageCircle } from "lucide-react";
 import { getSiteSettings } from "@/lib/settings";
 import {
   absoluteUrl,
@@ -13,6 +13,7 @@ import {
   buildWhatsAppLink,
   formatPhoneNumber,
 } from "@/lib/whatsapp";
+import { catalogHref } from "@/lib/store/filters";
 import { siteDefaults } from "@/lib/site";
 
 const PAGE_TITLE = "Contacto";
@@ -76,8 +77,7 @@ export default async function ContactPage() {
         {PAGE_TITLE}
       </h1>
       <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-        WhatsApp es nuestro canal principal: escribinos para consultar
-        disponibilidad, precios o coordinar tu pedido.
+        Si buscás algo en particular o tenés una duda, escribinos.
       </p>
 
       <a
@@ -111,26 +111,38 @@ export default async function ContactPage() {
             @{config.instagramHandle}
           </a>
         </div>
-        <div className="flex items-center gap-3">
-          <MapPin className="size-[18px] shrink-0 text-muted-foreground" />
-          <span className="text-base font-medium">
-            {siteDefaults.city} — entregas y retiro a coordinar
-          </span>
+        <div className="flex items-start gap-3">
+          <MapPin className="mt-0.5 size-[18px] shrink-0 text-muted-foreground" />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-base font-medium">{siteDefaults.city}</span>
+            <span className="text-sm text-muted-foreground">
+              {config.shippingInfo}
+            </span>
+          </div>
         </div>
       </div>
 
+      <div className="mt-6 rounded border border-border bg-card p-6">
+        <h2 className="text-lg font-bold">¿Ya hiciste un pedido?</h2>
+        <p className="mt-1 text-base leading-relaxed text-muted-foreground">
+          Mencioná tu número (por ejemplo PM-0042) y lo encontramos más rápido.
+        </p>
+      </div>
+
+      <Link
+        href="/como-comprar"
+        className="mt-6 flex min-h-11 items-center justify-between gap-4 rounded border border-dashed border-input p-5 hover:bg-muted"
+      >
+        <span className="text-base font-bold">¿Cómo funciona la compra?</span>
+        <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
+      </Link>
+
       <div className="mt-6 flex gap-6 text-sm text-muted-foreground">
         <Link
-          href="/#catalogo"
+          href={catalogHref({})}
           className="relative underline underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
         >
           Ver el catálogo
-        </Link>
-        <Link
-          href="/como-comprar"
-          className="relative underline underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
-        >
-          Cómo comprar
         </Link>
       </div>
     </div>

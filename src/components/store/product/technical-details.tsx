@@ -5,6 +5,7 @@ import { CONCENTRATION_LABELS, GENDER_LABELS } from "@/lib/catalog";
 import { catalogHref } from "@/lib/store/filters";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "./collapsible-section";
+import { CARD_SECTION_CLASS, CARD_SECTION_TITLE_CLASS } from "./section-styles";
 
 type ProductDetails = {
   brandName: string;
@@ -60,10 +61,8 @@ export function TechnicalDetails(product: ProductDetails) {
   return (
     <CollapsibleSection
       defaultOpenOnMobile
-      className="rounded border bg-card p-[30px]"
-      title={
-        <h2 className="text-xl font-bold tracking-[-0.015em]">Ficha técnica</h2>
-      }
+      className={CARD_SECTION_CLASS}
+      title={<h2 className={CARD_SECTION_TITLE_CLASS}>Ficha técnica</h2>}
     >
       <dl className="mt-5 flex flex-col">
         {rows.map((row, index) => (

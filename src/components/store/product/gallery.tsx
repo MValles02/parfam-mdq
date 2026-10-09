@@ -13,6 +13,14 @@ import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 type ProductImageData = { id: string; url: string; alt: string };
 
+/** The main photo is at most 560 px wide from `lg` up and full width below. */
+const MAIN_PHOTO_SIZES = "(min-width: 1024px) 560px, 100vw";
+
+/** Thumbnails are a 72 px vertical strip from `lg` up and hidden below. */
+const THUMBNAIL_SIZES = "72px";
+
+const MAX_THUMBNAILS = 4;
+
 /**
  * Product gallery with a Carousel, dots below lg and up to four vertical
  * thumbnails from lg. The active index is derived from `useCarousel` to avoid state updates in effects.
@@ -21,11 +29,7 @@ export function Gallery({ images }: { images: ProductImageData[] }) {
   if (images.length === 0) {
     return (
       <div className="relative isolate aspect-square w-full overflow-hidden rounded bg-background">
-        <ProductImage
-          image={null}
-          sizes="(min-width: 1024px) 560px, 100vw"
-          priority
-        />
+        <ProductImage image={null} sizes={MAIN_PHOTO_SIZES} priority />
       </div>
     );
   }
@@ -43,7 +47,7 @@ export function Gallery({ images }: { images: ProductImageData[] }) {
               <div className="relative isolate aspect-square w-full overflow-hidden rounded bg-background">
                 <ProductImage
                   image={image}
-                  sizes="(min-width: 1024px) 560px, 100vw"
+                  sizes={MAIN_PHOTO_SIZES}
                   priority={index === 0}
                 />
               </div>
@@ -99,7 +103,7 @@ function Thumbnails({ images }: { images: ProductImageData[] }) {
 
   return (
     <div className="hidden w-[72px] shrink-0 flex-col gap-2.5 lg:flex">
-      {images.slice(0, 4).map((image, index) => {
+      {images.slice(0, MAX_THUMBNAILS).map((image, index) => {
         const isActive = index === selectedIndex;
         return (
           <button
@@ -116,7 +120,7 @@ function Thumbnails({ images }: { images: ProductImageData[] }) {
               FOCUS_VISIBLE,
             )}
           >
-            <ProductImage image={image} sizes="72px" />
+            <ProductImage image={image} sizes={THUMBNAIL_SIZES} />
           </button>
         );
       })}

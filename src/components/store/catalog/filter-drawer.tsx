@@ -1,8 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { SlidersHorizontal, XIcon } from "lucide-react";
-import { useQueryStates } from "nuqs";
+import { SlidersHorizontal } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -10,13 +9,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { cn, FOCUS_VISIBLE } from "@/lib/utils";
-import {
-  countActiveCatalogFilters,
-  catalogFilterQueryOptions,
-  catalogFilterParsers,
-} from "@/lib/store/filters";
+import { SheetCloseButton } from "@/components/store/sheet-close-button";
+import { cn } from "@/lib/utils";
+import { countActiveCatalogFilters } from "@/lib/store/filters";
 import type { FilterOptions } from "@/lib/store/queries";
 import {
   GenderChips,
@@ -26,6 +21,26 @@ import {
   NoteSelect,
   PriceSelect,
 } from "./filter-controls";
+import { FILTER_LABEL_CLASS } from "./filter-label";
+import { useCatalogFilters } from "./use-catalog-filters";
+
+/** Full-width selects with a comfortable touch height. */
+const SELECT_CLASS = "h-[50px] w-full";
+
+function FilterGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-[11px]">
+      <span className={FILTER_LABEL_CLASS}>{label}</span>
+      {children}
+    </div>
+  );
+}
 
 /**
  * Mobile filter drawer. The applied-filter count is derived from URL state in
@@ -38,10 +53,7 @@ export function FilterDrawer({
   filterOptions: FilterOptions;
   applyText: ReactNode;
 }) {
-  const [filters] = useQueryStates(
-    catalogFilterParsers,
-    catalogFilterQueryOptions,
-  );
+  const [filters] = useCatalogFilters();
   const activeFilterCount = countActiveCatalogFilters(filters);
 
   return (
@@ -71,27 +83,24 @@ export function FilterDrawer({
         </SheetTitle>
 
         <div className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto">
-          <div className="flex flex-col gap-[11px]">
-            <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Para quién
-            </span>
+          <FilterGroup label="Para quién">
             <GenderChips />
-          </div>
+          </FilterGroup>
 
           <div className="flex flex-col gap-2.5">
             <BrandSelect
               filterOptions={filterOptions.brands}
-              className="h-[50px] w-full"
+              className={SELECT_CLASS}
             />
             <AccordSelect
               filterOptions={filterOptions.accords}
-              className="h-[50px] w-full"
+              className={SELECT_CLASS}
             />
             <NoteSelect
               filterOptions={filterOptions.notes}
-              className="h-[50px] w-full"
+              className={SELECT_CLASS}
             />
-            <PriceSelect className="h-[50px] w-full" />
+            <PriceSelect className={SELECT_CLASS} />
           </div>
         </div>
 
@@ -109,19 +118,7 @@ export function FilterDrawer({
           </SheetClose>
         </div>
 
-        <SheetClose asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className={cn(
-              "absolute top-1 right-1 size-11 lg:top-3 lg:right-3 lg:size-7",
-              FOCUS_VISIBLE,
-            )}
-          >
-            <XIcon />
-            <span className="sr-only">Cerrar</span>
-          </Button>
-        </SheetClose>
+        <SheetCloseButton />
       </SheetContent>
     </Sheet>
   );

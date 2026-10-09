@@ -5,9 +5,13 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Minus, Plus, X } from "lucide-react";
 import { formatArsPrice } from "@/lib/catalog";
-import { useCart, type CartItem } from "@/lib/cart";
-
-const MAX_QUANTITY = 99;
+import {
+  lineSubtotal,
+  MAX_ITEM_QUANTITY,
+  useCart,
+  type CartItem,
+} from "@/lib/cart";
+import { getProductPath } from "@/lib/store/links";
 
 /**
  * Cart thumbnail with the same bottle fallback used by the admin table.
@@ -79,15 +83,11 @@ export function CartItemRow({
       action: { label: "Deshacer", onClick: () => add(snapshot, qty) },
     });
   }
-  const lineSubtotal = (Number(item.unitPriceArs) * item.qty).toFixed(2);
+  const productHref = getProductPath(item.productSlug);
 
   return (
     <div className="flex gap-4 rounded border border-border bg-card p-3.5">
-      <Link
-        href={`/producto/${item.productSlug}`}
-        onClick={onNavigate}
-        className="shrink-0"
-      >
+      <Link href={productHref} onClick={onNavigate} className="shrink-0">
         <Thumbnail image={item.image} alt={item.productName} />
       </Link>
 
@@ -98,7 +98,7 @@ export function CartItemRow({
               {item.brandName}
             </span>
             <Link
-              href={`/producto/${item.productSlug}`}
+              href={productHref}
               onClick={onNavigate}
               className="text-[15px] leading-tight font-bold tracking-[-0.01em] hover:text-muted-foreground"
             >
@@ -136,14 +136,14 @@ export function CartItemRow({
               type="button"
               aria-label="Agregar una unidad"
               onClick={() => updateQuantity(item.variantId, item.qty + 1)}
-              disabled={item.qty >= MAX_QUANTITY}
+              disabled={item.qty >= MAX_ITEM_QUANTITY}
               className="flex min-h-11 min-w-11 items-center justify-center p-2 disabled:opacity-40"
             >
               <Plus className="size-3.5" />
             </button>
           </div>
           <span className="text-base font-bold tracking-[-0.02em]">
-            {formatArsPrice(lineSubtotal)}
+            {formatArsPrice(lineSubtotal(item))}
           </span>
         </div>
       </div>

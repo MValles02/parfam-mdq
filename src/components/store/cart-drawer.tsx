@@ -1,18 +1,11 @@
 "use client";
 
-import { XIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { cn, FOCUS_VISIBLE } from "@/lib/utils";
+import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { unitsLabel, useCart, useCartQuantity, useHydrated } from "@/lib/cart";
 import { CartItemList } from "@/components/store/cart/cart-item-list";
 import { CartTotalAnnouncer } from "@/components/store/cart/cart-total-announcer";
 import { CartSummary } from "@/components/store/cart/cart-summary";
+import { SheetCloseButton } from "@/components/store/sheet-close-button";
 
 /**
  * Cart drawer content. Header owns its Sheet because both desktop and mobile
@@ -56,19 +49,7 @@ export function CartDrawer({ close }: { close: () => void }) {
           <CartSummary onNavigate={close} />
         </div>
       ) : null}
-      <SheetClose asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className={cn(
-            "absolute top-1 right-1 size-11 lg:top-3 lg:right-3 lg:size-7",
-            FOCUS_VISIBLE,
-          )}
-        >
-          <XIcon />
-          <span className="sr-only">Cerrar</span>
-        </Button>
-      </SheetClose>
+      <SheetCloseButton />
     </SheetContent>
   );
 }

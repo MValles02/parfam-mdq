@@ -15,13 +15,13 @@ The route group name `(store)` does not appear in public URLs.
 
 ## Admin routes
 
-| URL                                                                   | Source                         | Access                                              |
-| --------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------- |
-| `/admin/login`                                                        | `src/app/admin/login/page.tsx` | Public login; signed-in users redirect to `/admin`. |
-| `/admin`                                                              | `admin/(panel)/page.tsx`       | Administrator only.                                 |
-| `/admin/productos`, `/admin/productos/nuevo`, `/admin/productos/[id]` | product pages                  | Administrator only.                                 |
-| `/admin/pedidos`, `/admin/pedidos/[id]`                               | order pages                    | Administrator only.                                 |
-| `/admin/marcas`, `/admin/configuracion`                               | supporting panel pages         | Administrator only.                                 |
+| URL                                                                   | Source                                               | Access                                              |
+| --------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| `/admin/login`                                                        | `src/app/admin/login/page.tsx`                       | Public login; signed-in users redirect to `/admin`. |
+| `/admin`                                                              | `admin/(panel)/page.tsx`                             | Administrator only.                                 |
+| `/admin/productos`, `/admin/productos/nuevo`, `/admin/productos/[id]` | product pages                                        | Administrator only.                                 |
+| `/admin/pedidos`, `/admin/pedidos/[id]`                               | order pages (`?pedido=<id>` selects the detail pane) | Administrator only.                                 |
+| `/admin/marcas`, `/admin/configuracion`                               | supporting panel pages                               | Administrator only.                                 |
 
 The proxy and panel layout both protect the panel. Every action has its own
 server authorization check; see [authentication.md](authentication.md).

@@ -1,6 +1,6 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
-import { ORDER_STATUS_LABELS } from "@/lib/admin/orders";
 import { cn } from "@/lib/utils";
+import { ORDER_STATUS_LABELS } from "@/lib/admin/orders";
 
 /**
  * Order statuses use their own feedback tokens: PENDING is warning (work

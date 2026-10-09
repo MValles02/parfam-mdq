@@ -6,6 +6,7 @@ import { AlertCircle, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RETURN_TO_PARAM } from "@/lib/auth.config";
 import { authenticate, type LoginState } from "./actions";
 
 function SubmitButton() {
@@ -38,7 +39,7 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
   return (
     <form action={formAction} className="flex flex-col gap-5">
       {returnTo ? (
-        <input type="hidden" name="returnTo" value={returnTo} />
+        <input type="hidden" name={RETURN_TO_PARAM} value={returnTo} />
       ) : null}
 
       <div className="flex flex-col gap-2">

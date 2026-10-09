@@ -41,18 +41,18 @@ Cloudflare R2. The repository is a single application, not a monorepo.
 
 ## Where to change common behavior
 
-| Change                              | Primary location                                                               |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| Catalog query or filter             | `src/lib/store/{filters,queries}.ts`                                           |
-| Cart state                          | `src/lib/cart.ts`                                                              |
-| Checkout validation and persistence | `src/app/(store)/checkout/actions.ts`                                          |
-| WhatsApp order message              | `src/lib/store/order-message.ts`                                               |
-| Product editing and publication     | `src/lib/validations/product.ts`, `src/app/admin/(panel)/productos/actions.ts` |
-| Public product visibility           | `src/lib/store/queries.ts`                                                     |
-| Product image upload                | `src/lib/r2.ts`, `productos/image-actions.ts`                                  |
-| Admin orders                        | `src/lib/admin/orders.ts`, `pedidos/actions.ts`                                |
-| Site settings                       | `src/lib/settings.ts`, `configuracion/actions.ts`                              |
-| Metadata and sitemap                | `src/lib/seo.ts`, `src/app/{sitemap,robots}.ts`                                |
+| Change                              | Primary location                                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Catalog query or filter             | `src/lib/store/{filters,catalog-listing}.ts`                                                         |
+| Cart state                          | `src/lib/cart.ts`                                                                                    |
+| Checkout validation and persistence | `src/app/(store)/checkout/actions.ts`                                                                |
+| WhatsApp order message              | `src/lib/store/order-message.ts`                                                                     |
+| Product editing and publication     | `src/lib/validations/product.ts`, `src/app/admin/(panel)/productos/{actions,product-persistence}.ts` |
+| Public product visibility           | `src/lib/store/visibility.ts`                                                                        |
+| Product image upload                | `src/lib/r2.ts`, `productos/image-actions.ts`                                                        |
+| Admin orders                        | `src/lib/admin/orders.ts`, `pedidos/actions.ts`                                                      |
+| Site settings                       | `src/lib/settings.ts`, `configuracion/actions.ts`                                                    |
+| Metadata and sitemap                | `src/lib/seo.ts`, `src/app/{sitemap,robots}.ts`                                                      |
 
 ## Invariants
 

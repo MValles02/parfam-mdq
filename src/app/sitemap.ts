@@ -1,17 +1,21 @@
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
+import { getProductPath } from "@/lib/store/links";
 import { absoluteUrl } from "@/lib/seo";
 import { TAG_SITEMAP_URLS, getSitemapUrls } from "@/lib/store/queries";
 
 /**
  * A force-dynamic route avoids accessing Postgres during next build, while
- * unstable_cache retains the one-hour sitemap cache. Store actions invalidate
- * the same cache through TAG_SITEMAP_URLS after product URL changes.
+ * unstable_cache retains the one-hour sitemap cache. Admin product actions
+ * invalidate the same cache through TAG_SITEMAP_URLS after product URL
+ * changes.
  */
 export const dynamic = "force-dynamic";
 
-const cachedSitemapUrls = unstable_cache(getSitemapUrls, ["sitemap-urls"], {
-  revalidate: 3600,
+const SITEMAP_REVALIDATE_SECONDS = 60 * 60;
+
+const cachedSitemapUrls = unstable_cache(getSitemapUrls, [TAG_SITEMAP_URLS], {
+  revalidate: SITEMAP_REVALIDATE_SECONDS,
   tags: [TAG_SITEMAP_URLS],
 });
 
@@ -37,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const productEntries: MetadataRoute.Sitemap = products.map((product) => ({
-    url: absoluteUrl(`/producto/${product.slug}`),
+    url: absoluteUrl(getProductPath(product.slug)),
     lastModified: product.updatedAt,
     changeFrequency: "weekly",
     priority: 0.8,

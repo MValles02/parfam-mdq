@@ -1,22 +1,23 @@
 import { expect, test } from "@playwright/test";
+import {
+  FIXTURE_DRAFT,
+  FIXTURE_INACTIVE_ONLY,
+  FIXTURE_LISTED,
+} from "../scripts/lib/fixture-catalog";
 
 test("catalog lists only published products with active variants", async ({
   page,
 }) => {
   await page.goto("/");
 
-  for (const name of [
-    "Fixture Eau de Prueba Mujer",
-    "Fixture Eau de Prueba Hombre",
-    "Fixture Eau de Prueba Unisex",
-  ]) {
+  for (const { name } of FIXTURE_LISTED) {
     await expect(page.getByRole("heading", { name })).toBeVisible();
   }
   await expect(
-    page.getByRole("heading", { name: "Fixture Eau de Prueba Borrador" }),
+    page.getByRole("heading", { name: FIXTURE_DRAFT.name }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Fixture Eau de Prueba Sin Stock" }),
+    page.getByRole("heading", { name: FIXTURE_INACTIVE_ONLY.name }),
   ).toHaveCount(0);
 });
 

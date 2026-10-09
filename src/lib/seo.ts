@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { env } from "@/lib/env";
 import { siteDefaults } from "@/lib/site";
-import { GENDER_LABELS, VARIANT_KIND_LABELS } from "@/lib/catalog";
+import { GENDER_LABELS, PRICE_CURRENCY } from "@/lib/catalog";
+import { getProductPath } from "@/lib/store/links";
 import type { PublicProduct } from "@/lib/store/queries";
 
 /**
  * Shared SEO helpers for store pages.
  *
  * The site URL comes from NEXT_PUBLIC_SITE_URL (validated in src/lib/env.ts),
- * not siteDefaults: local development uses http://localhost:3000 and canonical
- * URLs must point to the running environment instead of always production.
+ * not a hard-coded production domain: local development uses
+ * http://localhost:3000 and canonical URLs must point to the running
+ * environment.
  */
 
 export const SITE_URL = env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
@@ -62,7 +64,7 @@ export function serializeJsonLd(data: unknown): string {
  */
 export function productJsonLd(product: PublicProduct, imageUrls: string[]) {
   const prices = product.variants.map((variant) => Number(variant.price));
-  const url = absoluteUrl(`/producto/${product.slug}`);
+  const url = absoluteUrl(getProductPath(product.slug));
 
   return {
     "@context": "https://schema.org",
@@ -89,15 +91,15 @@ export function productJsonLd(product: PublicProduct, imageUrls: string[]) {
       ? {
           offers: {
             "@type": "AggregateOffer",
-            priceCurrency: "ARS",
+            priceCurrency: PRICE_CURRENCY,
             lowPrice: Math.min(...prices),
             highPrice: Math.max(...prices),
             offerCount: prices.length,
             offers: product.variants.map((variant) => ({
               "@type": "Offer",
-              name: `${product.name} — ${VARIANT_KIND_LABELS[variant.kind]}${variant.sizeMl ? ` ${variant.sizeMl} ml` : ""}`,
+              name: `${product.name} — ${variant.label}`,
               price: variant.price,
-              priceCurrency: "ARS",
+              priceCurrency: PRICE_CURRENCY,
               availability: "https://schema.org/InStock",
               itemCondition: "https://schema.org/NewCondition",
               url,

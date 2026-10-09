@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { buildBreadcrumbJsonLd, serializeJsonLd } from "@/lib/seo";
+import {
+  ContentPageBreadcrumb,
+  getContentPageBreadcrumbs,
+} from "@/components/store/content-page";
+import { JsonLd } from "@/components/store/json-ld";
+import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const GUIDES = [
@@ -48,34 +53,14 @@ export function GuideShell({
   title: string;
   children: React.ReactNode;
 }) {
-  const breadcrumbs = [
-    { name: "Inicio", path: "/" },
-    { name: title, path: current },
-  ];
+  const breadcrumbs = getContentPageBreadcrumbs(title, current);
 
   return (
     <div className="mx-auto max-w-page px-5 py-14 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12 lg:px-16 lg:py-20">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd(buildBreadcrumbJsonLd(breadcrumbs)),
-        }}
-      />
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbs)} />
       <GuideNav current={current} />
       <div className="max-w-3xl">
-        <nav
-          aria-label="Miga de pan"
-          className="mb-8 text-sm text-muted-foreground"
-        >
-          <Link
-            href="/"
-            className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
-          >
-            Inicio
-          </Link>
-          <span className="mx-2">·</span>
-          <span className="text-foreground">{title}</span>
-        </nav>
+        <ContentPageBreadcrumb title={title} />
         {children}
       </div>
     </div>

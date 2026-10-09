@@ -178,7 +178,8 @@ dump before a release is an extra safety margin, not the only backup.
 2. **Optional: clear test orders and reset the order-number sequence**, if a
    go-live needs order numbers to start clean. Checkout formats `PM-` plus a
    zero-padded `nextval('"Order_number_seq"')`
-   (`src/app/(store)/checkout/actions.ts`) — only reset the sequence after
+   (`formatOrderNumber` in `src/lib/whatsapp.ts`, called from
+   `src/app/(store)/checkout/actions.ts`) — only reset the sequence after
    removing (or intentionally keeping) every existing order, or a future
    order can collide with an old one's number:
 
@@ -409,7 +410,7 @@ comes only after the import and its checks succeed.
    imported references and 2 out-of-range years reported as warnings. Running
    this over the tunnel is slower than the ~10 minutes it takes locally;
    each batch's transaction already carries a 120-second timeout for that
-   reason (see `scripts/import-references.ts`) — lower `--batch-size` if a
+   reason (see `scripts/lib/reference-writes.ts`) — lower `--batch-size` if a
    single batch is timing out over the tunnel's added latency.
 
 8. **Post-import checks.**
@@ -626,7 +627,9 @@ login, throttling and image upload. Specs live in `e2e/*.e2e.ts`; `testMatch`
 in `playwright.config.ts` limits Playwright to that suffix, so Vitest ignores
 them.
 
-Prerequisites: a migrated and seeded database plus environment variables.
+Prerequisites: a migrated and seeded database plus environment variables. The
+fixture products' slugs and names that the specs, `pnpm smoke`, and
+`prisma/seed-fixtures.ts` share live in `scripts/lib/fixture-catalog.ts`.
 
 ```bash
 pnpm db:up && pnpm db:migrate && pnpm db:seed && pnpm db:seed:fixtures

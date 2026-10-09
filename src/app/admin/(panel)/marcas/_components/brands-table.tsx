@@ -17,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ColumnHeader } from "@/components/admin/listing-table";
+import { setServerFieldErrors } from "@/components/admin/server-field-errors";
 import type { BrandRow } from "@/lib/admin/brands";
 import {
   brandSchema,
@@ -43,11 +45,7 @@ function BrandRowForm({ brand }: { brand: BrandRow }) {
     startSaving(async () => {
       const result = await updateBrand(brand.id, values);
       if (!result.ok) {
-        for (const [field, messages] of Object.entries(
-          result.fieldErrors ?? {},
-        )) {
-          setError(field as keyof BrandFormValues, { message: messages[0] });
-        }
+        setServerFieldErrors(setError, result.fieldErrors);
         toast.error(result.message);
         return;
       }
@@ -114,17 +112,15 @@ function BrandRowForm({ brand }: { brand: BrandRow }) {
 }
 
 export function BrandsTable({ rows }: { rows: BrandRow[] }) {
-  const head =
-    "text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase";
   return (
     <div className="overflow-x-auto rounded border border-border bg-card">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/60 hover:bg-muted/60">
-            <TableHead className={head}>Slug</TableHead>
-            <TableHead className={head}>Nombre</TableHead>
-            <TableHead className={head}>País</TableHead>
-            <TableHead className={head}>Productos</TableHead>
+            <ColumnHeader>Slug</ColumnHeader>
+            <ColumnHeader>Nombre</ColumnHeader>
+            <ColumnHeader>País</ColumnHeader>
+            <ColumnHeader>Productos</ColumnHeader>
             <TableHead className="w-28"></TableHead>
           </TableRow>
         </TableHeader>

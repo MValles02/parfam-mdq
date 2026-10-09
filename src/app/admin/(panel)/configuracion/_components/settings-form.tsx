@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/admin/field";
+import { setServerFieldErrors } from "@/components/admin/server-field-errors";
 import type { EditableSettings } from "@/lib/admin/settings";
 import { buildOrderMessage } from "@/lib/store/order-message";
 import {
@@ -26,10 +27,14 @@ import {
 } from "@/lib/validations/settings";
 import { saveSettings } from "../actions";
 
+/** Without either of these, the WhatsApp message omits the order detail. */
+const ITEMS_PLACEHOLDER = "{{items}}";
+const TOTAL_PLACEHOLDER = "{{total}}";
+
 const PLACEHOLDERS = [
   ["{{marca}}", "Nombre de la marca"],
-  ["{{items}}", "Cada producto del pedido, uno por línea"],
-  ["{{total}}", "Total del pedido"],
+  [ITEMS_PLACEHOLDER, "Cada producto del pedido, uno por línea"],
+  [TOTAL_PLACEHOLDER, "Total del pedido"],
   ["{{nombre}}", "Nombre del cliente"],
   ["{{numero}}", "Número de pedido, ej. PM-0001"],
 ] as const;
@@ -90,9 +95,9 @@ export function SettingsForm({
   });
   const title = seoTitle ?? "";
   const description = seoDescription ?? "";
-  const isMissingPlaceholders =
-    !(messageTemplate ?? "").includes("{{items}}") &&
-    !(messageTemplate ?? "").includes("{{total}}");
+  const isMissingOrderDetail =
+    !(messageTemplate ?? "").includes(ITEMS_PLACEHOLDER) &&
+    !(messageTemplate ?? "").includes(TOTAL_PLACEHOLDER);
 
   const preview = buildOrderMessage({
     template: messageTemplate ?? "",
@@ -107,13 +112,7 @@ export function SettingsForm({
     startSaving(async () => {
       const result = await saveSettings(values);
       if (!result.ok) {
-        for (const [field, messages] of Object.entries(
-          result.fieldErrors ?? {},
-        )) {
-          setError(field as keyof SettingsFormInput, {
-            message: messages[0],
-          });
-        }
+        setServerFieldErrors(setError, result.fieldErrors);
         toast.error(result.message);
         return;
       }
@@ -191,10 +190,10 @@ export function SettingsForm({
               </ul>
             </div>
 
-            {isMissingPlaceholders ? (
+            {isMissingOrderDetail ? (
               <Alert>
                 <AlertTitle>
-                  La plantilla no tiene {"{{items}}"} ni {"{{total}}"}
+                  La plantilla no tiene {ITEMS_PLACEHOLDER} ni {TOTAL_PLACEHOLDER}
                 </AlertTitle>
                 <AlertDescription>
                   El pedido se crea igual, pero el mensaje de WhatsApp no va a

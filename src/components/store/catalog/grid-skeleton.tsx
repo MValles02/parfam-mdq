@@ -1,6 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-
-const SKELETON_COUNT = 12;
+import { PRODUCTS_PER_PAGE } from "@/lib/store/queries";
 
 /**
  * `Suspense` fallback for the grid. It matches `ProductCard` height and
@@ -10,7 +9,7 @@ const SKELETON_COUNT = 12;
 export function CatalogGridSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 lg:gap-7">
-      {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+      {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
         <div
           key={i}
           className="flex flex-col overflow-hidden rounded border border-border bg-card"

@@ -6,9 +6,9 @@ import { formatArsPrice } from "@/lib/catalog";
  * `{{marca}}`, `{{items}}`, `{{total}}`, `{{nombre}}`, and `{{numero}}`.
  * `{{items}}` is the only placeholder that expands to multiple lines.
  *
- * It accepts an already calculated subtotal instead of separate `unitPriceArs`
- * and `qty` values, avoiding duplicate Decimal multiplication after createOrder
- * has calculated database-backed totals.
+ * It accepts already calculated subtotal and total strings instead of
+ * `unitPriceArs` and `qty`, so all Decimal arithmetic stays in createOrder and
+ * this module only formats.
  */
 
 export type OrderMessageLine = {

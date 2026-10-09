@@ -7,13 +7,21 @@ import {
   buildBreadcrumbJsonLd,
   buildPageMetadata,
   productJsonLd,
-  serializeJsonLd,
 } from "@/lib/seo";
-import { getProductBySlug, getSimilarProducts } from "@/lib/store/queries";
+import { catalogHref } from "@/lib/store/filters";
+import { getBrandCatalogPath, getProductPath } from "@/lib/store/links";
+import {
+  getProductBySlug,
+  getSimilarProducts,
+  type PublicProduct,
+} from "@/lib/store/queries";
+import { NOT_FOUND_TITLE } from "@/components/store/not-found-content";
+import { HOME_BREADCRUMB } from "@/components/store/content-page";
+import { JsonLd } from "@/components/store/json-ld";
 import { ProductCard } from "@/components/store/product-card";
 import { MessageCircle } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
-import { catalogHref } from "@/lib/store/filters";
+import { SECTION_TITLE_CLASS } from "@/components/store/product/section-styles";
 import { Gallery } from "@/components/store/product/gallery";
 import { Purchase } from "@/components/store/product/purchase";
 import { Pyramid } from "@/components/store/product/pyramid";
@@ -24,6 +32,60 @@ import { CollapsibleSection } from "@/components/store/product/collapsible-secti
 import { AccordBars } from "@/components/store/product/accord-bars";
 import { VoteProfile } from "@/components/store/product/vote-profile";
 import { SimilarProducts } from "@/components/store/product/similar-products";
+
+/** "Dior · Eau de Toilette · Para él", the search description fallback. */
+function getSearchSummary(product: PublicProduct): string {
+  return [
+    product.brandName,
+    product.concentration ? CONCENTRATION_LABELS[product.concentration] : null,
+    product.gender ? GENDER_LABELS[product.gender] : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** "Para él · 2015 · <perfumers>", below the product name. */
+function getHeaderLine(product: PublicProduct): string {
+  return [
+    product.gender ? GENDER_LABELS[product.gender] : null,
+    product.year ? String(product.year) : null,
+    product.perfumers.length > 0 ? product.perfumers.join(", ") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** Taller touch target below `lg`, where the trail wraps. */
+const CRUMB_LINK_CLASS =
+  "inline-flex min-h-11 items-center hover:text-foreground lg:min-h-0";
+
+/** Visible "Catálogo / <brand> / <product>" trail above the gallery. */
+function ProductBreadcrumb({ product }: { product: PublicProduct }) {
+  return (
+    <nav aria-label="Miga de pan" className="pt-5 text-xs text-muted-foreground">
+      <ol className="flex flex-wrap items-center gap-x-2">
+        <li>
+          <Link href={catalogHref({})} className={CRUMB_LINK_CLASS}>
+            Catálogo
+          </Link>
+        </li>
+        <li aria-hidden>/</li>
+        <li>
+          <Link
+            href={catalogHref({ brand: product.brandSlug })}
+            className={CRUMB_LINK_CLASS}
+          >
+            {product.brandName}
+          </Link>
+        </li>
+        <li aria-hidden>/</li>
+        <li aria-current="page" className="text-foreground">
+          {product.name}
+        </li>
+      </ol>
+    </nav>
+  );
+}
 
 /**
  * Product detail queries return null for drafts, so notFound safely rejects a
@@ -36,23 +98,15 @@ export async function generateMetadata(
   const product = await getProductBySlug(slug);
   // Matches `not-found.tsx`; returning `{}` would let the site default title
   // replace it once the page hydrates.
-  if (!product) return { title: { absolute: "Página no encontrada" } };
-
-  const metadata = [
-    product.brandName,
-    product.concentration ? CONCENTRATION_LABELS[product.concentration] : null,
-    product.gender ? GENDER_LABELS[product.gender] : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  if (!product) return { title: { absolute: NOT_FOUND_TITLE } };
 
   return buildPageMetadata({
     title: product.seoTitle ?? `${product.name} — ${product.brandName}`,
     description:
       product.seoDescription ??
       product.description ??
-      `${product.name} — ${metadata}.`,
-    path: `/producto/${product.slug}`,
+      `${product.name} — ${getSearchSummary(product)}.`,
+    path: getProductPath(product.slug),
   });
 }
 
@@ -66,69 +120,26 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
 
   const similarProducts = await getSimilarProducts(product.id);
 
-  const headerLine = [
-    product.gender ? GENDER_LABELS[product.gender] : null,
-    product.year ? String(product.year) : null,
-    product.perfumers.length > 0 ? product.perfumers.join(", ") : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const headerLine = getHeaderLine(product);
 
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
-    { name: product.brandName, path: `/?marca=${product.brandSlug}` },
-    { name: product.name, path: `/producto/${product.slug}` },
+    HOME_BREADCRUMB,
+    { name: product.brandName, path: getBrandCatalogPath(product.brandSlug) },
+    { name: product.name, path: getProductPath(product.slug) },
   ];
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd(
-            productJsonLd(
-              product,
-              product.images.map((image) => image.url),
-            ),
-          ),
-        }}
+      <JsonLd
+        data={productJsonLd(
+          product,
+          product.images.map((image) => image.url),
+        )}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd(buildBreadcrumbJsonLd(breadcrumbs)),
-        }}
-      />
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbs)} />
 
       <div className="mx-auto max-w-page px-5 pb-24 lg:px-16 lg:pb-0">
-        <nav
-          aria-label="Miga de pan"
-          className="pt-5 text-xs text-muted-foreground"
-        >
-          <ol className="flex flex-wrap items-center gap-x-2">
-            <li>
-              <Link
-                href={catalogHref({})}
-                className="inline-flex min-h-11 items-center hover:text-foreground lg:min-h-0"
-              >
-                Catálogo
-              </Link>
-            </li>
-            <li aria-hidden>/</li>
-            <li>
-              <Link
-                href={catalogHref({ brand: product.brandSlug })}
-                className="inline-flex min-h-11 items-center hover:text-foreground lg:min-h-0"
-              >
-                {product.brandName}
-              </Link>
-            </li>
-            <li aria-hidden>/</li>
-            <li aria-current="page" className="text-foreground">
-              {product.name}
-            </li>
-          </ol>
-        </nav>
+        <ProductBreadcrumb product={product} />
 
         <div className="grid grid-cols-1 gap-7 py-5 lg:grid-cols-2 lg:gap-14 lg:py-7">
           <div className="min-w-0">
@@ -175,13 +186,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
                 brandName: product.brandName,
                 image: product.images[0]?.url ?? null,
               }}
-              variants={product.variants.map((variant) => ({
-                id: variant.id,
-                kind: variant.kind,
-                sizeMl: variant.sizeMl,
-                label: variant.label,
-                price: variant.price,
-              }))}
+              variants={product.variants}
               whatsappNumber={settings.whatsappNumber}
             />
 
@@ -208,7 +213,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
         <section className="grid grid-cols-1 gap-x-14 lg:grid-cols-2">
           {product.accords.length > 0 ? (
             <div className="border-t pt-11">
-              <h2 className="mb-5 text-2xl font-extrabold tracking-[-0.025em] lg:text-[32px]">
+              <h2 className={`mb-5 ${SECTION_TITLE_CLASS}`}>
                 A qué huele
               </h2>
               <AccordBars accords={product.accords} />
@@ -229,7 +234,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
                 className="border-t pt-11"
                 defaultOpenOnMobile
                 title={
-                  <h2 className="text-2xl font-extrabold tracking-[-0.025em] lg:text-[32px]">
+                  <h2 className={SECTION_TITLE_CLASS}>
                     Descripción
                   </h2>
                 }

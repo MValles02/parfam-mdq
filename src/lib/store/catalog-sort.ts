@@ -1,6 +1,10 @@
+import { SITE_LOCALE } from "../site";
 import type { SortOption } from "@/lib/store/filters";
 
-const SPANISH_COLLATOR = new Intl.Collator("es-AR", { sensitivity: "base" });
+/** Spanish, accent- and case-insensitive name ordering for store lists. */
+export const SPANISH_COLLATOR = new Intl.Collator(SITE_LOCALE, {
+  sensitivity: "base",
+});
 
 /** The fields `compareCatalogRows` needs; a light row carries nothing more. */
 export type CatalogSortRow = {
@@ -11,9 +15,9 @@ export type CatalogSortRow = {
 };
 
 /**
- * Comparator for `listCatalog` (`src/lib/store/queries.ts`). Price sort
- * compares the minimum active variant price as a number (rows without an
- * active variant, `startingPrice === null`, sort last regardless of
+ * Comparator for `listCatalog` (`src/lib/store/catalog-listing.ts`). Price
+ * sort compares the minimum active variant price as a number (rows without
+ * an active variant, `startingPrice === null`, sort last regardless of
  * direction); name sort uses Spanish collation so accented letters sort next
  * to their unaccented counterpart; `"latest"` is newest by `createdAt` only;
  * the default (`"featured"`) shows featured products first, then newest.

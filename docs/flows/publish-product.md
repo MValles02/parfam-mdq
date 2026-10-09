@@ -54,3 +54,5 @@ objects use the `products/` prefix.
 - [Admin products module](../modules/admin-products.md)
 - [Reference data module](../modules/reference-data.md)
 - [Image storage module](../modules/image-storage.md)
+
+The new-product step offers two radio cards ("Buscar en la referencia" / "Empezar de cero"). Selecting a search result fetches the adoptable payload and shows a preview card; "Usar estos datos" then prefills the form. When a product already links to that reference, the result is marked "Ya lo tenés" and the preview links to the existing product.

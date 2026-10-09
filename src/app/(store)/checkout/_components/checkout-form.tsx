@@ -4,14 +4,17 @@ import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Loader2, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { Check, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PriceChangeAlert } from "@/components/store/cart/price-change-alert";
+import { CartItemRow } from "@/components/store/cart/cart-item-row";
 import { EmptyCart } from "@/components/store/cart/cart-item-list";
 import { formatArsPrice } from "@/lib/catalog";
+import { cn } from "@/lib/utils";
 import { unitsLabel, useCart, useHydrated } from "@/lib/cart";
 import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
 import {
@@ -52,7 +55,7 @@ export function CheckoutForm({
     useForm<CheckoutCustomerInput>({
       resolver: standardSchemaResolver(checkoutCustomerSchema),
       defaultValues: { customerName: "", customerPhone: "" },
-      mode: "onSubmit",
+      mode: "onBlur",
     });
 
   if (!hydrated) return null;
@@ -143,42 +146,94 @@ export function CheckoutForm({
     )();
   }
 
+  const steps = ["Carrito", "Tus datos", "WhatsApp"];
+
   return (
-    <div className="flex flex-col gap-10 lg:flex-row lg:gap-14">
-      <div className="flex max-w-[680px] flex-col gap-8">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(340px,2fr)] lg:gap-14">
+      <div className="flex min-w-0 flex-col gap-5">
         <div>
-          <p className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
-            Último paso
-          </p>
-          <h1 className="mt-2.5 text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] sm:text-[44px]">
-            ¿A nombre de quién armamos el pedido?
+          <h1 className="text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] sm:text-[44px]">
+            Tu pedido
           </h1>
-          <p className="mt-3.5 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
-            Con esto generamos el pedido y abrimos WhatsApp con todo escrito. No
-            pedimos datos de pago: envío o retiro y cómo pagás lo arreglás por
-            chat.
+          <p className="mt-2 text-sm text-muted-foreground">
+            {unitsLabel(units)}
           </p>
         </div>
 
+        <ol
+          aria-label="Pasos"
+          className="grid grid-cols-3 gap-2 text-xs font-semibold lg:hidden"
+        >
+          {steps.map((step, index) => {
+            const isCurrent = index === 1;
+            const isDone = index < 1;
+            return (
+              <li
+                key={step}
+                aria-current={isCurrent ? "step" : undefined}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 text-center",
+                  isCurrent ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-full border text-xs font-bold",
+                    isCurrent
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : isDone
+                        ? "border-input bg-muted"
+                        : "border-input",
+                  )}
+                >
+                  {isDone ? <Check className="size-3.5" /> : index + 1}
+                </span>
+                {step}
+              </li>
+            );
+          })}
+        </ol>
+
         <PriceChangeAlert changes={changes} onDiscard={discardChanges} />
+
+        <div className="flex flex-col gap-3">
+          {items.map((item) => (
+            <CartItemRow key={item.variantId} item={item} />
+          ))}
+        </div>
+
+        <p className="rounded border border-dashed border-input px-4 py-3.5 text-[15px]">
+          ¿Primera vez con decants?{" "}
+          <Link
+            href="/presentaciones"
+            className="font-semibold underline underline-offset-2"
+          >
+            Mirá qué te conviene
+          </Link>
+          .
+        </p>
+      </div>
+
+      <aside className="flex h-fit min-w-0 flex-col gap-4 rounded border bg-card p-5 sm:p-6 lg:sticky lg:top-24">
+        <h2 className="text-[22px] font-bold">Mandanos el pedido</h2>
+        <p className="text-[15px] leading-snug text-muted-foreground">
+          Solo necesitamos tu nombre y un teléfono. Pago y entrega los
+          coordinamos en el chat.
+        </p>
 
         <form
           onSubmit={(e) => e.preventDefault()}
-          className="flex flex-col gap-5"
+          className="flex flex-col gap-4"
         >
           <div className="flex flex-col gap-2">
-            <Label
-              htmlFor="checkout-customer-name"
-              className="text-xs uppercase"
-            >
-              Tu nombre
-            </Label>
+            <Label htmlFor="checkout-customer-name">Nombre y apellido</Label>
             <Input
               id="checkout-customer-name"
-              placeholder="Nombre y apellido"
+              placeholder="Cómo te llamás"
               autoComplete="name"
               maxLength={120}
-              className="h-auto py-4 text-base"
+              className="h-auto py-3.5 text-base"
               aria-invalid={!!formState.errors.customerName}
               aria-required="true"
               aria-describedby={
@@ -200,13 +255,8 @@ export function CheckoutForm({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label
-              htmlFor="checkout-customer-phone"
-              className="text-xs uppercase"
-            >
-              Tu teléfono
-            </Label>
-            <div className="flex items-stretch overflow-hidden rounded-lg border border-input has-[[aria-invalid=true]]:border-destructive">
+            <Label htmlFor="checkout-customer-phone">Tu WhatsApp</Label>
+            <div className="flex items-stretch overflow-hidden rounded border border-input has-[[aria-invalid=true]]:border-destructive">
               <span className="flex items-center border-r border-input bg-muted px-3 text-sm font-semibold whitespace-nowrap text-foreground sm:px-4">
                 {PHONE_PREFIX}
               </span>
@@ -217,16 +267,20 @@ export function CheckoutForm({
                 autoComplete="tel-national"
                 inputMode="tel"
                 maxLength={20}
-                className="h-auto border-0 py-4 text-base"
+                className="h-auto border-0 py-3.5 text-base"
                 aria-invalid={!!formState.errors.customerPhone}
                 aria-required="true"
-                aria-describedby="checkout-customer-phone-help"
+                aria-describedby={
+                  formState.errors.customerPhone
+                    ? "checkout-customer-phone-error"
+                    : "checkout-customer-phone-help"
+                }
                 {...register("customerPhone")}
               />
             </div>
             {formState.errors.customerPhone ? (
               <p
-                id="checkout-customer-phone-help"
+                id="checkout-customer-phone-error"
                 role="alert"
                 className="text-sm text-destructive"
               >
@@ -237,7 +291,7 @@ export function CheckoutForm({
                 id="checkout-customer-phone-help"
                 className="text-sm text-muted-foreground"
               >
-                Por si se corta el chat y tenemos que escribirte.
+                Lo usamos solo para coordinar este pedido.
               </p>
             )}
           </div>
@@ -260,21 +314,34 @@ export function CheckoutForm({
               ref={honeypotRef}
             />
           </div>
+        </form>
 
-          <div className="flex items-baseline justify-between lg:hidden">
-            <span className="text-sm text-muted-foreground">
-              Total · {unitsLabel(units)}
-            </span>
-            <span className="text-xl font-extrabold tracking-[-0.03em]">
+        <div className="flex flex-col gap-1.5 border-t pt-4 text-[15px]">
+          <div className="flex justify-between">
+            <span>{unitsLabel(units)}</span>
+            <span>{formatArsPrice(total.toFixed(2))}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Envío</span>
+            <span>A coordinar</span>
+          </div>
+        </div>
+
+        {/* Below lg the bar is sticky to the viewport bottom but stays inside the
+            aside and last in visual order, so at scroll end it rests above the
+            footer instead of covering it (a fixed bar would). */}
+        <div className="flex flex-col gap-2.5 max-lg:sticky max-lg:bottom-0 max-lg:z-40 max-lg:order-last max-lg:-mx-5 max-lg:-mb-5 max-lg:border-t max-lg:bg-card max-lg:px-5 max-lg:pt-3 max-lg:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:max-lg:-mx-6 sm:max-lg:-mb-6 sm:max-lg:px-6">
+          <div className="flex items-baseline justify-between">
+            <span className="text-base font-bold">Total</span>
+            <span className="text-xl font-bold lg:text-2xl">
               {formatArsPrice(total.toFixed(2))}
             </span>
           </div>
-
           <Button
             type="button"
             onClick={handleSubmitClick}
             disabled={!canSubmit || isSubmitting}
-            className="h-auto gap-3 bg-whatsapp py-[22px] text-base font-semibold text-whatsapp-foreground hover:bg-whatsapp/90"
+            className="h-auto min-h-14 gap-3 bg-whatsapp py-4 text-base font-semibold text-whatsapp-foreground hover:bg-whatsapp/90"
           >
             {isSubmitting ? (
               <Loader2 className="size-5 animate-spin" />
@@ -287,57 +354,27 @@ export function CheckoutForm({
                 ? "Armando el pedido…"
                 : "Enviar pedido por WhatsApp"}
           </Button>
-        </form>
-      </div>
-
-      <div className="flex h-fit flex-col rounded border bg-card p-7 lg:w-[440px] lg:shrink-0">
-        <div className="flex items-baseline justify-between">
-          <span className="text-lg font-bold tracking-[-0.015em]">
-            Tu pedido
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {unitsLabel(units)}
-          </span>
+          <p className="text-center text-[13px] text-muted-foreground">
+            No se cobra nada ahora. Se abre WhatsApp con el pedido escrito.
+          </p>
         </div>
 
-        <div className="mt-5 flex flex-col">
-          {items.map((item) => (
-            <div
-              key={item.variantId}
-              className="flex items-start justify-between gap-4 border-b py-3.5 last:border-b-0"
-            >
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm leading-[1.25] font-semibold">
-                  {item.productName}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {item.variantLabel} · x{item.qty}
-                </span>
-              </div>
-              <span className="text-sm font-bold whitespace-nowrap">
-                {formatArsPrice(
-                  (Number(item.unitPriceArs) * item.qty).toFixed(2),
-                )}
-              </span>
-            </div>
+        <ul className="flex flex-col gap-2 text-sm">
+          {[
+            "No pagás nada ahora.",
+            ...(shippingInfo ? [shippingInfo] : []),
+            "Todos los productos son originales.",
+          ].map((text) => (
+            <li key={text} className="flex items-start gap-2">
+              <Check
+                className="mt-0.5 size-4 shrink-0 text-success-foreground"
+                aria-hidden
+              />
+              {text}
+            </li>
           ))}
-        </div>
-
-        <div className="mt-5 flex items-baseline justify-between">
-          <span className="text-sm text-muted-foreground">Total</span>
-          <span className="text-[32px] font-extrabold tracking-[-0.03em]">
-            {formatArsPrice(total.toFixed(2))}
-          </span>
-        </div>
-
-        <div className="my-5 h-px bg-border" />
-
-        <ul className="flex flex-col gap-3 text-sm leading-relaxed text-foreground/90">
-          <li>{shippingInfo}</li>
-          <li>Todos los productos son originales.</li>
-          <li>Guardamos el pedido con un número para seguirlo por chat.</li>
         </ul>
-      </div>
+      </aside>
     </div>
   );
 }

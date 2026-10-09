@@ -15,12 +15,53 @@ test("draft product slug returns 404", async ({ page }) => {
   expect(response?.status()).toBe(404);
 });
 
+test("multi-kind product lets you pick Decant and its size", async ({
+  page,
+}) => {
+  await page.goto("/producto/fixture-eau-de-prueba-mujer");
+  const kinds = page.getByRole("radiogroup", { name: "Presentación" });
+  await expect(
+    kinds.getByRole("radio", { name: "Frasco entero" }),
+  ).toBeVisible();
+  await kinds.getByRole("radio", { name: "Decant" }).click();
+  await expect(page.getByRole("radio", { name: /5 ml/ })).toBeVisible();
+  await expect(page.getByText(/8\.000/).first()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Agregar al carrito · Decant 5 ml" }),
+  ).toBeVisible();
+});
+
+test("single-kind product has no Presentación group", async ({ page }) => {
+  await page.goto("/producto/fixture-eau-de-prueba-unisex");
+  await expect(page.getByRole("radiogroup", { name: "Tamaño" })).toBeVisible();
+  await expect(
+    page.getByRole("radiogroup", { name: "Presentación" }),
+  ).toHaveCount(0);
+});
+
+test("tester variant is purchasable", async ({ page }) => {
+  await page.goto("/producto/fixture-eau-de-prueba-hombre");
+  await expect(
+    page.getByRole("button", { name: "Agregar al carrito · Tester 100 ml" }),
+  ).toBeVisible();
+});
+
+test("product page does not overflow at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/producto/fixture-eau-de-prueba-mujer");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const overflows = await page.evaluate(
+    () => document.documentElement.scrollWidth > 390,
+  );
+  expect(overflows).toBe(false);
+});
+
 test("Se parece a lists gender-compatible products sharing an accord", async ({
   page,
 }) => {
   await page.goto("/producto/fixture-eau-de-prueba-mujer");
   const similar = page.locator("section", {
-    has: page.getByRole("heading", { name: "Se parece a" }),
+    has: page.getByRole("heading", { name: "Si te gusta, probá también" }),
   });
   await expect(
     similar.getByRole("heading", { name: "Fixture Eau de Prueba Unisex" }),

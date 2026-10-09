@@ -8,6 +8,8 @@ Let a visitor select an active product variant and quantity, persist that select
 
 `/producto/[slug]` renders `Purchase` from `src/components/store/product/purchase.tsx`. Only `PUBLISHED` products with an `isActive` variant expose the cart controls. Customer copy, including the WhatsApp fallback for unavailable variants, remains in Spanish.
 
+`Purchase` renders two radio groups: "Presentación" (one option per variant kind, shown only when the product has more than one kind; picking a kind selects its first variant) and "Tamaño" (the variants of the selected kind, labelled `{sizeMl} ml` or the variant label, each with its price). A "¿Cuál me conviene?" link to `/presentaciones` is always visible. The price lives in the size options and the CTA label ("Agregar al carrito · {label}"); there is no separate price block. The WhatsApp question link and the key facts (`key-facts.tsx`) are rendered by the page around `Purchase`.
+
 Below `lg`, `Purchase` also renders a fixed bottom bar with the selected variant price and an add-to-cart button while the in-page CTA is out of view. Confirmation toasts (with a "Ver carrito" action that navigates to `/carrito`) come from `src/components/store/store-toaster.tsx`.
 
 ## Flow

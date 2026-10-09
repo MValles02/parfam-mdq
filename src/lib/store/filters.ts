@@ -8,6 +8,7 @@ import {
   type UrlKeys,
 } from "nuqs/server";
 import type { Gender, VariantKind } from "@/generated/prisma/enums";
+import { CATALOG_SECTION_ID } from "@/lib/store/links";
 
 /**
  * Catalog filters live in the URL. The parser definitions are shared by the
@@ -189,5 +190,5 @@ export function isCatalogView(filters: CatalogFilters): boolean {
 
 /** Link to the home catalog with the given filters applied. */
 export function catalogHref(partial: Partial<CatalogFilters>): string {
-  return "/" + serializeCatalogFilters(partial) + "#catalogo";
+  return "/" + serializeCatalogFilters(partial) + `#${CATALOG_SECTION_ID}`;
 }

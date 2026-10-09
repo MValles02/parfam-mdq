@@ -74,7 +74,7 @@ pnpm dev
 pnpm build
 pnpm typecheck
 pnpm lint
-pnpm test
+pnpm test   # integration tests; needs a migrated DB (pnpm db:up && pnpm db:deploy)
 pnpm test:e2e
 pnpm format
 pnpm db:up

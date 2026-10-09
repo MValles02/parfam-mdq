@@ -16,10 +16,26 @@ jobs:
     name: checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: e2e
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U e2e -d e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      # Placeholder so prisma.config.ts's env("DATABASE_URL") does not throw
-      # during postinstall `prisma generate`; no database is contacted.
-      DATABASE_URL: "postgresql://build:build@127.0.0.1:5432/build?schema=public"
+      # Fixed throwaway test values; none of these are secrets. The database
+      # backs the integration tests (`pnpm test`).
+      DATABASE_URL: "postgresql://e2e:e2e@localhost:5432/e2e?schema=public"
+      AUTH_SECRET: "e2e-only-auth-secret-not-for-production-use"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
 
     steps:
       - name: Check out repository
@@ -44,6 +60,9 @@ jobs:
 
       - name: Lint
         run: pnpm run lint
+
+      - name: Apply migrations
+        run: pnpm db:deploy
 
       - name: Test
         run: pnpm run test

@@ -8,27 +8,54 @@ import Link from "next/link";
 import { Check, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PriceChangeAlert } from "@/components/store/cart/price-change-alert";
 import { CartItemRow } from "@/components/store/cart/cart-item-row";
 import { EmptyCart } from "@/components/store/cart/cart-item-list";
 import { formatArsPrice } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
-import { unitsLabel, useCart, useHydrated } from "@/lib/cart";
+import {
+  cartSubtotal,
+  cartUnits,
+  unitsLabel,
+  useCart,
+  useHydrated,
+} from "@/lib/cart";
 import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
 import {
   checkoutCustomerSchema,
+  withPhonePrefix,
   type CheckoutCustomerInput,
 } from "@/lib/validations/checkout";
+import { whatsAppLinkStorageKey } from "@/lib/whatsapp";
 import { createOrder } from "../actions";
+import {
+  CustomerNameField,
+  CustomerPhoneField,
+  HoneypotField,
+} from "./customer-fields";
+
+type CheckoutFailure = Extract<
+  Awaited<ReturnType<typeof createOrder>>,
+  { ok: false }
+>;
+
+type CustomerField = keyof CheckoutCustomerInput;
 
 /**
- * Fixed phone prefix: the customer only enters the local number, never the
- * country code or mobile "9". This avoids the ambiguity of guessing whether
- * they entered "0223 15…" or "223…".
+ * Server field errors the form can show inline, in response order. Errors for
+ * other fields (such as `items`) have no input and fall back to a toast.
  */
-const PHONE_PREFIX = "+54 9";
+function customerFieldErrors(
+  fieldErrors: CheckoutFailure["fieldErrors"] = {},
+): [CustomerField, string][] {
+  const errors: [CustomerField, string][] = [];
+  for (const [field, messages] of Object.entries(fieldErrors)) {
+    if (field === "customerName" || field === "customerPhone") {
+      errors.push([field, messages[0]]);
+    }
+  }
+  return errors;
+}
 
 /**
  * Final checkout step. The honeypot deliberately uses `useRef` instead of
@@ -64,13 +91,35 @@ export function CheckoutForm({
     return <EmptyCart />;
   }
 
-  const total = items.reduce(
-    (acc, i) => acc + Number(i.unitPriceArs) * i.qty,
-    0,
-  );
   const canSubmit = changes.length === 0 && !isChecking;
 
-  const units = items.reduce((acc, i) => acc + i.qty, 0);
+  const units = cartUnits(items);
+  const total = cartSubtotal(items);
+
+  function showFailure({ message, fieldErrors, invalidItems }: CheckoutFailure) {
+    for (const invalidItem of invalidItems ?? []) {
+      remove(invalidItem.variantId);
+    }
+    // Field errors render inline and move focus to the field; the toast is
+    // reserved for errors that have no field (stock, network, etc.).
+    const inlineErrors = customerFieldErrors(fieldErrors);
+    inlineErrors.forEach(([field, fieldMessage], index) => {
+      setError(field, { message: fieldMessage }, { shouldFocus: index === 0 });
+    });
+    if (inlineErrors.length === 0) toast.error(message);
+  }
+
+  function showThanks(orderNumber: string, link: string) {
+    // The link embeds the customer's name and order contents, so it travels
+    // via sessionStorage instead of the URL (history, logs, Referer).
+    // `_customer-thanks.tsx` reads the same key.
+    try {
+      sessionStorage.setItem(whatsAppLinkStorageKey(orderNumber), link);
+    } catch {
+      // Storage unavailable: the thank-you page shows its generic fallback.
+    }
+    router.push(`/pedido/${orderNumber}/gracias`);
+  }
 
   function handleSubmitClick() {
     // Validate before opening anything: an invalid form must not leave a
@@ -91,7 +140,7 @@ export function CheckoutForm({
         startSubmitting(async () => {
           const result = await createOrder({
             customerName: values.customerName,
-            customerPhone: `${PHONE_PREFIX} ${values.customerPhone}`,
+            customerPhone: withPhonePrefix(values.customerPhone),
             items: items.map((i) => ({
               variantId: i.variantId,
               qty: i.qty,
@@ -100,43 +149,15 @@ export function CheckoutForm({
           });
 
           if (!result.ok) {
-            const { message, fieldErrors, invalidItems } = result;
             popup?.close();
-            if (invalidItems) {
-              for (const invalidItem of invalidItems) {
-                remove(invalidItem.variantId);
-              }
-            }
-            // Field errors render inline and move focus to the field; the toast
-            // is reserved for errors that have no field (stock, network, etc.).
-            let hasFieldError = false;
-            for (const [field, messages] of Object.entries(fieldErrors ?? {})) {
-              if (field === "customerName" || field === "customerPhone") {
-                setError(
-                  field,
-                  { message: messages[0] },
-                  { shouldFocus: !hasFieldError },
-                );
-                hasFieldError = true;
-              }
-            }
-            if (!hasFieldError) toast.error(message);
+            showFailure(result);
             return;
           }
 
-          const { orderNumber, link } = result;
           if (popup) {
-            popup.location.href = link;
+            popup.location.href = result.link;
           }
-          // The link embeds the customer's name and order contents, so it
-          // travels via sessionStorage instead of the URL (history, logs,
-          // Referer). `_customer-thanks.tsx` reads the same key.
-          try {
-            sessionStorage.setItem(`whatsapp-link:${orderNumber}`, link);
-          } catch {
-            // Storage unavailable: the thank-you page shows its generic fallback.
-          }
-          router.push(`/pedido/${orderNumber}/gracias`);
+          showThanks(result.orderNumber, result.link);
         });
       },
       () => {
@@ -226,100 +247,21 @@ export function CheckoutForm({
           onSubmit={(e) => e.preventDefault()}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="checkout-customer-name">Nombre y apellido</Label>
-            <Input
-              id="checkout-customer-name"
-              placeholder="Cómo te llamás"
-              autoComplete="name"
-              maxLength={120}
-              className="h-auto py-3.5 text-base"
-              aria-invalid={!!formState.errors.customerName}
-              aria-required="true"
-              aria-describedby={
-                formState.errors.customerName
-                  ? "checkout-customer-name-error"
-                  : undefined
-              }
-              {...register("customerName")}
-            />
-            {formState.errors.customerName ? (
-              <p
-                id="checkout-customer-name-error"
-                role="alert"
-                className="text-sm text-destructive"
-              >
-                {formState.errors.customerName.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="checkout-customer-phone">Tu WhatsApp</Label>
-            <div className="flex items-stretch overflow-hidden rounded border border-input has-[[aria-invalid=true]]:border-destructive">
-              <span className="flex items-center border-r border-input bg-muted px-3 text-sm font-semibold whitespace-nowrap text-foreground sm:px-4">
-                {PHONE_PREFIX}
-              </span>
-              <Input
-                id="checkout-customer-phone"
-                type="tel"
-                placeholder="223 123 4567"
-                autoComplete="tel-national"
-                inputMode="tel"
-                maxLength={20}
-                className="h-auto border-0 py-3.5 text-base"
-                aria-invalid={!!formState.errors.customerPhone}
-                aria-required="true"
-                aria-describedby={
-                  formState.errors.customerPhone
-                    ? "checkout-customer-phone-error"
-                    : "checkout-customer-phone-help"
-                }
-                {...register("customerPhone")}
-              />
-            </div>
-            {formState.errors.customerPhone ? (
-              <p
-                id="checkout-customer-phone-error"
-                role="alert"
-                className="text-sm text-destructive"
-              >
-                {formState.errors.customerPhone.message}
-              </p>
-            ) : (
-              <p
-                id="checkout-customer-phone-help"
-                className="text-sm text-muted-foreground"
-              >
-                Lo usamos solo para coordinar este pedido.
-              </p>
-            )}
-          </div>
-
-          {/* Honeypot: hidden from people and visible to bots that complete
-              every input. It avoids `hidden`, which some bots intentionally
-              skip, and is positioned offscreen instead. */}
-          <div
-            className="absolute -left-[9999px]"
-            aria-hidden="true"
-            tabIndex={-1}
-          >
-            <label htmlFor="checkout-company">Empresa</label>
-            <input
-              id="checkout-company"
-              name="company"
-              type="text"
-              tabIndex={-1}
-              autoComplete="off"
-              ref={honeypotRef}
-            />
-          </div>
+          <CustomerNameField
+            registration={register("customerName")}
+            error={formState.errors.customerName}
+          />
+          <CustomerPhoneField
+            registration={register("customerPhone")}
+            error={formState.errors.customerPhone}
+          />
+          <HoneypotField ref={honeypotRef} />
         </form>
 
         <div className="flex flex-col gap-1.5 border-t pt-4 text-[15px]">
           <div className="flex justify-between">
             <span>{unitsLabel(units)}</span>
-            <span>{formatArsPrice(total.toFixed(2))}</span>
+            <span>{formatArsPrice(total)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Envío</span>
@@ -334,7 +276,7 @@ export function CheckoutForm({
           <div className="flex items-baseline justify-between">
             <span className="text-base font-bold">Total</span>
             <span className="text-xl font-bold lg:text-2xl">
-              {formatArsPrice(total.toFixed(2))}
+              {formatArsPrice(total)}
             </span>
           </div>
           <Button

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { siteDefaults } from "@/lib/site";
+import { brandColors, siteDefaults } from "@/lib/site";
 
 /**
  * Preview image for every shared store link.
@@ -26,6 +26,13 @@ export const alt = siteDefaults.name;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+/**
+ * `ImageResponse` cannot read CSS variables, so the text color is the hex
+ * value behind the `--foreground` token in `src/app/globals.css`; the
+ * background is `brandColors.cream`.
+ */
+const INK = "#000000";
+
 // The font does not depend on the request, so read it once at module scope.
 const outfitExtraBold = readFile(
   join(process.cwd(), "src/assets/fonts/Outfit-ExtraBold.ttf"),
@@ -43,8 +50,8 @@ export default async function Image() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "#F2EEE9",
-        color: "#000000",
+        background: brandColors.cream,
+        color: INK,
         fontFamily: "Outfit",
       }}
     >

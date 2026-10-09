@@ -75,7 +75,7 @@ const NOTES = [
 ];
 
 export default async function ConcentracionesPage() {
-  const config = await getSiteSettings();
+  const settings = await getSiteSettings();
 
   return (
     <GuideShell current={PAGE_PATH} title={PAGE_TITLE}>
@@ -165,7 +165,7 @@ export default async function ConcentracionesPage() {
         </Link>
 
         <PageCtaPair
-          whatsappNumber={config.whatsappNumber}
+          whatsappNumber={settings.whatsappNumber}
           message="¡Hola! Tengo una duda sobre las concentraciones."
         />
       </article>

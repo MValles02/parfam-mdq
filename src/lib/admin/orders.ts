@@ -24,10 +24,14 @@ export function countPendingOrders() {
 function buildSearchWhere(query: string): Prisma.OrderWhereInput {
   const searchTerm = query.trim();
   if (!searchTerm) return {};
+  // customerPhone is stored as E.164 (+549...), so match on digits only: this
+  // lets "223 123-4567" or "+54 9 223 1234567" hit regardless of formatting.
+  const digits = searchTerm.replace(/\D/g, "");
   return {
     OR: [
       { number: { contains: searchTerm, mode: "insensitive" } },
       { customerName: { contains: searchTerm, mode: "insensitive" } },
+      ...(digits.length >= 6 ? [{ customerPhone: { contains: digits } }] : []),
     ],
   };
 }

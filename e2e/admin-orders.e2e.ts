@@ -48,6 +48,12 @@ test("admin opens a pending order, confirms it and finds it under confirmados", 
     list.getByRole("link", { name: new RegExp(number) }),
   ).toBeVisible();
 
+  // Phone search ignores formatting: stored as +549223..., typed with dashes.
+  await page.goto("/admin/pedidos?q=223-555 0101");
+  await expect(
+    list.getByRole("link", { name: new RegExp(number) }),
+  ).toBeVisible();
+
   await page.goto("/admin/pedidos?estado=cancelados");
   await expect(
     list.getByRole("link", { name: new RegExp(number) }),

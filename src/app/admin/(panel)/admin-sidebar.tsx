@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { siteDefaults } from "@/lib/site";
 
-const NAV = [
+export const NAV = [
   { href: "/admin", label: "Inicio", icon: Home },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/productos", label: "Productos", icon: Package },

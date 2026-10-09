@@ -3,7 +3,7 @@
  * reference-catalog dump (see new-database/SCHEMA.md, gitignored and
  * local-only, for the full record shape). This module does no database,
  * file, or network I/O: it takes already-parsed JSON in and returns typed,
- * normalized data out, so both unit tests and the future importer /
+ * normalized data out, so both the importer and the
  * translation-coverage script can reuse it without a live database.
  *
  * Only a subset of each record is kept. Dropped on purpose: `url`,
@@ -24,8 +24,8 @@ export { toSlug };
  * Mirrors the Prisma `Gender` and `NotePosition` enums (prisma/schema.prisma)
  * as local string unions instead of importing them. Importing the generated
  * Prisma client (directly, or transitively through another module) would tie
- * this file to `prisma generate` having run, which a pure parser and its
- * unit tests should not depend on.
+ * this file to `prisma generate` having run, which a pure parser and the
+ * importer scripts should not depend on.
  */
 export type Gender = "WOMEN" | "MEN" | "UNISEX";
 export type NotePosition = "TOP" | "MIDDLE" | "BASE";

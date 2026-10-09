@@ -9,6 +9,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { countPendingOrders } from "@/lib/admin/orders";
 import { auth } from "@/lib/auth";
+import { ADMIN_LOGIN_PATH } from "@/lib/auth.config";
 import { AdminBottomNav } from "./admin-bottom-nav";
 import { AdminSidebar } from "./admin-sidebar";
 import { UserMenu } from "./user-menu";
@@ -20,7 +21,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
    */
   const session = await auth();
   if (!session?.user) {
-    redirect("/admin/login");
+    redirect(ADMIN_LOGIN_PATH);
   }
 
   const pendingCount = await countPendingOrders();

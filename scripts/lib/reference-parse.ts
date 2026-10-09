@@ -3,44 +3,40 @@
  * reference-catalog dump (see new-database/SCHEMA.md, gitignored and
  * local-only, for the full record shape). This module does no database,
  * file, or network I/O: it takes already-parsed JSON in and returns typed,
- * normalized data out, so both the importer and the
- * translation-coverage script can reuse it without a live database.
+ * normalized data out, so the importer and the translation-coverage check
+ * both reuse it without a live database.
  *
- * Only a subset of each record is kept. Dropped on purpose: `url`,
- * `picture`, `thumbnail` (derivable from `id` + `slug`, see SCHEMA.md),
- * `rating`, every histogram, `price_value`, `relation`, `community_gender`,
- * `ai_summary`, `similar`, and the extra `popularity` sub-fields, plus
- * `image_id` on perfumers and notes (Fragrantica's own portrait/icon
- * assets, irrelevant to this project). Zod strips any other unknown key by
- * default, so the schema below only needs to name what it keeps.
+ * `parseReferenceRecord` validates the raw record against
+ * scripts/lib/reference-record-schema.ts (which also lists the dropped
+ * fields), parses its note, accord, and perfumer lists with
+ * scripts/lib/reference-parse-lists.ts, and normalizes the remaining scalar
+ * fields here.
  */
 
-import { z } from "zod";
 import { toSlug } from "../../src/lib/slug";
+import {
+  parseAccords,
+  parseNotes,
+  parsePerfumers,
+  toNoteSlug,
+  type NotePosition,
+  type ParsedAccord,
+  type ParsedNote,
+  type ParsedPerfumer,
+} from "./reference-parse-lists";
+import { referenceRecordSchema } from "./reference-record-schema";
 
-export { toSlug };
+export { toNoteSlug, toSlug };
+export type { NotePosition };
 
 /**
- * Mirrors the Prisma `Gender` and `NotePosition` enums (prisma/schema.prisma)
- * as local string unions instead of importing them. Importing the generated
- * Prisma client (directly, or transitively through another module) would tie
- * this file to `prisma generate` having run, which a pure parser and the
- * importer scripts should not depend on.
+ * Mirrors the Prisma `Gender` enum (prisma/schema.prisma) as a local string
+ * union instead of importing it. Importing the generated Prisma client
+ * (directly, or transitively through another module) would tie this file to
+ * `prisma generate` having run, which a pure parser and the importer scripts
+ * should not depend on.
  */
 export type Gender = "WOMEN" | "MEN" | "UNISEX";
-export type NotePosition = "TOP" | "MIDDLE" | "BASE";
-
-/**
- * A note's identity, for deduplication purposes, is its own display name —
- * not the dataset's "family" slug (kept separately, see `ParsedNote.family`
- * below). Two different display names can share a family (e.g. "Calabrian
- * bergamot" and "Sicilian Bergamot" both carry the family slug "Bergamot"),
- * and collapsing them into one note would silently discard the distinction
- * an administrator may care about when writing the Spanish product copy.
- */
-export function toNoteSlug(name: string): string {
-  return toSlug(name.trim().toLowerCase());
-}
 
 /**
  * `slug` on a raw record is "Brand-Segment/Name-Segment" and is NOT unique
@@ -60,127 +56,6 @@ export function mapGender(value: string | null | undefined): Gender | null {
   if (value === "female") return "WOMEN";
   if (value === "unisex") return "UNISEX";
   return null;
-}
-
-const perfumerRecordSchema = z.object({
-  name: z.string(),
-  slug: z.string(),
-});
-
-const accordRecordSchema = z.object({
-  name: z.string(),
-  strength: z.number(),
-});
-
-const noteItemRecordSchema = z.object({
-  name: z.string(),
-  slug: z.string(),
-  weight: z.number(),
-});
-
-const tieredNotesSchema = z.object({
-  top: z.array(noteItemRecordSchema).default([]),
-  middle: z.array(noteItemRecordSchema).default([]),
-  base: z.array(noteItemRecordSchema).default([]),
-});
-
-function emptyTiered(): { top: []; middle: []; base: [] } {
-  return { top: [], middle: [], base: [] };
-}
-
-const notesRecordSchema = z.object({
-  tiered: tieredNotesSchema.default(emptyTiered),
-  flat: z.array(noteItemRecordSchema).default([]),
-});
-
-/**
- * Only `average` is kept from longevity/sillage/popularity; their
- * histograms and other sub-fields are out of scope for this parser.
- */
-const averageMetricSchema = z.object({
-  average: z.number().nullable(),
-});
-
-const seasonVotesSchema = z.object({
-  winter: z.number(),
-  spring: z.number(),
-  summer: z.number(),
-  autumn: z.number(),
-});
-
-const daypartVotesSchema = z.object({
-  day: z.number(),
-  night: z.number(),
-});
-
-const popularityRecordSchema = z.object({
-  magnitude: z.number().nullable(),
-});
-
-const metaRecordSchema = z.object({
-  scraped_at: z.number().nullable().default(null),
-});
-
-/**
- * Covers only the fields this project keeps from a perfumes.jsonl record.
- *
- * `id` is typed as a bare `z.number()`, not `.int().positive()`, on purpose:
- * that keeps "the record doesn't match the schema at all" (a missing/wrong
- * -typed field) and "the record has a nonsensical id" (checked explicitly in
- * `parseReferenceRecord`) as two distinguishable failures instead of one.
- */
-const referenceRecordSchema = z.object({
-  id: z.number(),
-  slug: z.string(),
-  name: z.string(),
-  brand: z.string(),
-  year: z.number().nullable().default(null),
-  gender: z.string().nullable().default(null),
-  collection: z.string().nullable().default(null),
-  description: z.string().nullable().default(null),
-  perfumers: z.array(perfumerRecordSchema).default([]),
-  accords: z.array(accordRecordSchema).default([]),
-  notes: notesRecordSchema.default(() => ({ tiered: emptyTiered(), flat: [] })),
-  // The vote aggregates below come from one encrypted blob upstream and go
-  // null together when it is absent (see new-database/SCHEMA.md); each is
-  // independently nullable here to match that.
-  longevity: averageMetricSchema.nullable().default(null),
-  sillage: averageMetricSchema.nullable().default(null),
-  seasons: seasonVotesSchema.nullable().default(null),
-  daypart: daypartVotesSchema.nullable().default(null),
-  people: z.number().nullable().default(null),
-  popularity: popularityRecordSchema.nullable().default(null),
-  meta: metaRecordSchema.default({ scraped_at: null }),
-});
-
-type ReferenceRecord = z.infer<typeof referenceRecordSchema>;
-
-interface ParsedPerfumer {
-  name: string;
-  slug: string;
-}
-
-interface ParsedAccord {
-  name: string;
-  slug: string;
-  strength: number;
-  sortOrder: number;
-}
-
-interface ParsedNote {
-  name: string;
-  noteSlug: string;
-  /** The dataset's own note slug, kept as given (e.g. "Bergamot"); several display names can share one family, see `toNoteSlug`. */
-  family: string;
-  position: NotePosition | null;
-  /**
-   * 0..100, normalized so the perfume's strongest note is 100. A note at
-   * weight 0 is not "faint" — every note in the pyramid sits at 0 exactly
-   * when nobody has voted on this perfume's ingredients yet, so a record's
-   * all-zero weights are preserved rather than treated as missing data.
-   */
-  weight: number;
-  sortOrder: number;
 }
 
 interface SeasonVotes {
@@ -222,12 +97,22 @@ export interface ParsedReference {
    * the import). `parseReferenceRecord` always sets this to an array, empty
    * when the record had no warnings; it is typed optional only so that
    * hand-built `ParsedReference` fixtures elsewhere (e.g.
-   * scripts/lib/reference-import.test.ts) do not have to name it. Callers
-   * reading a real parsed record (see scripts/import-references.ts and
-   * scripts/check-reference-translations.ts) should still guard with `?? []`
-   * to keep that distinction honest at the type level.
+   * scripts/lib/reference-import.test.ts) do not have to name it. Readers
+   * still guard with `?? []` (see `countYearOutOfRangeWarnings`) to keep that
+   * distinction honest at the type level.
    */
   warnings?: string[];
+}
+
+/**
+ * How many of the record's warnings report an out-of-range year (0 or 1).
+ * Currently the only warning `parseReferenceRecord` ever produces is a year
+ * outside the plausible range (see `normalizeYear`), so counting warning
+ * entries doubles as counting those records; this comment is the tripwire to
+ * revisit the count if a second kind of warning is ever added.
+ */
+export function countYearOutOfRangeWarnings(record: ParsedReference): number {
+  return (record.warnings ?? []).length;
 }
 
 /** Trims a nullable text field; an empty result becomes `null` rather than a persisted empty string. */
@@ -235,131 +120,6 @@ function nullableText(value: string | null): string | null {
   if (value === null) return null;
   const trimmed = value.trim();
   return trimmed === "" ? null : trimmed;
-}
-
-/** Weights and accord strengths are both documented as integers 0..100. */
-function assertUnitScore(
-  value: number,
-  kind: "weight" | "strength",
-  pid: number,
-): void {
-  if (!Number.isInteger(value) || value < 0 || value > 100) {
-    throw new Error(
-      `Reference record ${pid}: ${kind} must be an integer between 0 and 100, got ${value}.`,
-    );
-  }
-}
-
-/**
- * The perfumer slug comes from the dataset's own `perfumers[].slug` (e.g.
- * "Nathalie_Feisthauer"), not from re-slugifying the display name: keeping
- * the dataset's identity key is what lets two credits with different display
- * casing or accents still resolve to the same Perfumer row. That dataset
- * slug is not itself a clean URL slug, though — measuring it against the
- * real 140k-record dataset (see scripts/import-references.ts) found two
- * quirks `toSlug` alone does not undo: words are separated with `_` instead
- * of `-` (so "Nathalie_Feisthauer" would slugify to "nathaliefeisthauer",
- * losing the word boundary), and any non-ASCII character is left as an
- * undecoded percent-escape rather than the actual UTF-8 character (e.g.
- * "Sophie_Labb%C3%A9" for "Sophie Labbé", which `toSlug` would otherwise turn
- * into the unreadable "sophielabbpercentc3percenta9"). `normalizePerfumerSlug`
- * percent-decodes the raw slug (falling back to the raw string if the escape
- * itself is malformed, e.g. a stray "%ZZ") and turns `_` into a space before
- * handing the result to `toSlug`. Falls back to `toSlug(name)` when the
- * dataset slug is empty, or when normalizing it yields an empty string.
- */
-function normalizePerfumerSlug(datasetSlug: string, name: string): string {
-  const trimmed = datasetSlug.trim();
-  if (trimmed === "") return toSlug(name);
-  let decoded = trimmed;
-  try {
-    decoded = decodeURIComponent(trimmed);
-  } catch {
-    // Malformed percent-escape (e.g. "Bad%ZZ"): keep the raw slug rather
-    // than letting a corrupt dataset value abort the whole import.
-  }
-  const slug = toSlug(decoded.replace(/_/g, " "));
-  return slug !== "" ? slug : toSlug(name);
-}
-
-function parsePerfumers(raw: ReferenceRecord["perfumers"]): ParsedPerfumer[] {
-  const seenSlugs = new Set<string>();
-  const result: ParsedPerfumer[] = [];
-  for (const perfumer of raw) {
-    const name = perfumer.name.trim();
-    const slug = normalizePerfumerSlug(perfumer.slug, name);
-    if (seenSlugs.has(slug)) continue;
-    seenSlugs.add(slug);
-    result.push({ name, slug });
-  }
-  return result;
-}
-
-function parseAccords(
-  raw: ReferenceRecord["accords"],
-  pid: number,
-): ParsedAccord[] {
-  const seenSlugs = new Set<string>();
-  const result: ParsedAccord[] = [];
-  raw.forEach((accord, index) => {
-    assertUnitScore(accord.strength, "strength", pid);
-    const name = accord.name.trim();
-    const slug = toSlug(name);
-    if (seenSlugs.has(slug)) return;
-    seenSlugs.add(slug);
-    result.push({ name, slug, strength: accord.strength, sortOrder: index });
-  });
-  return result;
-}
-
-function parseNoteItems(
-  items: ReferenceRecord["notes"]["flat"],
-  position: NotePosition | null,
-  pid: number,
-): ParsedNote[] {
-  const seenNoteSlugs = new Set<string>();
-  const result: ParsedNote[] = [];
-  items.forEach((item, index) => {
-    assertUnitScore(item.weight, "weight", pid);
-    const name = item.name.trim();
-    const noteSlug = toNoteSlug(name);
-    if (seenNoteSlugs.has(noteSlug)) return;
-    seenNoteSlugs.add(noteSlug);
-    result.push({
-      name,
-      noteSlug,
-      family: item.slug,
-      position,
-      weight: item.weight,
-      sortOrder: index,
-    });
-  });
-  return result;
-}
-
-function parseNotes(raw: ReferenceRecord["notes"], pid: number): ParsedNote[] {
-  const { tiered, flat } = raw;
-  const hasTiered =
-    tiered.top.length > 0 || tiered.middle.length > 0 || tiered.base.length > 0;
-  const hasFlat = flat.length > 0;
-
-  if (hasTiered && hasFlat) {
-    throw new Error(
-      `Reference record ${pid}: has both tiered and flat notes; the dataset documents these as mutually exclusive.`,
-    );
-  }
-
-  if (hasFlat) return parseNoteItems(flat, null, pid);
-
-  // Deduplication is scoped per tier (a fresh Set per parseNoteItems call),
-  // matching the spec: duplicates of the same noteSlug within the SAME
-  // position keep the first, but the same note can legitimately appear once
-  // per tier (rare, but not a data error).
-  return [
-    ...parseNoteItems(tiered.top, "TOP", pid),
-    ...parseNoteItems(tiered.middle, "MIDDLE", pid),
-    ...parseNoteItems(tiered.base, "BASE", pid),
-  ];
 }
 
 /** A count field (season/daypart vote, or community vote total) must be a whole number no lower than zero; a negative or fractional count signals corrupt source data rather than "no votes". */
@@ -379,6 +139,10 @@ function assertNonNegativeInt(value: number, kind: string, pid: number): void {
  * a fabricated rating; any other out-of-range value is corrupt data and
  * throws instead of being silently clamped or passed through.
  */
+const NO_VOTES_AVERAGE = 0;
+const LONGEVITY_RANGE = { min: 1, max: 5 } as const;
+const SILLAGE_RANGE = { min: 1, max: 4 } as const;
+
 function normalizeAverageMetric(
   metric: { average: number | null } | null,
   range: { min: number; max: number },
@@ -387,7 +151,7 @@ function normalizeAverageMetric(
 ): number | null {
   if (metric === null || metric.average === null) return null;
   const { average } = metric;
-  if (average === 0) return null;
+  if (average === NO_VOTES_AVERAGE) return null;
   if (average < range.min || average > range.max) {
     throw new Error(
       `Reference record ${pid}: ${label} average ${average} is outside the valid range [${range.min}, ${range.max}].`,
@@ -398,11 +162,12 @@ function normalizeAverageMetric(
 
 /**
  * Season/daypart tallies come from the same encrypted vote blob as
- * longevity/sillage (see the comment on `referenceRecordSchema`). When the
- * community simply hasn't voted on seasonality (or day/night), every bucket
- * reads 0 rather than the blob being absent — so an all-zero tally means "no
- * votes", not "0% of voters chose every option", and must become `null`
- * before it reaches the store.
+ * longevity/sillage (see `referenceRecordSchema` in
+ * scripts/lib/reference-record-schema.ts). When the community simply hasn't
+ * voted on seasonality (or day/night), every bucket reads 0 rather than the
+ * blob being absent — so an all-zero tally means "no votes", not "0% of
+ * voters chose every option", and must become `null` before it reaches the
+ * store.
  */
 function normalizeSeasonVotes(
   seasons: SeasonVotes | null,
@@ -455,6 +220,9 @@ function normalizeCommunityVotes(
  * Fragrantica does list occasionally; 1500 is the lower bound, the smallest
  * round number that keeps the one genuine 1533 case in.
  */
+const MIN_PLAUSIBLE_YEAR = 1500;
+const MAX_YEARS_AHEAD_OF_RELEASE = 1;
+
 function normalizeYear(
   year: number | null,
   pid: number,
@@ -465,8 +233,8 @@ function normalizeYear(
       `Reference record ${pid}: year must be an integer, got ${year}.`,
     );
   }
-  const minYear = 1500;
-  const maxYear = new Date().getFullYear() + 1;
+  const minYear = MIN_PLAUSIBLE_YEAR;
+  const maxYear = new Date().getFullYear() + MAX_YEARS_AHEAD_OF_RELEASE;
   if (year < minYear || year > maxYear) {
     return {
       year: null,
@@ -494,6 +262,9 @@ function normalizePopularity(
   }
   return magnitude;
 }
+
+/** `meta.scraped_at` is a Unix timestamp in seconds; `Date` takes milliseconds. */
+const MS_PER_SECOND = 1000;
 
 /** Best-effort id extraction for error messages when schema validation itself fails and `record.id` is unavailable. */
 function extractProbableId(json: unknown): number | null {
@@ -556,13 +327,13 @@ export function parseReferenceRecord(json: unknown): ParsedReference {
     notes,
     longevity: normalizeAverageMetric(
       record.longevity,
-      { min: 1, max: 5 },
+      LONGEVITY_RANGE,
       "longevity",
       pid,
     ),
     sillage: normalizeAverageMetric(
       record.sillage,
-      { min: 1, max: 4 },
+      SILLAGE_RANGE,
       "sillage",
       pid,
     ),
@@ -572,7 +343,7 @@ export function parseReferenceRecord(json: unknown): ParsedReference {
     popularity: normalizePopularity(record.popularity, pid),
     scrapedAt:
       record.meta.scraped_at !== null
-        ? new Date(record.meta.scraped_at * 1000)
+        ? new Date(record.meta.scraped_at * MS_PER_SECOND)
         : null,
     warnings,
   };

@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryStates } from "nuqs";
 import {
   Select,
   SelectContent,
@@ -11,17 +10,13 @@ import {
 import {
   SORT_LABELS,
   SORT_OPTIONS,
-  catalogFilterQueryOptions,
-  catalogFilterParsers,
   type SortOption,
 } from "@/lib/store/filters";
+import { useCatalogFilters } from "./use-catalog-filters";
 
 /** The catalog sort selector shared by desktop and mobile. */
 export function OrderSelect({ className }: { className?: string }) {
-  const [{ sort }, setFilters] = useQueryStates(
-    catalogFilterParsers,
-    catalogFilterQueryOptions,
-  );
+  const [{ sort }, setFilters] = useCatalogFilters();
 
   return (
     <Select

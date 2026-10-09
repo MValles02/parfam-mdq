@@ -32,7 +32,8 @@ Catalog URLs retain these Spanish keys: `q`, `genero`, `presentacion`,
 `marca`, `acorde`, `nota`, `precio`, `orden`, and `pagina`.
 `src/lib/store/filters.ts` maps them to English `CatalogFilters` fields.
 
-Admin list URLs retain `q`, `estado`, and `pagina` where applicable.
+Admin list URLs retain `q` and `estado` where applicable; no admin listing
+is paginated.
 Login links now emit `returnTo`; the login page and action still accept
 `volverA` from old bookmarks and open forms.
 

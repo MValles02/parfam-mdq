@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useQueryStates } from "nuqs";
 import {
   Select,
   SelectContent,
@@ -16,23 +15,22 @@ import {
   GENDERS,
   VARIANT_KINDS,
   PRICE_RANGES,
-  catalogFilterQueryOptions,
-  catalogFilterParsers,
+  type PriceRange,
 } from "@/lib/store/filters";
 import type { FilterOptions } from "@/lib/store/queries";
+import { useCatalogFilters } from "./use-catalog-filters";
 
 /**
  * Catalog chips and selects shared by desktop and mobile. They read and write
- * the same URL state through useQueryStates.
- *
+ * the same URL state through `useCatalogFilters`, and every change returns to
+ * the first results page.
+ */
+
+/**
  * Radix Select does not allow an empty item value, so the all-options item
  * uses this sentinel and is converted to null before updating the URL.
  */
 const ALL_OPTIONS = "__all__";
-
-function useCatalogFilters() {
-  return useQueryStates(catalogFilterParsers, catalogFilterQueryOptions);
-}
 
 function Chip({
   isActive,
@@ -75,29 +73,67 @@ function Chip({
   );
 }
 
+/** One chip per option plus a leading "all" chip that clears the filter. */
+function FilterChips<T extends string>({
+  allLabel,
+  options,
+  labels,
+  value,
+  compact,
+  segmented,
+  onSelect,
+}: {
+  allLabel: string;
+  options: readonly T[];
+  labels: Record<T, string>;
+  value: T | null;
+  compact?: boolean;
+  segmented?: boolean;
+  onSelect: (value: T | null) => void;
+}) {
+  return (
+    <div
+      className={
+        segmented
+          ? "grid grid-cols-4 rounded bg-muted p-[3px]"
+          : "flex flex-wrap gap-2"
+      }
+    >
+      <Chip
+        isActive={!value}
+        compact={compact}
+        segmented={segmented}
+        onClick={() => onSelect(null)}
+      >
+        {allLabel}
+      </Chip>
+      {options.map((option) => (
+        <Chip
+          key={option}
+          isActive={value === option}
+          compact={compact}
+          segmented={segmented}
+          onClick={() => onSelect(option)}
+        >
+          {labels[option]}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
 export function GenderChips({ compact = false }: { compact?: boolean }) {
   const [{ gender }, setFilters] = useCatalogFilters();
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Chip
-        isActive={!gender}
-        compact={compact}
-        onClick={() => setFilters({ gender: null, page: 1 })}
-      >
-        Todos
-      </Chip>
-      {GENDERS.map((g) => (
-        <Chip
-          key={g}
-          isActive={gender === g}
-          compact={compact}
-          onClick={() => setFilters({ gender: g, page: 1 })}
-        >
-          {GENDER_LABELS[g]}
-        </Chip>
-      ))}
-    </div>
+    <FilterChips
+      allLabel="Todos"
+      options={GENDERS}
+      labels={GENDER_LABELS}
+      value={gender}
+      compact={compact}
+      onSelect={(value) => setFilters({ gender: value, page: 1 })}
+    />
   );
 }
 
@@ -111,36 +147,19 @@ export function VariantKindChips({
   const [{ variantKind }, setFilters] = useCatalogFilters();
 
   return (
-    <div
-      className={
-        segmented
-          ? "grid grid-cols-4 rounded bg-muted p-[3px]"
-          : "flex flex-wrap gap-2"
-      }
-    >
-      <Chip
-        isActive={!variantKind}
-        compact={compact}
-        segmented={segmented}
-        onClick={() => setFilters({ variantKind: null, page: 1 })}
-      >
-        Todas
-      </Chip>
-      {VARIANT_KINDS.map((p) => (
-        <Chip
-          key={p}
-          isActive={variantKind === p}
-          compact={compact}
-          segmented={segmented}
-          onClick={() => setFilters({ variantKind: p, page: 1 })}
-        >
-          {VARIANT_KIND_LABELS[p]}
-        </Chip>
-      ))}
-    </div>
+    <FilterChips
+      allLabel="Todas"
+      options={VARIANT_KINDS}
+      labels={VARIANT_KIND_LABELS}
+      value={variantKind}
+      compact={compact}
+      segmented={segmented}
+      onSelect={(value) => setFilters({ variantKind: value, page: 1 })}
+    />
   );
 }
 
+/** A select whose first item clears the filter (`null`). */
 function FilterSelect({
   label,
   value,
@@ -150,14 +169,19 @@ function FilterSelect({
   children,
 }: {
   label: string;
-  value: string;
+  value: string | null;
   allOptionsLabel: string;
-  onValueChange: (value: string) => void;
+  onValueChange: (value: string | null) => void;
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select
+      value={value ?? ALL_OPTIONS}
+      onValueChange={(selected) =>
+        onValueChange(selected === ALL_OPTIONS ? null : selected)
+      }
+    >
       <SelectTrigger aria-label={label} className={className}>
         <SelectValue placeholder={label} />
       </SelectTrigger>
@@ -182,10 +206,8 @@ export function BrandSelect({
     <FilterSelect
       label="Marca"
       allOptionsLabel="Todas las marcas"
-      value={brand ?? ALL_OPTIONS}
-      onValueChange={(value) =>
-        setFilters({ brand: value === ALL_OPTIONS ? null : value, page: 1 })
-      }
+      value={brand}
+      onValueChange={(value) => setFilters({ brand: value, page: 1 })}
       className={className}
     >
       {filterOptions.map((option) => (
@@ -210,10 +232,8 @@ export function AccordSelect({
     <FilterSelect
       label="Familia olfativa"
       allOptionsLabel="Todas las familias"
-      value={accord ?? ALL_OPTIONS}
-      onValueChange={(value) =>
-        setFilters({ accord: value === ALL_OPTIONS ? null : value, page: 1 })
-      }
+      value={accord}
+      onValueChange={(value) => setFilters({ accord: value, page: 1 })}
       className={className}
     >
       {filterOptions.map((option) => (
@@ -245,10 +265,8 @@ export function NoteSelect({
     <FilterSelect
       label="Nota"
       allOptionsLabel="Todas las notas"
-      value={note ?? ALL_OPTIONS}
-      onValueChange={(value) =>
-        setFilters({ note: value === ALL_OPTIONS ? null : value, page: 1 })
-      }
+      value={note}
+      onValueChange={(value) => setFilters({ note: value, page: 1 })}
       className={className}
     >
       {filterOptions.map((option) => (
@@ -267,15 +285,9 @@ export function PriceSelect({ className }: { className?: string }) {
     <FilterSelect
       label="Precio"
       allOptionsLabel="Todos los precios"
-      value={priceRange ?? ALL_OPTIONS}
+      value={priceRange}
       onValueChange={(value) =>
-        setFilters({
-          priceRange:
-            value === ALL_OPTIONS
-              ? null
-              : (value as (typeof PRICE_RANGES)[number]),
-          page: 1,
-        })
+        setFilters({ priceRange: value as PriceRange | null, page: 1 })
       }
       className={className}
     >
@@ -291,11 +303,9 @@ export function PriceSelect({ className }: { className?: string }) {
 export function ClearFilters({
   variant = "link",
   text = "Limpiar filtros",
-  className,
 }: {
   variant?: "link" | "button";
   text?: string;
-  className?: string;
 }) {
   const [, setFilters] = useCatalogFilters();
 
@@ -308,7 +318,6 @@ export function ClearFilters({
           ? "inline-flex min-h-11 items-center text-[13px] font-medium text-muted-foreground underline underline-offset-[3px] hover:text-foreground"
           : "flex h-[54px] items-center justify-center rounded border border-input px-[22px] text-sm font-semibold text-muted-foreground hover:bg-muted",
         FOCUS_VISIBLE,
-        className,
       )}
     >
       {text}

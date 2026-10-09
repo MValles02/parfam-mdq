@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Plus } from "lucide-react";
+import { EmptyState } from "@/components/admin/empty-state";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { listProducts } from "@/lib/admin/products";
@@ -9,8 +10,27 @@ import { AdminSearch } from "@/components/admin/admin-search";
 import { FilterTabs } from "@/components/admin/filter-tabs";
 import { ProductCards } from "./_components/product-cards";
 import { ProductsTable } from "./_components/products-table";
+import { NEW_ADMIN_PRODUCT_PATH } from "./paths";
 
 export const metadata: Metadata = { title: "Productos" };
+
+/** `estado` tabs, in display order; ids match `PRODUCT_ESTADO_VALUES`. */
+const STATUS_FILTER_OPTIONS = [
+  { id: "todos", label: "Todos" },
+  { id: "publicados", label: "Publicados" },
+  { id: "borradores", label: "Borradores" },
+];
+
+function NewProductButton() {
+  return (
+    <Button asChild>
+      <Link href={NEW_ADMIN_PRODUCT_PATH}>
+        <Plus />
+        Nuevo producto
+      </Link>
+    </Button>
+  );
+}
 
 export default async function Page(props: PageProps<"/admin/productos">) {
   const { q: query, estado: status } = await loadProductListParams(
@@ -30,23 +50,14 @@ export default async function Page(props: PageProps<"/admin/productos">) {
         title="Productos"
         description={`${published} publicados · ${drafts} en borrador`}
         action={
-          <Button asChild>
-            <Link href="/admin/productos/nuevo">
-              <Plus />
-              Nuevo producto
-            </Link>
-          </Button>
+          <NewProductButton />
         }
       />
 
       <div className="p-8 pt-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <FilterTabs
-            options={[
-              { id: "todos", label: "Todos" },
-              { id: "publicados", label: "Publicados" },
-              { id: "borradores", label: "Borradores" },
-            ]}
+            options={STATUS_FILTER_OPTIONS}
             defaultValue="todos"
             counts={{ todos: total, publicados: published, borradores: drafts }}
           />
@@ -59,19 +70,15 @@ export default async function Page(props: PageProps<"/admin/productos">) {
         </div>
 
         {rows.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded border border-dashed p-16 text-center">
-            <p className="text-sm text-muted-foreground">
-              {hasActiveFilters
+          <EmptyState
+            message={
+              hasActiveFilters
                 ? "No hay productos que coincidan con la búsqueda."
-                : "Todavía no cargaste ningún producto."}
-            </p>
-            <Button asChild>
-              <Link href="/admin/productos/nuevo">
-                <Plus />
-                Nuevo producto
-              </Link>
-            </Button>
-          </div>
+                : "Todavía no cargaste ningún producto."
+            }
+          >
+            <NewProductButton />
+          </EmptyState>
         ) : (
           <>
             <div className="hidden md:block">

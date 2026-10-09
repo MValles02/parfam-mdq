@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
  * layout or `proxy.ts`, so every panel action that reads or writes data starts
  * with this guard.
  *
- * Ver node_modules/next/dist/docs/01-app/02-guides/authentication.md
+ * See node_modules/next/dist/docs/01-app/02-guides/authentication.md
  */
 export async function requireAdmin() {
   const session = await auth();

@@ -9,7 +9,7 @@ import type { VariantKind } from "@/generated/prisma/enums";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { formatArsPrice, VARIANT_KIND_LABELS } from "@/lib/catalog";
-import { useCart } from "@/lib/cart";
+import { MAX_ITEM_QUANTITY, useCart } from "@/lib/cart";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
@@ -28,8 +28,6 @@ type PurchaseProduct = {
   image: string | null;
 };
 
-const MAX_QUANTITY = 99;
-
 const VARIANT_DESCRIPTIONS: Partial<Record<VariantKind, string>> = {
   FULL_BOTTLE: "Sellado, con estuche",
   DECANT: "Fraccionado en atomizador",
@@ -38,6 +36,10 @@ const VARIANT_DESCRIPTIONS: Partial<Record<VariantKind, string>> = {
 function buildInquiryMessage(product: PurchaseProduct) {
   return `¡Hola! Quería consultar por el ${product.name} de ${product.brandName}.`;
 }
+
+/** Small uppercase caption above each group of purchase options. */
+const OPTION_GROUP_LABEL_CLASS =
+  "text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase";
 
 /** Bordered radio row; only the border color changes so layout never shifts. */
 function OptionCard({
@@ -62,6 +64,82 @@ function OptionCard({
       <RadioGroupItem value={value} id={id} />
       {children}
     </label>
+  );
+}
+
+/** Minus/plus control that keeps the quantity within 1..MAX_ITEM_QUANTITY. */
+function QuantityStepper({
+  quantity,
+  onChange,
+}: {
+  quantity: number;
+  onChange: (update: (currentQuantity: number) => number) => void;
+}) {
+  return (
+    <div className="flex items-center rounded border bg-card">
+      <button
+        type="button"
+        aria-label="Quitar una unidad"
+        onClick={() =>
+          onChange((currentQuantity) => Math.max(1, currentQuantity - 1))
+        }
+        disabled={quantity <= 1}
+        className={cn(
+          "flex size-12 items-center justify-center text-muted-foreground disabled:opacity-40",
+          FOCUS_VISIBLE,
+        )}
+      >
+        <Minus className="size-4" />
+      </button>
+      <span className="min-w-7 text-center text-base font-bold">
+        {quantity}
+      </span>
+      <button
+        type="button"
+        aria-label="Agregar una unidad"
+        onClick={() =>
+          onChange((currentQuantity) =>
+            Math.min(MAX_ITEM_QUANTITY, currentQuantity + 1),
+          )
+        }
+        disabled={quantity >= MAX_ITEM_QUANTITY}
+        className={cn(
+          "flex size-12 items-center justify-center disabled:opacity-40",
+          FOCUS_VISIBLE,
+        )}
+      >
+        <Plus className="size-4" />
+      </button>
+    </div>
+  );
+}
+
+/** Mobile bar pinned to the bottom while the main add-to-cart button is off screen. */
+function StickyAddToCartBar({
+  variant,
+  onAddToCart,
+}: {
+  variant: ProductVariant;
+  onAddToCart: () => void;
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t bg-background px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate text-xs text-muted-foreground">
+          {variant.label}
+        </span>
+        <span className="text-lg leading-tight font-extrabold">
+          {formatArsPrice(variant.price)}
+        </span>
+      </div>
+      <Button
+        type="button"
+        onClick={onAddToCart}
+        className="min-h-11 shrink-0 text-[15px] font-semibold"
+      >
+        Agregar al carrito
+      </Button>
+    </div>
   );
 }
 
@@ -130,16 +208,6 @@ export function Purchase({
     (variant) => variant.kind === selectedVariant.kind,
   );
 
-  function decrementQuantity() {
-    setQuantity((currentQuantity) => Math.max(1, currentQuantity - 1));
-  }
-
-  function incrementQuantity() {
-    setQuantity((currentQuantity) =>
-      Math.min(MAX_QUANTITY, currentQuantity + 1),
-    );
-  }
-
   function addToCart() {
     add(
       {
@@ -168,7 +236,7 @@ export function Purchase({
 
       {kinds.length > 1 ? (
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+          <p className={`mb-2 ${OPTION_GROUP_LABEL_CLASS}`}>
             Presentación
           </p>
           <RadioGroup
@@ -198,7 +266,7 @@ export function Purchase({
       ) : null}
 
       <div>
-        <p className="mb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+        <p className={`mb-2 ${OPTION_GROUP_LABEL_CLASS}`}>
           Tamaño
         </p>
         <RadioGroup
@@ -240,35 +308,7 @@ export function Purchase({
       </div>
 
       <div className="flex gap-2.5">
-        <div className="flex items-center rounded border bg-card">
-          <button
-            type="button"
-            aria-label="Quitar una unidad"
-            onClick={decrementQuantity}
-            disabled={quantity <= 1}
-            className={cn(
-              "flex size-12 items-center justify-center text-muted-foreground disabled:opacity-40",
-              FOCUS_VISIBLE,
-            )}
-          >
-            <Minus className="size-4" />
-          </button>
-          <span className="min-w-7 text-center text-base font-bold">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            aria-label="Agregar una unidad"
-            onClick={incrementQuantity}
-            disabled={quantity >= MAX_QUANTITY}
-            className={cn(
-              "flex size-12 items-center justify-center disabled:opacity-40",
-              FOCUS_VISIBLE,
-            )}
-          >
-            <Plus className="size-4" />
-          </button>
-        </div>
+        <QuantityStepper quantity={quantity} onChange={setQuantity} />
         <Button
           ref={ctaRef}
           type="button"
@@ -280,23 +320,7 @@ export function Purchase({
       </div>
 
       {ctaVisible === false ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t bg-background px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-xs text-muted-foreground">
-              {selectedVariant.label}
-            </span>
-            <span className="text-lg leading-tight font-extrabold">
-              {formatArsPrice(selectedVariant.price)}
-            </span>
-          </div>
-          <Button
-            type="button"
-            onClick={addToCart}
-            className="min-h-11 shrink-0 text-[15px] font-semibold"
-          >
-            Agregar al carrito
-          </Button>
-        </div>
+        <StickyAddToCartBar variant={selectedVariant} onAddToCart={addToCart} />
       ) : null}
     </div>
   );

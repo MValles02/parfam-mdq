@@ -11,16 +11,9 @@
 import "dotenv/config";
 import { hash } from "@node-rs/argon2";
 import { prisma } from "@/lib/db";
-import { siteDefaults } from "@/lib/site";
+import { SITE_SETTINGS_ID, siteDefaults } from "@/lib/site";
 
-const DEFAULT_WHATSAPP_TEMPLATE = `¡Hola! Quiero hacer este pedido en {{marca}}:
-
-{{items}}
-
-Total: {{total}}
-
-Nombre: {{nombre}}
-Pedido: {{numero}}`;
+const ADMIN_DISPLAY_NAME = "Admin";
 
 async function seedAdminUser() {
   // `authorize()` in src/lib/auth.ts searches lowercase email addresses. This
@@ -43,21 +36,21 @@ async function seedAdminUser() {
 
   const passwordHash = await hash(password);
   await prisma.user.create({
-    data: { email, passwordHash, name: "Admin", role: "ADMIN" },
+    data: { email, passwordHash, name: ADMIN_DISPLAY_NAME, role: "ADMIN" },
   });
   console.log(`Created admin user: ${email}`);
 }
 
 async function seedSiteSettings() {
   await prisma.siteSetting.upsert({
-    where: { id: "singleton" },
+    where: { id: SITE_SETTINGS_ID },
     create: {
-      id: "singleton",
+      id: SITE_SETTINGS_ID,
       whatsappNumber: siteDefaults.whatsapp,
-      whatsappMessageTemplate: DEFAULT_WHATSAPP_TEMPLATE,
+      whatsappMessageTemplate: siteDefaults.whatsappMessageTemplate,
       instagramHandle: siteDefaults.instagram,
-      shippingInfo: "Coordinamos envío en Mar del Plata o retiro a convenir.",
-      seoDefaultTitle: `${siteDefaults.name} — ${siteDefaults.tagline}`,
+      shippingInfo: siteDefaults.shippingInfo,
+      seoDefaultTitle: siteDefaults.seoTitle,
       seoDefaultDescription: siteDefaults.description,
     },
     update: {},

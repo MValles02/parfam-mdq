@@ -91,16 +91,12 @@ const priceRangeUrlValues = {
 } as const satisfies Record<string, PriceRange>;
 
 function createUrlValueParser<T extends string>(urlValues: Record<string, T>) {
-  const internalValues = Object.entries(urlValues).map(([urlValue, value]) => [
-    value,
-    urlValue,
-  ]);
-
   return createParser({
     parse: (urlValue) => urlValues[urlValue] ?? null,
     serialize: (value) =>
-      internalValues.find(([internalValue]) => internalValue === value)?.[1] ??
-      "",
+      Object.keys(urlValues).find(
+        (urlValue) => urlValues[urlValue] === value,
+      ) ?? "",
   });
 }
 
@@ -120,7 +116,7 @@ export const catalogFilterParsers = {
 };
 
 /** Raw Spanish keys kept for existing shared catalog URLs. */
-export const catalogFilterUrlKeys: UrlKeys<typeof catalogFilterParsers> = {
+const catalogFilterUrlKeys: UrlKeys<typeof catalogFilterParsers> = {
   search: "q",
   gender: "genero",
   variantKind: "presentacion",

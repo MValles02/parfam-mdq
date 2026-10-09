@@ -14,18 +14,20 @@ import { prisma } from "@/lib/db";
  */
 export const dynamic = "force-dynamic";
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
+
 export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return NextResponse.json(
       { status: "ok", database: "ok", sha: process.env.GIT_SHA ?? null },
-      { headers: { "Cache-Control": "no-store" } },
+      { headers: NO_STORE_HEADERS },
     );
   } catch (error) {
     console.error("[health] database did not respond:", error);
     return NextResponse.json(
       { status: "error", database: "unavailable" },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
+      { status: 503, headers: NO_STORE_HEADERS },
     );
   }
 }

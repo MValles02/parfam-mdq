@@ -133,6 +133,14 @@ export async function searchReferences(
 }
 
 /**
+ * Panel-only deep link back to a reference's source Fragrantica page; never
+ * shown to customers.
+ */
+export function getFragranticaPerfumeUrl(slug: string, pid: number) {
+  return `https://www.fragrantica.com/perfume/${slug}-${pid}.html`;
+}
+
+/**
  * Converts a group of vote counts (e.g. the four season tallies) into
  * rounded integer percentages that sum to 100, using the largest-remainder
  * method so rounding each entry independently cannot drift the total away
@@ -246,9 +254,7 @@ export async function getReferenceForAdoption(id: string) {
     // This internal Fragrantica copy helps administrators write descriptions
     // and is never published.
     descriptionEn: reference.descriptionEn,
-    // Panel-only deep link back to the source Fragrantica page; never shown
-    // to customers.
-    referenceUrl: `https://www.fragrantica.com/perfume/${reference.slug}-${reference.pid}.html`,
+    referenceUrl: getFragranticaPerfumeUrl(reference.slug, reference.pid),
     brand: reference.brand,
     notes: reference.notes.map((note) => ({
       noteId: note.note.id,
@@ -264,8 +270,8 @@ export async function getReferenceForAdoption(id: string) {
     })),
     perfumers: reference.perfumers.map((perfumer) => ({
       perfumerId: perfumer.perfumer.id,
-      // Imported `Perfumer.name` casing is inconsistent (F-21 in
-      // docs/findings.md), so normalize it for display.
+      // Imported `Perfumer.name` casing is inconsistent, so normalize it for
+      // display.
       name: formatProperName(perfumer.perfumer.name),
     })),
   };

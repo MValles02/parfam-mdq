@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CATALOG_HREF } from "@/lib/store/links";
+import {
+  CONTENT_PAGE_CLASS,
+  CONTENT_PAGE_LEAD_CLASS,
+  CONTENT_PAGE_TITLE_CLASS,
+} from "@/components/store/content-page";
 
 /**
  * Store error boundary. It renders inside the store layout (header/footer
@@ -13,11 +19,9 @@ import { Button } from "@/components/ui/button";
  */
 export default function StoreError({ retry }: { retry: () => void }) {
   return (
-    <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
-      <h1 className="text-4xl font-extrabold tracking-[-0.03em] lg:text-6xl">
-        Algo salió mal
-      </h1>
-      <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+    <div className={CONTENT_PAGE_CLASS}>
+      <h1 className={CONTENT_PAGE_TITLE_CLASS}>Algo salió mal</h1>
+      <p className={CONTENT_PAGE_LEAD_CLASS}>
         Tuvimos un problema al cargar esta página. Probá de nuevo y, si sigue
         pasando, escribinos por WhatsApp.
       </p>
@@ -26,7 +30,7 @@ export default function StoreError({ retry }: { retry: () => void }) {
           Reintentar
         </Button>
         <Button asChild variant="outline" className="h-11 px-6 text-base">
-          <Link href="/#catalogo">Ver el catálogo</Link>
+          <Link href={CATALOG_HREF}>Ver el catálogo</Link>
         </Button>
       </div>
     </div>

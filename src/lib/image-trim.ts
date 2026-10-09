@@ -42,6 +42,11 @@ const MIN_TRIMMED_DIMENSION_PX = 64;
 /** JPEG quality used for the re-encoded, trimmed output. */
 const TRIMMED_JPEG_QUALITY = 90;
 
+/** Opens an image with the pixel cap every `sharp` call here must apply. */
+function loadImage(input: Buffer) {
+  return sharp(input, { limitInputPixels: MAX_TRIM_INPUT_PIXELS });
+}
+
 type TrimmedContentType =
   "image/jpeg" | "image/png" | "image/webp" | "image/avif";
 
@@ -95,63 +100,71 @@ export async function trimWhiteMargins(input: Uint8Array): Promise<TrimResult> {
   try {
     const buffer = Buffer.from(input);
 
-    const metadata = await sharp(buffer, {
-      limitInputPixels: MAX_TRIM_INPUT_PIXELS,
-    }).metadata();
-    const originalWidth = metadata.width;
-    const originalHeight = metadata.height;
-    if (!originalWidth || !originalHeight) {
+    const { width, height } = await loadImage(buffer).metadata();
+    if (!width || !height) {
       return original;
     }
 
-    const { data: trimmedData, info: trimmedInfo } = await sharp(buffer, {
-      limitInputPixels: MAX_TRIM_INPUT_PIXELS,
-    })
+    const { data: trimmedData, info: trimmedSize } = await loadImage(buffer)
       .trim({ background: WHITE_BACKGROUND, threshold: TRIM_THRESHOLD })
       .toBuffer({ resolveWithObject: true });
 
-    // No reduction at all means `.trim()` found nothing far enough from
-    // white to crop (e.g. an all-white photo) — there is nothing gained by
-    // re-encoding, so this does not count as a trim.
-    const noReduction =
-      trimmedInfo.width >= originalWidth &&
-      trimmedInfo.height >= originalHeight;
-
-    const originalLargerSide = Math.max(originalWidth, originalHeight);
-    const trimmedLargerSide = Math.max(trimmedInfo.width, trimmedInfo.height);
-
-    if (
-      noReduction ||
-      trimmedInfo.width < MIN_TRIMMED_DIMENSION_PX ||
-      trimmedInfo.height < MIN_TRIMMED_DIMENSION_PX ||
-      trimmedLargerSide < originalLargerSide * MIN_SCALE_RATIO
-    ) {
+    if (!isUsableTrim({ width, height }, trimmedSize)) {
       return original;
     }
 
-    const padding = Math.round(
-      Math.max(trimmedInfo.width, trimmedInfo.height) * PADDING_RATIO,
-    );
-
-    const paddedBuffer = await sharp(trimmedData, {
-      limitInputPixels: MAX_TRIM_INPUT_PIXELS,
-    })
-      .extend({
-        top: padding,
-        bottom: padding,
-        left: padding,
-        right: padding,
-        background: WHITE_BACKGROUND,
-      })
-      .jpeg({ quality: TRIMMED_JPEG_QUALITY, mozjpeg: true })
-      .toBuffer();
-
     return {
-      bytes: new Uint8Array(paddedBuffer),
+      bytes: await padAndEncode(trimmedData, trimmedSize),
       contentType: "image/jpeg",
       trimmed: true,
     };
   } catch {
     return original;
   }
+}
+
+interface ImageSize {
+  width: number;
+  height: number;
+}
+
+/** Whether a trim result is worth keeping instead of the original bytes. */
+function isUsableTrim(original: ImageSize, trimmed: ImageSize): boolean {
+  // No reduction at all means `.trim()` found nothing far enough from
+  // white to crop (e.g. an all-white photo) — there is nothing gained by
+  // re-encoding, so this does not count as a trim.
+  const noReduction =
+    trimmed.width >= original.width && trimmed.height >= original.height;
+
+  return !(
+    noReduction ||
+    trimmed.width < MIN_TRIMMED_DIMENSION_PX ||
+    trimmed.height < MIN_TRIMMED_DIMENSION_PX ||
+    getLargerSide(trimmed) < getLargerSide(original) * MIN_SCALE_RATIO
+  );
+}
+
+/** Adds the uniform white pad back around a trimmed image and re-encodes it as JPEG. */
+async function padAndEncode(
+  trimmedImage: Buffer,
+  trimmedSize: ImageSize,
+): Promise<Uint8Array> {
+  const padding = Math.round(getLargerSide(trimmedSize) * PADDING_RATIO);
+
+  const paddedBuffer = await loadImage(trimmedImage)
+    .extend({
+      top: padding,
+      bottom: padding,
+      left: padding,
+      right: padding,
+      background: WHITE_BACKGROUND,
+    })
+    .jpeg({ quality: TRIMMED_JPEG_QUALITY, mozjpeg: true })
+    .toBuffer();
+
+  return new Uint8Array(paddedBuffer);
+}
+
+function getLargerSide({ width, height }: ImageSize): number {
+  return Math.max(width, height);
 }

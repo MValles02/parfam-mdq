@@ -4,11 +4,14 @@ import { PageHeader } from "@/components/admin/page-header";
 import { countUncorrectedBrands, listBrands } from "@/lib/admin/brands";
 import { loadBrandListParams } from "@/lib/admin/brand-list-params";
 import { AdminSearch } from "@/components/admin/admin-search";
+import { EmptyState } from "@/components/admin/empty-state";
 import { BrandsTable } from "./_components/brands-table";
 
 export const metadata: Metadata = { title: "Marcas" };
 
-export default async function Page(props: PageProps<"/admin/marcas">) {
+export default async function BrandsPage(props: PageProps<"/admin/marcas">) {
+  // `filtro` is the user-facing Spanish querystring name; `listBrands` calls
+  // the same option `filter`.
   const { q, filtro } = await loadBrandListParams(props.searchParams);
 
   const [brands, uncorrected] = await Promise.all([
@@ -46,13 +49,13 @@ export default async function Page(props: PageProps<"/admin/marcas">) {
         ) : null}
 
         {brands.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded border border-dashed p-16 text-center">
-            <p className="text-sm text-muted-foreground">
-              {q.trim() || filtro === "sin-corregir"
+          <EmptyState
+            message={
+              q.trim() || filtro === "sin-corregir"
                 ? "No hay marcas que coincidan con la búsqueda."
-                : "Todavía no hay productos con marca asignada."}
-            </p>
-          </div>
+                : "Todavía no hay productos con marca asignada."
+            }
+          />
         ) : (
           <BrandsTable rows={brands} />
         )}

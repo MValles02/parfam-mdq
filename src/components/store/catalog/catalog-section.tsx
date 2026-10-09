@@ -2,14 +2,20 @@ import { Suspense, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { FilterOptions } from "@/lib/store/queries";
 import type { CatalogFilters } from "@/lib/store/filters";
+import { CATALOG_SECTION_ID } from "@/lib/store/links";
 import { ActiveFilterChips } from "./active-filter-chips";
 import { VariantKindChips } from "./filter-controls";
 import { FilterDrawer } from "./filter-drawer";
-import { FraseTotal, CatalogGrid } from "./grid";
+import { CatalogResultCount, CatalogGrid } from "./grid";
 import { CatalogGridSkeleton } from "./grid-skeleton";
 import { CatalogPagination } from "./pagination";
 import { FilterPanel } from "./filter-panel";
 import { OrderSelect } from "./order-select";
+
+/** Spanish plural ending for "fragancia". */
+function pluralSuffix(count: number): string {
+  return count === 1 ? "" : "s";
+}
 
 const FALLBACK_TOTAL = (
   <span className="inline-block h-[1em] w-40 animate-pulse rounded-sm bg-muted align-middle" />
@@ -18,9 +24,9 @@ const FALLBACK_TOTAL = (
 function Total({ filters }: { filters: CatalogFilters }): ReactNode {
   return (
     <Suspense fallback={FALLBACK_TOTAL}>
-      <FraseTotal
+      <CatalogResultCount
         filters={filters}
-        format={(n) => `${n} fragancia${n === 1 ? "" : "s"}`}
+        format={(n) => `${n} fragancia${pluralSuffix(n)}`}
       />
     </Suspense>
   );
@@ -53,7 +59,7 @@ export function CatalogSection({
 
   return (
     <section
-      id="catalogo"
+      id={CATALOG_SECTION_ID}
       className={cn(
         "mx-auto max-w-page px-5 pb-16 lg:px-16 lg:pb-24",
         isHome ? "pt-10" : "pt-8",
@@ -83,9 +89,9 @@ export function CatalogSection({
                 filterOptions={filterOptions}
                 applyText={
                   <Suspense fallback="Ver fragancias">
-                    <FraseTotal
+                    <CatalogResultCount
                       filters={filters}
-                      format={(n) => `Ver ${n} fragancia${n === 1 ? "" : "s"}`}
+                      format={(n) => `Ver ${n} fragancia${pluralSuffix(n)}`}
                     />
                   </Suspense>
                 }

@@ -12,12 +12,15 @@ src/
     ui/                      shadcn components
   lib/
     admin/                   server-side panel queries and helpers
-    store/                   public queries, catalog filters, cart validation
+    store/                   public queries (re-exported by queries.ts), catalog
+                             filters, store links, cart validation
     validations/             shared Zod schemas
     cart.ts                  persisted client cart
+    catalog.ts               enum labels, variant labels, ARS formatting
     r2.ts                    Cloudflare R2 integration
     settings.ts              cached site settings
     seo.ts                   metadata and JSON-LD helpers
+    site.ts                  brand defaults, locale, settings row id
   proxy.ts                   optimistic admin navigation guard
 prisma/
   schema.prisma              data model
@@ -26,6 +29,9 @@ prisma/
 scripts/
   import-references.ts       reference importer
   check-reference-translations.ts  translation coverage report
+  smoke.ts                   headless CSP and console smoke check
+  lib/                       pure helpers and DB writes for the scripts, and
+                             the fixture catalog shared with seeds and E2E
 docs/                         technical documentation
 ```
 

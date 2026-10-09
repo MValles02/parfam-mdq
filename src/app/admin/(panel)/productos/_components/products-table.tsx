@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ColumnHeader } from "@/components/admin/listing-table";
 import {
   Table,
   TableBody,
@@ -8,10 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
 import { SHORT_CONCENTRATION_LABELS, getVariantLabel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { ProductRow } from "@/lib/admin/products";
 import { StatusChip, VisibleSwitch, ActionMenu } from "./action-row";
+import { getAdminProductPath } from "../paths";
 
 function Thumbnail({ image, alt }: { image: string | null; alt: string }) {
   if (image) {
@@ -63,14 +66,14 @@ function Thumbnail({ image, alt }: { image: string | null; alt: string }) {
 function formatPresentations(variants: ProductRow["variants"]) {
   const active = variants.filter((variant) => variant.isActive);
   const decantSizes = active
-    .filter((variant) => variant.kind === "DECANT" && variant.sizeMl !== null)
+    .filter((variant) => variant.kind === VariantKind.DECANT && variant.sizeMl !== null)
     .map((variant) => variant.sizeMl);
   const parts: string[] = [];
   if (decantSizes.length > 0) {
     parts.push(`Decant ${decantSizes.join(" · ")} ml`);
   }
   for (const variant of active) {
-    if (variant.kind === "DECANT" && variant.sizeMl !== null) continue;
+    if (variant.kind === VariantKind.DECANT && variant.sizeMl !== null) continue;
     parts.push(getVariantLabel(variant.kind, variant.sizeMl));
   }
   return parts.length > 0 ? parts.join(" · ") : "Sin presentaciones activas";
@@ -127,21 +130,11 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/60 hover:bg-muted/60">
-            <TableHead className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Producto
-            </TableHead>
-            <TableHead className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Presentaciones
-            </TableHead>
-            <TableHead className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Ficha
-            </TableHead>
-            <TableHead className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Estado
-            </TableHead>
-            <TableHead className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Visible
-            </TableHead>
+            <ColumnHeader>Producto</ColumnHeader>
+            <ColumnHeader>Presentaciones</ColumnHeader>
+            <ColumnHeader>Ficha</ColumnHeader>
+            <ColumnHeader>Estado</ColumnHeader>
+            <ColumnHeader>Visible</ColumnHeader>
             <TableHead className="w-24"></TableHead>
           </TableRow>
         </TableHeader>
@@ -155,7 +148,7 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
                     alt={row.image?.alt ?? row.name}
                   />
                   <Link
-                    href={`/admin/productos/${row.id}`}
+                    href={getAdminProductPath(row.id)}
                     className="flex flex-col gap-0.5"
                   >
                     <span className="text-sm font-semibold tracking-tight text-foreground">
@@ -177,13 +170,15 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
                 <SheetCompleteness row={row} />
               </TableCell>
               <TableCell>
-                <StatusChip isPublished={row.status === "PUBLISHED"} />
+                <StatusChip
+                  isPublished={row.status === ProductStatus.PUBLISHED}
+                />
               </TableCell>
               <TableCell>
                 <VisibleSwitch
                   id={row.id}
                   name={row.name}
-                  isPublished={row.status === "PUBLISHED"}
+                  isPublished={row.status === ProductStatus.PUBLISHED}
                 />
               </TableCell>
               <TableCell>

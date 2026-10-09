@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { CartBadge } from "@/components/store/cart-badge";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Logo } from "@/components/store/logo";
+import {
+  HOME_LINK_LABEL,
+  MOBILE_NAVIGATION_LINKS,
+  NAVIGATION_LINKS,
+} from "@/components/store/navigation";
 import { StoreSearch } from "@/components/store/catalog/search";
 import {
   Sheet,
@@ -18,27 +23,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cartLabel, useCartQuantity } from "@/lib/cart";
-import { siteDefaults } from "@/lib/site";
 import {
   GENDER_SHORTCUTS,
   KIND_SHORTCUTS,
 } from "@/lib/store/catalog-shortcuts";
+import { CATALOG_HREF } from "@/lib/store/links";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
-
-const NAVIGATION_LINKS = [
-  { href: "/presentaciones", label: "Frasco o decant" },
-  { href: "/como-comprar", label: "Cómo comprar" },
-  { href: "/contacto", label: "Contacto" },
-] as const;
-
-// The desktop nav stays at three links; the concentrations guide is reachable
-// from the mobile menu, the footer and the product page chip.
-const MOBILE_NAVIGATION_LINKS = [
-  NAVIGATION_LINKS[0],
-  { href: "/concentraciones", label: "Concentraciones" },
-  NAVIGATION_LINKS[1],
-  NAVIGATION_LINKS[2],
-] as const;
 
 /** 46 px bordered square matching the mobile icon buttons. */
 const MOBILE_ICON_BUTTON_CLASS = cn(
@@ -140,6 +130,7 @@ export function Header({
   const hidden = scrolledDown && !hasFocus && !isCartOpen;
   const quantity = useCartQuantity();
   const cartAccessibleLabel = cartLabel(quantity);
+  const openCartLabel = `Abrir el carrito, ${cartAccessibleLabel}`;
 
   const getLinkClassName = (href: string) =>
     cn(
@@ -174,7 +165,7 @@ export function Header({
         <div className="mx-auto hidden max-w-page items-center justify-between gap-9 px-16 py-6 lg:flex">
           <Link
             href="/"
-            aria-label={`Ir al inicio de ${siteDefaults.name}`}
+            aria-label={HOME_LINK_LABEL}
             className="flex min-h-11 items-center"
           >
             <Logo size="header" />
@@ -204,7 +195,7 @@ export function Header({
             <SheetTrigger asChild>
               <button
                 type="button"
-                aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
+                aria-label={openCartLabel}
                 className="flex min-h-11 items-center"
               >
                 <CartBadge variant="chip" />
@@ -259,7 +250,7 @@ export function Header({
                       {item.label}
                     </MenuLink>
                   ))}
-                  <MenuLink href="/#catalogo">Ver todas →</MenuLink>
+                  <MenuLink href={CATALOG_HREF}>Ver todas →</MenuLink>
                   <MenuHeading>Cómo lo llevás</MenuHeading>
                   {KIND_SHORTCUTS.map((item) => (
                     <MenuLink key={item.label} href={item.href}>
@@ -299,7 +290,7 @@ export function Header({
             </Sheet>
             <Link
               href="/"
-              aria-label={`Ir al inicio de ${siteDefaults.name}`}
+              aria-label={HOME_LINK_LABEL}
               className="relative justify-self-center before:absolute before:inset-x-0 before:-inset-y-2"
             >
               <Logo size="header" />
@@ -307,7 +298,7 @@ export function Header({
             <SheetTrigger asChild>
               <button
                 type="button"
-                aria-label={`Abrir el carrito, ${cartAccessibleLabel}`}
+                aria-label={openCartLabel}
                 className="flex justify-self-end"
               >
                 <CartBadge variant="button" />

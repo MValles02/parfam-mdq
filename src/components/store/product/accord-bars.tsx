@@ -8,12 +8,12 @@ type Accord = {
 };
 
 /**
- * Strength-ranked accord bars (name inside the bar, width = strength), replacing the plain chip list this section
- * used before `Product.accords` gained a `strength` (see
- * `src/lib/store/queries.ts`, ordered strongest first). The bar fill reuses
+ * Accord bars by `ProductAccord.strength` (name inside the bar, width =
+ * strength), in the strongest-first order `getProductBySlug`
+ * (`src/lib/store/product-detail.ts`) returns. The bar fill reuses
  * `getChipColor()`'s background half so the accord's own dictionary color
- * (`Accord.color`, domain data rather than a theme token) still resolves
- * through the same contrast-aware treatment.
+ * (`Accord.color`, domain data rather than a theme token) resolves through
+ * the same contrast-aware treatment as accord chips.
  */
 export function AccordBars({ accords }: { accords: Accord[] }) {
   if (accords.length === 0) return null;

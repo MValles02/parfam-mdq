@@ -14,6 +14,9 @@ import {
  */
 export const listCatalogCached = cache(listCatalog);
 
+/** Cards near the top of the grid load their photo eagerly. */
+const PRIORITY_IMAGE_COUNT = 4;
+
 /**
  * The grid requests catalog results inside the section Suspense boundary.
  */
@@ -61,11 +64,11 @@ export async function CatalogGrid({
 
   return (
     <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 lg:gap-7">
-      {cards.map((product, index) => (
+      {cards.map((card, index) => (
         <ProductCard
-          key={product.slug}
-          product={product}
-          priority={index < 4}
+          key={card.slug}
+          product={card}
+          priority={index < PRIORITY_IMAGE_COUNT}
           headingLevel={headingLevel}
         />
       ))}
@@ -76,7 +79,7 @@ export async function CatalogGrid({
 /**
  * The caller formats the result total for its Spanish UI context.
  */
-export async function FraseTotal({
+export async function CatalogResultCount({
   filters,
   format,
 }: {

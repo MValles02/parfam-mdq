@@ -6,6 +6,7 @@ import type {
   ProductStatus,
   VariantKind,
 } from "@/generated/prisma/enums";
+import { SITE_LOCALE } from "./site";
 
 /**
  * Spanish (es-AR) enum labels for the catalog. They live outside components
@@ -109,9 +110,12 @@ export function getVariantLabel(kind: VariantKind, sizeMl: number | null) {
     : VARIANT_KIND_LABELS[kind];
 }
 
-const arsPriceFormatter = new Intl.NumberFormat("es-AR", {
+/** ISO 4217 code of every catalog price (`ProductVariant.priceArs`). */
+export const PRICE_CURRENCY = "ARS";
+
+const arsPriceFormatter = new Intl.NumberFormat(SITE_LOCALE, {
   style: "currency",
-  currency: "ARS",
+  currency: PRICE_CURRENCY,
   maximumFractionDigits: 0,
 });
 
@@ -149,18 +153,6 @@ export function escapeLikePattern(term: string) {
   return `%${escaped}%`;
 }
 
-/**
- * Normalizes a proper name from the dataset ("françois demachy",
- * "PAUL PARQUET") for display: "François Demachy", "Paul Parquet".
- *
- * `Perfumer.name` has inconsistent capitalization from the initial import:
- * 718 of 1,355 rows are entirely lowercase, depending on which CSV supplied
- * the value. Normalize it at display time to avoid overwriting manual admin
- * corrections; the importer should normalize it before production import.
- *
- * Particles ("de", "van", "di"...) stay lowercase unless they begin a name,
- * following Spanish and French conventions.
- */
 const NAME_PARTICLES = new Set([
   "de",
   "del",
@@ -174,16 +166,28 @@ const NAME_PARTICLES = new Set([
   "y",
 ]);
 
+/**
+ * Normalizes a proper name from the dataset ("françois demachy",
+ * "PAUL PARQUET") for display: "François Demachy", "Paul Parquet".
+ *
+ * `Perfumer.name` has inconsistent capitalization from the initial import:
+ * 718 of 1,355 rows are entirely lowercase, depending on which CSV supplied
+ * the value. Normalize it at display time to avoid overwriting manual admin
+ * corrections; the importer should normalize it before production import.
+ *
+ * Particles ("de", "van", "di"...) stay lowercase unless they begin a name,
+ * following Spanish and French conventions.
+ */
 export function formatProperName(name: string): string {
   return name
-    .toLocaleLowerCase("es-AR")
+    .toLocaleLowerCase(SITE_LOCALE)
     .split(/\s+/)
     .filter(Boolean)
     .map((word, index) =>
       index > 0 && NAME_PARTICLES.has(word)
         ? word
         : word.replace(/^\p{L}/u, (letter) =>
-            letter.toLocaleUpperCase("es-AR"),
+            letter.toLocaleUpperCase(SITE_LOCALE),
           ),
     )
     .join(" ");

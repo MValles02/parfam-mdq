@@ -21,6 +21,12 @@ const DUMMY_HASH =
   "$argon2id$v=19$m=19456,t=2,p=1$keEaT4q3U3YZt4iNsOXi+w$M3VA5pYzqzq8bdNho7z/XzOkEvMl6qH2t9cTbd+WUmw";
 
 /**
+ * At most five sign-in attempts per IP and email every ten minutes; a
+ * successful sign-in resets the count.
+ */
+const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 1000 * 60 * 10 };
+
+/**
  * Thrown by `authorize` when a login key (IP + email) exceeds the attempt
  * limit. `@auth/core` rethrows the same instance to the `signIn` caller (see
  * the `isRaw` branch in its `Auth()` function), so `retryAfter` (seconds)
@@ -48,31 +54,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        const { password } = parsed.data;
+        const email = parsed.data.email.toLowerCase();
 
         // Shared IP derivation with src/app/(store)/checkout/actions.ts; this
         // is also the entry point for POST /api/auth/callback/credentials,
         // which bypasses the login Server Action.
         const ipAddress = getClientIp(request.headers);
-        const rateLimitKey = `login:${ipAddress}:${email.toLowerCase()}`;
+        const rateLimitKey = `login:${ipAddress}:${email}`;
 
-        const limit = rateLimit(rateLimitKey, {
-          limit: 5,
-          windowMs: 1000 * 60 * 10,
-        });
-        if (!limit.ok) throw new RateLimitedSignin(limit.retryAfter);
+        const attempt = rateLimit(rateLimitKey, LOGIN_RATE_LIMIT);
+        if (!attempt.ok) throw new RateLimitedSignin(attempt.retryAfter);
 
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
-        });
+        const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
           await verify(DUMMY_HASH, password);
           return null;
         }
 
-        const ok = await verify(user.passwordHash, password);
-        if (!ok) return null;
+        const isPasswordValid = await verify(user.passwordHash, password);
+        if (!isPasswordValid) return null;
 
         resetRateLimit(rateLimitKey);
         return { id: user.id, email: user.email, name: user.name };

@@ -17,6 +17,7 @@ import { ORDER_STATUS_LABELS } from "@/lib/admin/orders";
 import { auth } from "@/lib/auth";
 import { formatArsPrice } from "@/lib/catalog";
 import { formatRelativeDate } from "@/lib/date";
+import { SITE_LOCALE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Panel" };
 
@@ -40,7 +41,7 @@ function Card({
         {label}
       </span>
       <span className="text-4xl font-extrabold tracking-tight">
-        {value.toLocaleString("es-AR")}
+        {value.toLocaleString(SITE_LOCALE)}
       </span>
       {hint ? (
         <span className="text-xs text-muted-foreground">{hint}</span>
@@ -66,7 +67,7 @@ function SectionTitle({
   );
 }
 
-const dateFormatter = new Intl.DateTimeFormat("es-AR", {
+const dateFormatter = new Intl.DateTimeFormat(SITE_LOCALE, {
   dateStyle: "full",
   timeZone: "America/Argentina/Buenos_Aires",
 });

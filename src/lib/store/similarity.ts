@@ -1,7 +1,7 @@
 /**
  * Pure "Se parece a" scoring. Nothing here imports Prisma: `src/lib/store/queries.ts`
- * loads the raw rows and hands plain data in, so this module stays trivial to
- * unit test and reusable if the ranking ever needs to run outside a query.
+ * loads the raw rows and hands plain data in, so this module stays
+ * easy to reason about and reusable if the ranking ever needs to run outside a query.
  *
  * The score combines three cosine-similarity components plus a small additive
  * bonus:

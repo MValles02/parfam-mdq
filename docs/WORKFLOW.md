@@ -21,7 +21,7 @@ Run locally before opening a PR:
 ```bash
 pnpm typecheck
 pnpm lint
-pnpm test
+pnpm test   # integration tests; needs a migrated DB (pnpm db:up && pnpm db:deploy)
 ```
 
 ## Migrations and deploys

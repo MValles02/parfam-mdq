@@ -19,7 +19,6 @@ export const GENDERS = ["WOMEN", "MEN", "UNISEX"] as const satisfies Gender[];
 
 export const VARIANT_KINDS = [
   "FULL_BOTTLE",
-  "TESTER",
   "DECANT",
 ] as const satisfies VariantKind[];
 
@@ -158,7 +157,7 @@ export const serializeCatalogFilters = createSerializer(catalogFilterParsers, {
 export type CatalogFilters = {
   search: string;
   gender: Gender | null;
-  variantKind: VariantKind | null;
+  variantKind: (typeof VARIANT_KINDS)[number] | null;
   brand: string | null;
   accord: string | null;
   note: string | null;

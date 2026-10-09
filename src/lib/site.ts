@@ -14,7 +14,7 @@ export const siteDefaults = {
   legalName: "ParfamMdq Perfumería",
   tagline: "No solo es un perfume",
   description:
-    "Perfumes originales en Mar del Plata: frascos, testers y decants. Consultas y pedidos por WhatsApp.",
+    "Perfumes originales en Mar del Plata: frascos y decants. Consultas y pedidos por WhatsApp.",
   city: "Mar del Plata",
   whatsapp: "+5492236163910",
   instagram: "parfam_mdq",

@@ -65,3 +65,16 @@ introduce an explicit migration or adapter.
 
 The code is the authoritative source. Refresh this document whenever an
 implementation change invalidates one of these statements.
+
+## Pending: retire `VariantKind.TESTER`
+
+Release N only hides and blocks testers in code; the enum value and any rows
+remain. Pending work, in order, each needing user approval:
+
+1. Delete the legacy tester rows after reviewing the affected orders and
+   published products (order lines keep their snapshots; their variant link
+   becomes null).
+2. Release N+1: remove every `TESTER` reference from the code (filters, legacy
+   branches, label).
+3. Release N+2: contract migration that recreates the `VariantKind` enum
+   without `TESTER`, guarded by a check that no row still uses it.

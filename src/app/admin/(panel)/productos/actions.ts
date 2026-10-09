@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
-import { ProductStatus } from "@/generated/prisma/enums";
+import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/admin/guard";
 import {
   findProductsByFragranceRefIds,
@@ -576,7 +576,10 @@ export async function changeProductStatus(
       where: { id },
       select: {
         description: true,
-        variants: { where: { isActive: true }, select: { id: true } },
+        variants: {
+          where: { isActive: true, kind: { not: VariantKind.TESTER } },
+          select: { id: true },
+        },
       },
     });
     if (!product) return actionFailure("Ese producto ya no existe.");
@@ -659,6 +662,7 @@ export async function setVariantActive(
         where: {
           productId: variant.productId,
           isActive: true,
+          kind: { not: VariantKind.TESTER },
           id: { not: parsed.data.variantId },
         },
       });

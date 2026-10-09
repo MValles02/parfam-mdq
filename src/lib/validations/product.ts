@@ -244,6 +244,13 @@ export const productSchema = z
     // and ambiguous in the WhatsApp order message.
     const seenVariants = new Set<string>();
     values.variants.forEach((variant, index) => {
+      if (variant.kind === VariantKind.TESTER && variant.id === null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["variants", index, "kind"],
+          message: "Los testers ya no se venden: elegí frasco entero o decant.",
+        });
+      }
       const variantKey = `${variant.kind}|${variant.sizeMl ?? ""}`;
       if (seenVariants.has(variantKey)) {
         ctx.addIssue({
@@ -257,7 +264,12 @@ export const productSchema = z
 
     // Published products need a purchasable active variant.
     if (values.status === ProductStatus.PUBLISHED) {
-      if (!values.variants.some((variant) => variant.isActive)) {
+      // Legacy testers are never sold, so they do not make a product purchasable.
+      if (
+        !values.variants.some(
+          (variant) => variant.isActive && variant.kind !== VariantKind.TESTER,
+        )
+      ) {
         ctx.addIssue({
           code: "custom",
           path: ["variants"],

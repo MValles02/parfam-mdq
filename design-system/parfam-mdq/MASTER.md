@@ -237,7 +237,7 @@ The customer voice is **es-AR, voseo, second person, short sentences**. `<html>`
 
 Representative customer copy remains intentionally Spanish:
 
-- “Recorré el catálogo y elegí entre frasco entero, tester o decant, en el tamaño que quieras probar.”
+- “Recorré el catálogo y elegí entre frasco entero o decant, en el tamaño que quieras probar.”
 - “Sumá una o varias fragancias. Podés seguir mirando el catálogo antes de cerrar el pedido.”
 - “Te pedimos nombre y teléfono, y se abre el chat con el pedido ya escrito.”
 - “¿A nombre de quién armamos el pedido?”

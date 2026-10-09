@@ -39,11 +39,16 @@ test("single-kind product has no Presentación group", async ({ page }) => {
   ).toHaveCount(0);
 });
 
-test("tester variant is purchasable", async ({ page }) => {
+test("hombre fixture sells Frasco entero 100 ml and hides the legacy tester", async ({
+  page,
+}) => {
   await page.goto("/producto/fixture-eau-de-prueba-hombre");
   await expect(
-    page.getByRole("button", { name: "Agregar al carrito · Tester 100 ml" }),
+    page.getByRole("button", {
+      name: "Agregar al carrito · Frasco entero 100 ml",
+    }),
   ).toBeVisible();
+  await expect(page.getByText("Tester")).toHaveCount(0);
 });
 
 test("product page does not overflow at 390px", async ({ page }) => {

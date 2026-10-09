@@ -12,7 +12,7 @@ Buyers in Mar del Plata, Argentina, who find the store mostly through Instagram.
 
 ## Product Purpose
 
-A perfume store (sealed bottles, testers and decants) that is also a technical reference: each fragrance carries its notes, accords, pyramid and perfumer data. It does not charge. Checkout saves the order, assigns a sequential number (`PM-0042`) and opens a prewritten WhatsApp message; payment and delivery are agreed in chat. Success means a visitor understands what a fragrance is, picks a presentation and sends the order.
+A perfume store (sealed bottles and decants) that is also a technical reference: each fragrance carries its notes, accords, pyramid and perfumer data. It does not charge. Checkout saves the order, assigns a sequential number (`PM-0042`) and opens a prewritten WhatsApp message; payment and delivery are agreed in chat. Success means a visitor understands what a fragrance is, picks a presentation and sends the order.
 
 ## Positioning
 
@@ -26,7 +26,7 @@ Store and technical fragrance reference in one place: the visitor can learn abou
 
 ## Capabilities and Constraints
 
-- Presentations: frasco entero, tester, decant. Pages: catalog with URL filters, product, cart, checkout, order confirmation, "Frasco o decant", "Concentraciones", "Cómo comprar", contact.
+- Presentations: frasco entero, decant. Pages: catalog with URL filters, product, cart, checkout, order confirmation, "Frasco o decant", "Concentraciones", "Cómo comprar", contact.
 - UI copy is Spanish (es-AR, voseo). Code and developer docs are English.
 - Only PUBLISHED products with active variants are public.
 - Stack: Next.js 16, Tailwind v4, shadcn/ui; see AGENTS.md.
@@ -47,7 +47,7 @@ Store and technical fragrance reference in one place: the visitor can learn abou
 
 1. The technical depth (notes, accords, data) is the differentiator; surface it, do not bury it behind the sales flow.
 2. Mobile first: every key task (browse, understand a fragrance, order) must work one-handed on a phone.
-3. Reduce the risk of trying: make decants and testers easy to understand and choose.
+3. Reduce the risk of trying: make decants easy to understand and choose.
 4. Honest and local: no invented claims; WhatsApp conversation is the human close.
 5. Keep the sales flow short: from fragrance to WhatsApp message in few taps.
 

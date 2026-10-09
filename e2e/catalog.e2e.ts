@@ -168,3 +168,19 @@ test("the sort control defaults to Destacados on desktop", async ({ page }) => {
     page.getByRole("combobox", { name: "Ordenar" }).filter({ visible: true }),
   ).toHaveText("Destacados");
 });
+
+test("a legacy ?presentacion=TESTER URL is ignored and offers no Tester filter", async ({
+  page,
+}) => {
+  const response = await page.goto("/?presentacion=TESTER");
+  expect(response?.status()).toBe(200);
+
+  await expect(
+    page.getByRole("heading", { name: "Fixture Eau de Prueba Hombre" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Fixture Eau de Prueba Mujer" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tester" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Decant" })).toBeVisible();
+});

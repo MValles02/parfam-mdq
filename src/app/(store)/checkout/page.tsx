@@ -14,11 +14,11 @@ export const metadata: Metadata = {
  * from `/admin/configuracion`.
  */
 export default async function Page() {
-  const config = await getSiteSettings();
+  const settings = await getSiteSettings();
 
   return (
     <div className="mx-auto max-w-page px-5 pt-10 pb-10 sm:px-8 lg:px-16 lg:pt-14 lg:pb-14">
-      <CheckoutForm shippingInfo={config.shippingInfo} />
+      <CheckoutForm shippingInfo={settings.shippingInfo} />
     </div>
   );
 }

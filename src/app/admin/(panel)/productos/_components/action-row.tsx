@@ -29,6 +29,7 @@ import {
   duplicateProduct,
   deleteProduct,
 } from "../actions";
+import { getAdminProductPath } from "../paths";
 
 /**
  * The status chip, publish switch and action menu render in non-adjacent table
@@ -104,7 +105,7 @@ export function ActionMenu({ id, name }: { id: string; name: string }) {
         return;
       }
       toast.success("Producto duplicado.");
-      router.push(`/admin/productos/${result.data.id}`);
+      router.push(getAdminProductPath(result.data.id));
     });
   }
 
@@ -125,7 +126,7 @@ export function ActionMenu({ id, name }: { id: string; name: string }) {
     <>
       <div className="flex items-center justify-end gap-1.5">
         <Button variant="outline" size="icon" asChild>
-          <Link href={`/admin/productos/${id}`} aria-label={`Editar ${name}`}>
+          <Link href={getAdminProductPath(id)} aria-label={`Editar ${name}`}>
             <Pencil />
           </Link>
         </Button>
@@ -142,7 +143,7 @@ export function ActionMenu({ id, name }: { id: string; name: string }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/admin/productos/${id}`}>
+              <Link href={getAdminProductPath(id)}>
                 <Pencil /> Editar
               </Link>
             </DropdownMenuItem>

@@ -8,29 +8,31 @@ export type BrandRow = {
   productCount: number;
 };
 
+const BRAND_SEARCH_LIMIT = 50;
+
 /**
  * The Fragrantica dataset has 1,748 brands, while only a few currently have
- * store products. Without `q`, this limits the list to relevant brands. With
- * `q`, it searches the whole reference set so a brand can be corrected before
- * its first product is added.
+ * store products. Without a search term, this limits the list to relevant
+ * brands. With one, it searches the whole reference set so a brand can be
+ * corrected before its first product is added.
  */
 export async function listBrands(
-  q: string,
-  filtro: "todas" | "sin-corregir" = "todas",
+  query: string,
+  filter: "todas" | "sin-corregir" = "todas",
 ): Promise<BrandRow[]> {
-  const query = q.trim();
+  const searchTerm = query.trim();
 
   const brands = await prisma.brand.findMany({
-    where: query
+    where: searchTerm
       ? {
           OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { slug: { contains: query, mode: "insensitive" } },
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { slug: { contains: searchTerm, mode: "insensitive" } },
           ],
         }
       : { products: { some: {} } },
     orderBy: { name: "asc" },
-    take: query ? 50 : undefined,
+    take: searchTerm ? BRAND_SEARCH_LIMIT : undefined,
     select: {
       id: true,
       slug: true,
@@ -50,7 +52,7 @@ export async function listBrands(
 
   // A brand whose name still equals its slug was never corrected after the
   // reference import. Prisma cannot compare two columns, so filter in JS.
-  return filtro === "sin-corregir"
+  return filter === "sin-corregir"
     ? rows.filter((brand) => brand.name === brand.slug)
     : rows;
 }

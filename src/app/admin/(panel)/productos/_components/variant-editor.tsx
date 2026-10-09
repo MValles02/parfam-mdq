@@ -23,6 +23,13 @@ import { VARIANT_KIND_LABELS as variantKindLabels } from "@/lib/catalog";
 import type { ProductFormInput } from "@/lib/validations/product";
 import { cn } from "@/lib/utils";
 
+/**
+ * Column template shared by the header and each row. Warning: Tailwind only
+ * generates classes written literally in source, so the `md:` variant that
+ * `VariantRow` derives from this string emits no CSS and rows keep
+ * `grid-cols-2` at every width. Writing that class literally would change the
+ * desktop layout, so it is deliberately left as is.
+ */
 const COLUMNS = "grid-cols-[1.4fr_0.8fr_1.2fr_1fr_1fr_60px]";
 
 /** Typical sizes for each variant, used only as datalist suggestions. */
@@ -31,14 +38,22 @@ const SIZE_SUGGESTIONS_ML: Partial<Record<VariantKind, number[]>> = {
   DECANT: [2, 3, 5, 10, 15],
 };
 
+/** Starting values for "Agregar presentación": the most common decant. */
+const NEW_VARIANT: NonNullable<ProductFormInput["variants"]>[number] = {
+  id: null,
+  kind: VariantKind.DECANT,
+  sizeMl: 10,
+  priceArs: "",
+  isActive: true,
+  sku: null,
+};
+
 export function VariantEditor({
   control,
-  disabled,
-  errorGeneral,
+  error,
 }: {
   control: Control<ProductFormInput>;
-  disabled?: boolean;
-  errorGeneral?: string;
+  error?: string;
 }) {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -71,7 +86,6 @@ export function VariantEditor({
           control={control}
           index={index}
           datalistId={datalistId}
-          disabled={disabled}
           onRemove={() => remove(index)}
         />
       ))}
@@ -87,25 +101,15 @@ export function VariantEditor({
 
       <button
         type="button"
-        disabled={disabled}
-        onClick={() =>
-          append({
-            id: null,
-            kind: VariantKind.DECANT,
-            sizeMl: 10,
-            priceArs: "",
-            isActive: true,
-            sku: null,
-          })
-        }
+        onClick={() => append({ ...NEW_VARIANT })}
         className="flex items-center justify-center gap-2 rounded-md border border-dashed p-3.5 text-[13px] font-semibold text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
       >
         <Plus className="size-4" />
         Agregar presentación
       </button>
 
-      {errorGeneral ? (
-        <p className="text-xs font-medium text-destructive">{errorGeneral}</p>
+      {error ? (
+        <p className="text-xs font-medium text-destructive">{error}</p>
       ) : null}
     </div>
   );
@@ -119,13 +123,11 @@ function VariantRow({
   control,
   index,
   datalistId,
-  disabled,
   onRemove,
 }: {
   control: Control<ProductFormInput>;
   index: number;
   datalistId: string;
-  disabled?: boolean;
   onRemove: () => void;
 }) {
   const variantKind = useWatch({ control, name: `variants.${index}.kind` });
@@ -147,11 +149,7 @@ function VariantRow({
             control={control}
             name={`variants.${index}.kind`}
             render={({ field: kind }) => (
-              <Select
-                value={kind.value}
-                onValueChange={kind.onChange}
-                disabled={disabled}
-              >
+              <Select value={kind.value} onValueChange={kind.onChange}>
                 <SelectTrigger className="w-full bg-background">
                   <SelectValue />
                 </SelectTrigger>
@@ -184,7 +182,6 @@ function VariantRow({
                     placeholder="ml"
                     aria-label="Tamaño en mililitros"
                     list={`${datalistId}-${variantKind}`}
-                    disabled={disabled}
                     className="bg-background pr-8"
                     value={ml.value ?? ""}
                     onChange={(e) => {
@@ -221,7 +218,6 @@ function VariantRow({
                     inputMode="decimal"
                     placeholder="0"
                     aria-label="Precio en pesos"
-                    disabled={disabled}
                     className="bg-background pl-7 font-semibold"
                     value={price.value ?? ""}
                     onChange={(e) => price.onChange(e.target.value)}
@@ -244,7 +240,6 @@ function VariantRow({
                 <Input
                   placeholder="SKU (opcional)"
                   aria-label="SKU de esta presentación"
-                  disabled={disabled}
                   className="bg-background"
                   value={sku.value ?? ""}
                   onChange={(e) => sku.onChange(e.target.value)}
@@ -262,7 +257,6 @@ function VariantRow({
             <Switch
               checked={active.value ?? true}
               onCheckedChange={active.onChange}
-              disabled={disabled}
             />
             <span
               className={cn(
@@ -279,7 +273,6 @@ function VariantRow({
               type="button"
               variant="outline"
               size="icon"
-              disabled={disabled}
               onClick={onRemove}
               aria-label="Eliminar esta presentación"
             >

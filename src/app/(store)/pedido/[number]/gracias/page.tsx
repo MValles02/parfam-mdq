@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function Page(
   pageProps: PageProps<"/pedido/[number]/gracias">,
 ) {
-  const [{ number }, config] = await Promise.all([
+  const [{ number }, settings] = await Promise.all([
     pageProps.params,
     getSiteSettings(),
   ]);
@@ -26,8 +26,8 @@ export default async function Page(
   return (
     <CustomerThanks
       number={isOrderNumber(number) ? number : null}
-      whatsappNumber={config.whatsappNumber}
-      shippingInfo={config.shippingInfo}
+      whatsappNumber={settings.whatsappNumber}
+      shippingInfo={settings.shippingInfo}
     />
   );
 }

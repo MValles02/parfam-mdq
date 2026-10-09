@@ -37,43 +37,11 @@ export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
  * match none of the four formats this app accepts.
  */
 export function detectImageContentType(bytes: Uint8Array): string | null {
-  // JPEG: SOI marker.
-  if (
-    bytes.length >= 3 &&
-    bytes[0] === 0xff &&
-    bytes[1] === 0xd8 &&
-    bytes[2] === 0xff
-  ) {
-    return "image/jpeg";
-  }
-
-  // PNG: fixed 8-byte signature.
-  if (
-    bytes.length >= 8 &&
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47 &&
-    bytes[4] === 0x0d &&
-    bytes[5] === 0x0a &&
-    bytes[6] === 0x1a &&
-    bytes[7] === 0x0a
-  ) {
-    return "image/png";
-  }
+  if (hasBytesAt(bytes, 0, JPEG_START_OF_IMAGE)) return "image/jpeg";
+  if (hasBytesAt(bytes, 0, PNG_SIGNATURE)) return "image/png";
 
   // WebP: a RIFF container whose form type is "WEBP".
-  if (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 && // R
-    bytes[1] === 0x49 && // I
-    bytes[2] === 0x46 && // F
-    bytes[3] === 0x46 && // F
-    bytes[8] === 0x57 && // W
-    bytes[9] === 0x45 && // E
-    bytes[10] === 0x42 && // B
-    bytes[11] === 0x50 // P
-  ) {
+  if (hasBytesAt(bytes, 0, RIFF) && hasBytesAt(bytes, 8, WEBP)) {
     return "image/webp";
   }
 
@@ -86,22 +54,11 @@ export function detectImageContentType(bytes: Uint8Array): string | null {
   // (offset 0..3, big-endian) and never past the end of the buffer, so a
   // truncated or lied-about size cannot make this read outside the box or
   // outside `bytes`.
-  if (
-    bytes.length >= 12 &&
-    bytes[4] === 0x66 && // f
-    bytes[5] === 0x74 && // t
-    bytes[6] === 0x79 && // y
-    bytes[7] === 0x70 // p
-  ) {
-    const majorBrand = String.fromCharCode(
-      bytes[8]!,
-      bytes[9]!,
-      bytes[10]!,
-      bytes[11]!,
-    );
-    if (majorBrand === "avif" || majorBrand === "avis") return "image/avif";
+  if (bytes.length >= 12 && hasBytesAt(bytes, 4, FTYP)) {
+    const majorBrand = readFourCharacterCode(bytes, 8);
+    if (AVIF_BRANDS.has(majorBrand)) return "image/avif";
 
-    if (majorBrand === "mif1" || majorBrand === "msf1") {
+    if (HEIF_CONTAINER_BRANDS.has(majorBrand)) {
       const boxSize =
         ((bytes[0]! << 24) |
           (bytes[1]! << 16) |
@@ -110,13 +67,7 @@ export function detectImageContentType(bytes: Uint8Array): string | null {
         0;
       const boxEnd = Math.min(boxSize, bytes.length);
       for (let offset = 16; offset + 4 <= boxEnd; offset += 4) {
-        const compatibleBrand = String.fromCharCode(
-          bytes[offset]!,
-          bytes[offset + 1]!,
-          bytes[offset + 2]!,
-          bytes[offset + 3]!,
-        );
-        if (compatibleBrand === "avif" || compatibleBrand === "avis") {
+        if (AVIF_BRANDS.has(readFourCharacterCode(bytes, offset))) {
           return "image/avif";
         }
       }
@@ -124,4 +75,38 @@ export function detectImageContentType(bytes: Uint8Array): string | null {
   }
 
   return null;
+}
+
+const JPEG_START_OF_IMAGE = [0xff, 0xd8, 0xff];
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const RIFF = asciiBytes("RIFF");
+const WEBP = asciiBytes("WEBP");
+const FTYP = asciiBytes("ftyp");
+const AVIF_BRANDS = new Set(["avif", "avis"]);
+const HEIF_CONTAINER_BRANDS = new Set(["mif1", "msf1"]);
+
+function asciiBytes(text: string): number[] {
+  return Array.from(text, (character) => character.charCodeAt(0));
+}
+
+/** True when `bytes` holds exactly `expected` starting at `offset`. */
+function hasBytesAt(
+  bytes: Uint8Array,
+  offset: number,
+  expected: readonly number[],
+): boolean {
+  return (
+    bytes.length >= offset + expected.length &&
+    expected.every((value, index) => bytes[offset + index] === value)
+  );
+}
+
+/** Reads the 4-byte ASCII code (an ISOBMFF box type or brand) at `offset`. */
+function readFourCharacterCode(bytes: Uint8Array, offset: number): string {
+  return String.fromCharCode(
+    bytes[offset]!,
+    bytes[offset + 1]!,
+    bytes[offset + 2]!,
+    bytes[offset + 3]!,
+  );
 }

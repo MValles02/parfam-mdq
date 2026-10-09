@@ -1,22 +1,23 @@
 /**
  * Legible colors for accord chips.
  *
- * The 92 accords each have their own database color (`Accord.color`, from
+ * Each accord has its own database color (`Accord.color`, from
  * prisma/reference/accords.es.json). It is the only site color that does
  * not come from a globals.css token because it is data rather than a theme
  * decision. Its foreground cannot use a token either: it must contrast with
  * that hex value, which can fall anywhere on the color ramp.
  *
- * Choosing the better palette endpoint is insufficient: 40 of the 93 colors
- * are middle tones that do not reach 4.5:1 against either endpoint (the best
- * case is 4.01), and chip text is 12 px, so WCAG AA requires 4.5:1. Adjust
- * the background just enough away from the foreground to reach that threshold.
- * The maximum adjustment in the current dictionary is 8% toward the opposite
- * endpoint, preserving the accord's recognizable hue.
+ * Choosing the better palette endpoint is insufficient: some colors are
+ * middle tones that do not reach 4.5:1 against either endpoint, and chip text
+ * is 12 px, so WCAG AA requires 4.5:1. Adjust the background just enough
+ * away from the foreground to reach that threshold, in small steps toward the
+ * opposite endpoint, so the accord keeps its recognizable hue.
  */
 
-const INK = "#14120F";
-const CREAM = "#F2EEE9";
+import { brandColors } from "./site";
+
+const INK = brandColors.ink;
+const CREAM = brandColors.cream;
 
 /** WCAG AA for normal text. The 12 px chip text does not qualify as large. */
 const MINIMUM_CONTRAST = 4.5;
@@ -36,8 +37,8 @@ function toRgb(hex: string): Rgb | null {
 
 function toHex(rgb: Rgb): string {
   return `#${rgb
-    .map((v) =>
-      Math.round(Math.min(255, Math.max(0, v)))
+    .map((channel) =>
+      Math.round(Math.min(255, Math.max(0, channel)))
         .toString(16)
         .padStart(2, "0"),
     )
@@ -98,6 +99,9 @@ export function getChipColor(color: string): ChipColor {
     return { background: toHex(base), foreground: toHex(foreground) };
   }
 
+  // Contrast is checked on the unrounded blend, before `toHex` rounds each
+  // channel; src/lib/color.test.ts pins the accords that rounding leaves just
+  // under the threshold.
   for (let ratio = STEP; ratio <= 1; ratio += STEP) {
     const candidate = blend(base, opposite, ratio);
     if (getContrastRatio(candidate, foreground) >= MINIMUM_CONTRAST) {

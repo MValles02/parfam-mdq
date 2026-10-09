@@ -1,70 +1,21 @@
 /**
  * Pure helpers for scripts/import-references.ts: dimension aggregation
- * (brand/perfumer/note-family "most frequent casing wins", matching how
- * scripts/check-reference-translations.ts already picks a canonical display
- * name) and the FragranceRef row shape shared by both the create and update
- * paths of the importer's second pass.
+ * (brand/perfumer/note-family "most frequent casing wins", see
+ * scripts/lib/slug-frequency.ts), the FragranceRef row shape shared by both
+ * the create and update paths of the importer's second pass, and the
+ * relation and dimension rows each batch writes.
  *
  * Like scripts/lib/reference-parse.ts, this module does no database, file,
  * or network I/O and never imports the generated Prisma client, so it stays
  * usable from the importer scripts without a live database or `prisma generate`.
  */
 
-import type { Gender, ParsedReference } from "./reference-parse";
+import type { Gender, NotePosition, ParsedReference } from "./reference-parse";
+import type { ReferenceTranslations } from "./reference-translations";
+import { SlugFrequencyTracker } from "./slug-frequency";
 
-/**
- * Tracks, per slug, how many times each exact display-name (or family, for
- * notes) string occurred across the dataset, and picks the most frequent one
- * as the canonical value written to the dimension table. The dataset does
- * not normalize casing (e.g. a brand appearing as both "L'Oréal" and
- * "L'OREAL"), so picking anything other than "most common wins" would make
- * the imported name depend on iteration order rather than the data itself.
- */
-export class SlugFrequencyTracker {
-  private readonly valuesBySlug = new Map<string, Map<string, number>>();
-
-  record(slug: string, value: string): void {
-    let values = this.valuesBySlug.get(slug);
-    if (!values) {
-      values = new Map();
-      this.valuesBySlug.set(slug, values);
-    }
-    values.set(value, (values.get(value) ?? 0) + 1);
-  }
-
-  slugs(): string[] {
-    return [...this.valuesBySlug.keys()];
-  }
-
-  /** Total occurrences of the slug, across every distinct value seen for it. */
-  total(slug: string): number {
-    const values = this.valuesBySlug.get(slug);
-    if (!values) return 0;
-    let total = 0;
-    for (const count of values.values()) total += count;
-    return total;
-  }
-
-  /** The single most frequently seen value for this slug; ties keep whichever value was recorded first, for a deterministic result independent of Map iteration quirks. */
-  mostFrequent(slug: string): string {
-    const values = this.valuesBySlug.get(slug);
-    if (!values || values.size === 0) {
-      throw new Error(`No value was ever recorded for slug "${slug}".`);
-    }
-    let best: { value: string; count: number } | null = null;
-    for (const [value, count] of values) {
-      if (best === null || count > best.count) best = { value, count };
-    }
-    return best!.value;
-  }
-}
-
-interface BrandDimension {
-  slug: string;
-  name: string;
-}
-
-interface PerfumerDimension {
+/** A Brand or Perfumer row: both are keyed by slug and carry only a display name. */
+interface NamedDimension {
   slug: string;
   name: string;
 }
@@ -95,13 +46,13 @@ export class ReferenceDimensionAggregator {
     }
   }
 
-  get brands(): BrandDimension[] {
+  get brands(): NamedDimension[] {
     return this.brandNames
       .slugs()
       .map((slug) => ({ slug, name: this.brandNames.mostFrequent(slug) }));
   }
 
-  get perfumers(): PerfumerDimension[] {
+  get perfumers(): NamedDimension[] {
     return this.perfumerNames
       .slugs()
       .map((slug) => ({ slug, name: this.perfumerNames.mostFrequent(slug) }));
@@ -187,4 +138,185 @@ export function buildFragranceRefRow(
     scrapedAt: record.scrapedAt,
     searchText: buildSearchText(record.name, record.brandName),
   };
+}
+
+/** Looks up the Brand row id the dimension upserts created for this record's brand slug. */
+export function resolveBrandId(
+  record: ParsedReference,
+  brandIdBySlug: ReadonlyMap<string, string>,
+): string {
+  const brandId = brandIdBySlug.get(record.brandSlug);
+  if (!brandId) {
+    throw new Error(
+      `Unresolved brand "${record.brandName}" (pid ${record.pid}).`,
+    );
+  }
+  return brandId;
+}
+
+/**
+ * Maps every pid in the batch to its FragranceRef id: the id of the row that
+ * already existed when there is one, otherwise the id of the row the batch
+ * just created.
+ */
+export function resolveRefIdByPid(
+  batch: readonly ParsedReference[],
+  existingIdByPid: ReadonlyMap<number, string>,
+  createdIdByPid: ReadonlyMap<number, string>,
+): Map<number, string> {
+  const refIdByPid = new Map<number, string>();
+  for (const record of batch) {
+    const id =
+      existingIdByPid.get(record.pid) ?? createdIdByPid.get(record.pid);
+    if (!id) {
+      throw new Error(
+        `FragranceRef for pid ${record.pid} was neither found nor created.`,
+      );
+    }
+    refIdByPid.set(record.pid, id);
+  }
+  return refIdByPid;
+}
+
+interface FragranceRefNoteRow {
+  fragranceRefId: string;
+  noteId: string;
+  position: NotePosition | null;
+  weight: number;
+  sortOrder: number;
+}
+
+interface FragranceRefAccordRow {
+  fragranceRefId: string;
+  accordId: string;
+  strength: number;
+  sortOrder: number;
+}
+
+interface FragranceRefPerfumerRow {
+  fragranceRefId: string;
+  perfumerId: string;
+}
+
+interface FragranceRefRelationRows {
+  notes: FragranceRefNoteRow[];
+  accords: FragranceRefAccordRow[];
+  perfumers: FragranceRefPerfumerRow[];
+}
+
+/** Dimension row ids by slug, read back from the database after the dimension upserts. */
+export interface RelationDimensionIds {
+  noteIdBySlug: ReadonlyMap<string, string>;
+  accordIdBySlug: ReadonlyMap<string, string>;
+  perfumerIdBySlug: ReadonlyMap<string, string>;
+}
+
+/**
+ * Builds the note, accord, and perfumer relation rows for every record in
+ * the batch, in record order. Every slug must resolve: the translation gate
+ * and the dimension upserts guarantee it, so a miss is an importer bug and
+ * throws.
+ */
+export function buildRelationRows(
+  batch: readonly ParsedReference[],
+  refIdByPid: ReadonlyMap<number, string>,
+  ids: RelationDimensionIds,
+): FragranceRefRelationRows {
+  const rows: FragranceRefRelationRows = {
+    notes: [],
+    accords: [],
+    perfumers: [],
+  };
+  for (const record of batch) {
+    const fragranceRefId = refIdByPid.get(record.pid)!;
+    for (const note of record.notes) {
+      const noteId = ids.noteIdBySlug.get(note.noteSlug);
+      if (!noteId) {
+        throw new Error(
+          `Unresolved note "${note.name}" (pid ${record.pid}); the translation gate should have prevented this.`,
+        );
+      }
+      rows.notes.push({
+        fragranceRefId,
+        noteId,
+        position: note.position,
+        weight: note.weight,
+        sortOrder: note.sortOrder,
+      });
+    }
+    for (const accord of record.accords) {
+      const accordId = ids.accordIdBySlug.get(accord.slug);
+      if (!accordId) {
+        throw new Error(
+          `Unresolved accord "${accord.name}" (pid ${record.pid}); the translation gate should have prevented this.`,
+        );
+      }
+      rows.accords.push({
+        fragranceRefId,
+        accordId,
+        strength: accord.strength,
+        sortOrder: accord.sortOrder,
+      });
+    }
+    for (const perfumer of record.perfumers) {
+      const perfumerId = ids.perfumerIdBySlug.get(perfumer.slug);
+      if (!perfumerId) {
+        throw new Error(
+          `Unresolved perfumer "${perfumer.name}" (pid ${record.pid}); pass 1 should have aggregated it.`,
+        );
+      }
+      rows.perfumers.push({ fragranceRefId, perfumerId });
+    }
+  }
+  return rows;
+}
+
+export interface NoteDimensionRow {
+  slug: string;
+  nameEn: string;
+  nameEs: string;
+  family: string;
+}
+
+export interface AccordDimensionRow {
+  slug: string;
+  nameEn: string;
+  nameEs: string;
+  color: string;
+}
+
+/**
+ * Note rows to upsert, one per note slug the dataset uses. The importer only
+ * calls this after the translation gate verified every slug has an entry in
+ * `translations.notes`.
+ */
+export function buildNoteDimensionRows(
+  aggregator: ReferenceDimensionAggregator,
+  translations: ReferenceTranslations,
+): NoteDimensionRow[] {
+  return aggregator.noteSlugs.map((slug) => {
+    const translation = translations.notes.get(slug)!;
+    return {
+      slug,
+      nameEn: translation.en,
+      nameEs: translation.es,
+      family: aggregator.familyFor(slug),
+    };
+  });
+}
+
+/** Accord rows to upsert; same translation-gate precondition as `buildNoteDimensionRows`. */
+export function buildAccordDimensionRows(
+  aggregator: ReferenceDimensionAggregator,
+  translations: ReferenceTranslations,
+): AccordDimensionRow[] {
+  return aggregator.accordSlugs.map((slug) => {
+    const translation = translations.accords.get(slug)!;
+    return {
+      slug,
+      nameEn: translation.en,
+      nameEs: translation.es,
+      color: translation.color,
+    };
+  });
 }

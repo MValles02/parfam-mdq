@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
+import { CATALOG_HREF } from "@/lib/store/links";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 // Same height, width and type size on both so neither action outweighs the
@@ -17,7 +18,7 @@ export function PageCtaPair({
   return (
     <div className="mt-12 flex flex-col gap-3 sm:flex-row">
       <Link
-        href="/#catalogo"
+        href={CATALOG_HREF}
         className={`${BUTTON} bg-primary text-primary-foreground hover:bg-primary/80`}
       >
         Ver el catálogo

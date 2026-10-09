@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { FIXTURE_UNISEX } from "../scripts/lib/fixture-catalog";
 
 test("checkout creates an order and shows the thank-you page", async ({
   page,
 }) => {
-  await page.goto("/producto/fixture-eau-de-prueba-unisex");
+  await page.goto(`/producto/${FIXTURE_UNISEX.slug}`);
   await page.getByRole("button", { name: /^Agregar al carrito/ }).click();
 
   await page.goto("/checkout");

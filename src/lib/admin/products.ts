@@ -1,17 +1,20 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { formatProperName, getStartingPrice } from "@/lib/catalog";
+import { getFragranticaPerfumeUrl } from "@/lib/admin/references";
 import { prisma } from "@/lib/db";
 import { getPublicUrl } from "@/lib/r2";
 
 export type ProductStatusFilter = "todos" | "publicados" | "borradores";
 
-const STATUS_TO_WHERE: Record<ProductStatusFilter, ProductStatus | undefined> =
-  {
-    todos: undefined,
-    publicados: ProductStatus.PUBLISHED,
-    borradores: ProductStatus.DRAFT,
-  };
+const PRODUCT_STATUS_BY_FILTER: Record<
+  ProductStatusFilter,
+  ProductStatus | undefined
+> = {
+  todos: undefined,
+  publicados: ProductStatus.PUBLISHED,
+  borradores: ProductStatus.DRAFT,
+};
 
 function buildSearchWhere(query: string): Prisma.ProductWhereInput {
   const term = query.trim();
@@ -39,7 +42,7 @@ export async function listProducts(options: {
   const status = options.status ?? "todos";
   const where: Prisma.ProductWhereInput = {
     ...buildSearchWhere(query),
-    status: STATUS_TO_WHERE[status],
+    status: PRODUCT_STATUS_BY_FILTER[status],
   };
 
   const [products, published, total] = await Promise.all([
@@ -48,7 +51,6 @@ export async function listProducts(options: {
       orderBy: [{ updatedAt: "desc" }],
       select: {
         id: true,
-        slug: true,
         name: true,
         status: true,
         concentration: true,
@@ -84,7 +86,6 @@ export async function listProducts(options: {
 
     return {
       id: product.id,
-      slug: product.slug,
       name: product.name,
       brandName: product.brand.name,
       concentration: product.concentration,
@@ -137,7 +138,7 @@ export async function getProductForEdit(id: string) {
       slug: true,
       name: true,
       brandId: true,
-      brand: { select: { id: true, name: true } },
+      brand: { select: { name: true } },
       fragranceRefId: true,
       fragranceRef: { select: { name: true, slug: true, pid: true } },
       sourceUrl: true,
@@ -174,14 +175,14 @@ export async function getProductForEdit(id: string) {
         select: {
           position: true,
           weight: true,
-          note: { select: { id: true, nameEn: true, nameEs: true } },
+          note: { select: { id: true, nameEs: true } },
         },
       },
       accords: {
         orderBy: { sortOrder: "asc" },
         select: {
           strength: true,
-          accord: { select: { id: true, nameEs: true, color: true } },
+          accord: { select: { id: true } },
         },
       },
       perfumers: {
@@ -208,30 +209,28 @@ export async function getProductForEdit(id: string) {
 
   return {
     ...product,
-    // Panel-only deep link back to the source Fragrantica page, matching
-    // `getReferenceForAdoption`'s `referenceUrl` (`src/lib/admin/references.ts`);
-    // never shown to customers.
+    // Same panel-only link as `getReferenceForAdoption`'s `referenceUrl`.
     fragranceRef: product.fragranceRef
       ? {
           name: product.fragranceRef.name,
-          referenceUrl: `https://www.fragrantica.com/perfume/${product.fragranceRef.slug}-${product.fragranceRef.pid}.html`,
+          referenceUrl: getFragranticaPerfumeUrl(
+            product.fragranceRef.slug,
+            product.fragranceRef.pid,
+          ),
         }
       : null,
     // Decimal is not Client Component serializable. `longevity` and
     // `sillage` become plain numbers, matching the form's schema
-    // (`src/lib/validations/product.ts`); prices stay strings (see below)
-    // because they must never go through float arithmetic.
+    // (`src/lib/validations/product.ts`), while prices become the strings the
+    // form expects because they must never go through float arithmetic.
     longevity: product.longevity === null ? null : Number(product.longevity),
     sillage: product.sillage === null ? null : Number(product.sillage),
-    // Decimal is not serializable to a Client Component. Send it as a string,
-    // which is also what the form expects.
     variants: product.variants.map((v) => ({
       ...v,
       priceArs: v.priceArs.toString(),
     })),
-    // Imported `Perfumer.name` casing is inconsistent (F-21 in
-    // docs/findings.md), so normalize it for display as the store query and
-    // getReferenceForAdoption do.
+    // Imported `Perfumer.name` casing is inconsistent, so normalize it for
+    // display as the store query and getReferenceForAdoption do.
     perfumers: product.perfumers.map((x) => ({
       perfumer: { ...x.perfumer, name: formatProperName(x.perfumer.name) },
     })),

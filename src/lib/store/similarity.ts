@@ -1,7 +1,8 @@
 /**
- * Pure "Se parece a" scoring. Nothing here imports Prisma: `src/lib/store/queries.ts`
- * loads the raw rows and hands plain data in, so this module stays
- * easy to reason about and reusable if the ranking ever needs to run outside a query.
+ * Pure "Se parece a" scoring. Nothing here imports Prisma:
+ * `src/lib/store/similar-products.ts` loads the raw rows and hands plain data
+ * in, so this module stays easy to reason about and reusable if the ranking
+ * ever needs to run outside a query.
  *
  * The score combines three cosine-similarity components plus a small additive
  * bonus:
@@ -98,28 +99,33 @@ export function isGenderCompatible(
 }
 
 /**
- * Cosine similarity over the union of keys present in either sparse vector,
- * treating an absent key as 0. Returns 0 (rather than `NaN` from a 0/0
- * division) when either vector has zero magnitude, which can only happen
- * here if every value present is 0.
+ * Cosine similarity of two equal-length vectors given as `[a, b]` value
+ * pairs. Returns 0 (rather than `NaN` from a 0/0 division) when either
+ * vector has zero magnitude, which can only happen here if every value is 0.
  */
-function cosineSparse(
-  a: Record<string, number>,
-  b: Record<string, number>,
-): number {
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+function cosine(pairs: [number, number][]): number {
   let dot = 0;
   let normA = 0;
   let normB = 0;
-  for (const key of keys) {
-    const valueA = a[key] ?? 0;
-    const valueB = b[key] ?? 0;
+  for (const [valueA, valueB] of pairs) {
     dot += valueA * valueB;
     normA += valueA * valueA;
     normB += valueB * valueB;
   }
   if (normA === 0 || normB === 0) return 0;
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+/**
+ * Cosine similarity over the union of keys present in either sparse vector,
+ * treating an absent key as 0.
+ */
+function cosineSparse(
+  a: Record<string, number>,
+  b: Record<string, number>,
+): number {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  return cosine([...keys].map((key) => [a[key] ?? 0, b[key] ?? 0]));
 }
 
 /** `null` means the accord component is missing for this product: no
@@ -140,10 +146,10 @@ function buildAccordVector(
  * Groups by family and keeps the strongest weight per family. Community data
  * that has not been voted on yet leaves every `ProductNote.weight` at 0
  * (see `prisma/schema.prisma`); a zero vector has no direction, so cosine
- * similarity would always return 0 for it. The spec calls for presence
- * instead in that case: every family the product has gets weight 1, so two
- * products that share the same note families still score as similar even
- * before anyone has voted on relative strength.
+ * similarity would always return 0 for it. Presence is used instead in that
+ * case: every family the product has gets weight 1, so two products that
+ * share the same note families still score as similar even before anyone has
+ * voted on relative strength.
  */
 function buildNoteFamilyVector(
   notes: SimilarityNote[],
@@ -177,17 +183,7 @@ function profileSimilarity(
     }
   }
   if (sharedPairs.length === 0) return null;
-
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (const [valueA, valueB] of sharedPairs) {
-    dot += valueA * valueB;
-    normA += valueA * valueA;
-    normB += valueB * valueB;
-  }
-  if (normA === 0 || normB === 0) return 0;
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  return cosine(sharedPairs);
 }
 
 function normalizeCollection(collection: string | null): string | null {
@@ -197,7 +193,10 @@ function normalizeCollection(collection: string | null): string | null {
 
 /** +0.05 when both products share a non-null, case-insensitive `collection`
  * or at least one perfumer. */
-function hasBonus(a: SimilarityCandidate, b: SimilarityCandidate): boolean {
+function sharesCollectionOrPerfumer(
+  a: SimilarityCandidate,
+  b: SimilarityCandidate,
+): boolean {
   const collectionA = normalizeCollection(a.collection);
   const collectionB = normalizeCollection(b.collection);
   if (collectionA !== null && collectionA === collectionB) return true;
@@ -245,7 +244,9 @@ export function scoreSimilarity(
       : components.reduce((sum, c) => sum + c.score * c.weight, 0) /
         totalWeight;
 
-  const bonus = hasBonus(a, b) ? SAME_COLLECTION_OR_PERFUMER_BONUS : 0;
+  const bonus = sharesCollectionOrPerfumer(a, b)
+    ? SAME_COLLECTION_OR_PERFUMER_BONUS
+    : 0;
   return Math.min(1, baseScore + bonus);
 }
 
@@ -256,7 +257,7 @@ export function scoreSimilarity(
  * completely unrelated products, kept only to pad the list to 20, would be
  * misleading rather than useful. Ties break by `isFeatured` (featured first),
  * then by `createdAt` (newest first), matching the catalog's own default
- * sort in `listCatalog` (`src/lib/store/queries.ts`).
+ * sort (`compareCatalogRows` in `src/lib/store/catalog-sort.ts`).
  */
 export function rankSimilarProducts(
   candidates: SimilarityCandidate[],

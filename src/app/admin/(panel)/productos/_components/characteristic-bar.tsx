@@ -10,12 +10,10 @@ export function CharacteristicBar({
   value,
   onChange,
   label,
-  disabled,
 }: {
   value: number | null | undefined;
   onChange: (v: number | null) => void;
   label: string;
-  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center gap-1" role="group" aria-label={label}>
@@ -25,7 +23,6 @@ export function CharacteristicBar({
           <button
             key={step}
             type="button"
-            disabled={disabled}
             aria-label={`${label}: ${step} de 5`}
             aria-pressed={isActive}
             // Selecting the active step clears the value without a page reload.
@@ -35,7 +32,6 @@ export function CharacteristicBar({
               isActive
                 ? "border-primary bg-primary"
                 : "bg-background hover:border-muted-foreground",
-              disabled && "opacity-50",
             )}
           />
         );

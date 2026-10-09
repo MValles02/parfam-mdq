@@ -2,10 +2,10 @@ import type { z } from "zod";
 
 /**
  * Flattens ZodError issues to `{ "variants.0.priceArs": [...] }` so forms can
- * render an error below the field that failed validation.
+ * render an error below the field that failed validation. Issues without a
+ * path (whole-object refinements) are filed under `_`.
  *
- * This replaces duplicated implementations across checkout, product, brand,
- * and settings Server Actions; see F-11 in docs/findings.md.
+ * Shared by the checkout, product, brand, and settings Server Actions.
  */
 export function fieldErrors(error: z.ZodError): Record<string, string[]> {
   const errorsByField: Record<string, string[]> = {};

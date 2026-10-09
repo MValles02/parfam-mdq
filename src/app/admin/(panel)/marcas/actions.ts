@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/guard";
 import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { prisma } from "@/lib/db";
+import { getProductPath } from "@/lib/store/links";
 import { fieldErrors } from "@/lib/validations/errors";
 import { brandSchema } from "@/lib/validations/brand";
 
@@ -25,7 +26,7 @@ async function revalidateBrand(brandId: string) {
 
   revalidatePath("/");
   for (const product of products)
-    revalidatePath(`/producto/${product.slug}`, "page");
+    revalidatePath(getProductPath(product.slug), "page");
 }
 
 export async function updateBrand(

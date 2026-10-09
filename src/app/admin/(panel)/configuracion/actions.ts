@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin/guard";
 import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { SITE_SETTINGS_TAG } from "@/lib/settings";
 import { prisma } from "@/lib/db";
+import { SITE_SETTINGS_ID } from "@/lib/site";
 import { fieldErrors } from "@/lib/validations/errors";
 import { settingsSchema } from "@/lib/validations/settings";
 
@@ -30,7 +31,7 @@ export async function saveSettings(input: unknown): Promise<ActionResult> {
   const settings = parsed.data;
 
   await prisma.siteSetting.update({
-    where: { id: "singleton" },
+    where: { id: SITE_SETTINGS_ID },
     data: {
       whatsappNumber: settings.whatsappNumber,
       whatsappMessageTemplate: settings.whatsappMessageTemplate,

@@ -2,6 +2,7 @@ import { LONGEVITY_LABELS, SILLAGE_LABELS } from "@/lib/catalog";
 import { roundLongevity, roundSillage } from "@/lib/store/key-facts";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "./collapsible-section";
+import { CARD_SECTION_CLASS, CARD_SECTION_TITLE_CLASS } from "./section-styles";
 
 /**
  * Captions for the admin-entered `Product.intensity` (`prisma/schema.prisma`).
@@ -16,6 +17,19 @@ const INTENSITY_LABELS: Record<1 | 2 | 3 | 4 | 5, string> = {
   4: "marcada",
   5: "potente",
 };
+
+/**
+ * Scale sizes: longevity 1..5 and sillage 1..4 (`prisma/schema.prisma`), and
+ * intensity 1..5.
+ */
+const LONGEVITY_STEPS = 5;
+const SILLAGE_STEPS = 4;
+const INTENSITY_STEPS = 5;
+
+/** Rounds to the nearest whole step and keeps it within 1..steps. */
+function toStep(value: number, steps: number): number {
+  return Math.min(Math.max(Math.round(value), 1), steps);
+}
 
 function CharacteristicBar({
   label,
@@ -58,10 +72,10 @@ function CharacteristicBar({
  * Longevity, sillage, and intensity, shown together as "Carácter". Longevity
  * and sillage are community-voted, copied from the adopted `FragranceRef` (or
  * set by hand for a manually created product) and hidden by
- * `getProductBySlug` (`src/lib/store/queries.ts`) when the community sample
- * is too small; longevity is on a 1..5 scale and sillage on a 1..4 scale (see
- * prisma/schema.prisma), and both are decimals rounded to the nearest whole
- * step for the caption and the bar fill. Intensity is `Product.intensity`, an
+ * `getProductBySlug` (`src/lib/store/product-detail.ts`) when the community
+ * sample is too small; longevity is on a 1..5 scale and sillage on a 1..4
+ * scale (see prisma/schema.prisma), and both are decimals rounded to the
+ * nearest whole step for the caption and the bar fill. Intensity is `Product.intensity`, an
  * admin-entered 1..5 integer that reflects ParfamMdq's own assessment rather
  * than the community, so it is never hidden by the sample-size rule above.
  */
@@ -78,45 +92,42 @@ export function CharacteristicBars({
     return null;
   }
 
-  const roundedLongevity =
-    longevity !== null ? roundLongevity(longevity) : null;
-  const roundedSillage = sillage !== null ? roundSillage(sillage) : null;
-  const boundedIntensity =
+  const longevityStep = longevity !== null ? roundLongevity(longevity) : null;
+  const sillageStep = sillage !== null ? roundSillage(sillage) : null;
+  const intensityStep =
     intensity !== null
-      ? (Math.min(Math.max(intensity, 1), 5) as 1 | 2 | 3 | 4 | 5)
+      ? (toStep(intensity, INTENSITY_STEPS) as 1 | 2 | 3 | 4 | 5)
       : null;
 
   return (
     <CollapsibleSection
       defaultOpenOnMobile
-      className="rounded border bg-card p-[30px]"
-      title={
-        <h2 className="text-xl font-bold tracking-[-0.015em]">Carácter</h2>
-      }
+      className={CARD_SECTION_CLASS}
+      title={<h2 className={CARD_SECTION_TITLE_CLASS}>Carácter</h2>}
     >
       <div className="mt-6 flex flex-col gap-6">
-        {roundedLongevity !== null ? (
+        {longevityStep !== null ? (
           <CharacteristicBar
             label="Duración"
-            value={roundedLongevity}
-            max={5}
-            caption={LONGEVITY_LABELS[roundedLongevity]}
+            value={longevityStep}
+            max={LONGEVITY_STEPS}
+            caption={LONGEVITY_LABELS[longevityStep]}
           />
         ) : null}
-        {roundedSillage !== null ? (
+        {sillageStep !== null ? (
           <CharacteristicBar
             label="Estela"
-            value={roundedSillage}
-            max={4}
-            caption={SILLAGE_LABELS[roundedSillage]}
+            value={sillageStep}
+            max={SILLAGE_STEPS}
+            caption={SILLAGE_LABELS[sillageStep]}
           />
         ) : null}
-        {boundedIntensity !== null ? (
+        {intensityStep !== null ? (
           <CharacteristicBar
             label="Intensidad"
-            value={boundedIntensity}
-            max={5}
-            caption={INTENSITY_LABELS[boundedIntensity]}
+            value={intensityStep}
+            max={INTENSITY_STEPS}
+            caption={INTENSITY_LABELS[intensityStep]}
           />
         ) : null}
       </div>

@@ -7,7 +7,7 @@ import { SettingsForm } from "./_components/settings-form";
 
 export const metadata: Metadata = { title: "Configuración" };
 
-export default async function Page() {
+export default async function SettingsPage() {
   const settings = await getEditableSettings();
 
   return (

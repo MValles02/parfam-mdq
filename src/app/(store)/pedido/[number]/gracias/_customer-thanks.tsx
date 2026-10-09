@@ -10,7 +10,54 @@ import {
   buildWhatsAppLink,
   extractWhatsAppText,
   isValidWhatsAppLink,
+  whatsAppLinkStorageKey,
 } from "@/lib/whatsapp";
+
+/**
+ * Reads the wa.me link checkout stored for this order in this tab.
+ * sessionStorage is client input, so it gets the same host check as any
+ * link; unavailable storage or a tampered value yields null.
+ */
+function readStoredLink(orderNumber: string): string | null {
+  try {
+    const stored = sessionStorage.getItem(whatsAppLinkStorageKey(orderNumber));
+    if (stored && isValidWhatsAppLink(stored)) return stored;
+  } catch {}
+  return null;
+}
+
+function fallbackMessage(orderNumber: string | null): string {
+  return `¡Hola! Quería consultar por mi pedido${orderNumber ? ` ${orderNumber}` : ""}.`;
+}
+
+/** The decoded order message with a manual copy fallback. */
+function MessageRecap({ message }: { message: string }) {
+  async function copyMessage() {
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success("Mensaje copiado");
+    } catch {
+      toast.error(
+        "No pudimos copiar el mensaje. Seleccionalo y copialo a mano.",
+      );
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4 rounded border bg-card p-6">
+      <span className="text-lg font-bold tracking-[-0.015em]">Tu mensaje</span>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11 px-8"
+        onClick={copyMessage}
+      >
+        Copiar mensaje
+      </Button>
+    </div>
+  );
+}
 
 /**
  * `/pedido/[number]/gracias` is public and its order number is guessable:
@@ -55,37 +102,14 @@ export function CustomerThanks({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
-  // sessionStorage is client input: apply the same host check as any link.
-  let link: string | null = null;
-  if (hydrated && number) {
-    try {
-      const stored = sessionStorage.getItem(`whatsapp-link:${number}`);
-      if (stored && isValidWhatsAppLink(stored)) link = stored;
-    } catch {}
-  }
+  const link = hydrated && number ? readStoredLink(number) : null;
   const message = link ? extractWhatsAppText(link) : null;
 
   // Checkout already opened the popup synchronously with the click. There is
   // no user gesture here, so retrying `window.open` automatically would be
   // blocked. The visible button provides a manual retry.
   const href =
-    link ??
-    buildWhatsAppLink(
-      whatsappNumber,
-      `¡Hola! Quería consultar por mi pedido${number ? ` ${number}` : ""}.`,
-    );
-
-  async function copyMessage() {
-    if (!message) return;
-    try {
-      await navigator.clipboard.writeText(message);
-      toast.success("Mensaje copiado");
-    } catch {
-      toast.error(
-        "No pudimos copiar el mensaje. Seleccionalo y copialo a mano.",
-      );
-    }
-  }
+    link ?? buildWhatsAppLink(whatsappNumber, fallbackMessage(number));
 
   async function copyNumber() {
     if (!number) return;
@@ -190,24 +214,7 @@ export function CustomerThanks({
         </ol>
       </section>
 
-      {message && (
-        <div className="flex flex-col gap-4 rounded border bg-card p-6">
-          <span className="text-lg font-bold tracking-[-0.015em]">
-            Tu mensaje
-          </span>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 px-8"
-            onClick={copyMessage}
-          >
-            Copiar mensaje
-          </Button>
-        </div>
-      )}
+      {message && <MessageRecap message={message} />}
 
       <Button asChild variant="outline" className="h-12 px-8 text-base">
         <Link href="/">Seguir viendo fragancias</Link>

@@ -19,11 +19,14 @@ catalog filtered with `/?marca=<slug>#catalogo`. The product route remains
 
 1. The page parses the browser URL through `loadCatalogFilters()` and maps
    preserved Spanish query keys to the internal English `CatalogFilters`.
-2. `listCatalog` filters by search and the other criteria in
-   PostgreSQL, then sorts in JavaScript (`compareCatalogRows` in
-   `src/lib/store/catalog-sort.ts`) and paginates. It limits results to `PUBLISHED` products with active variants.
-3. `getFilterOptions` provides brands, accords, and notes; price bands are the fixed
-   `PRICE_RANGES`.
+2. `listCatalog` (`src/lib/store/catalog-listing.ts`) matches the search term
+   in PostgreSQL, filters with Prisma, then sorts in JavaScript
+   (`compareCatalogRows` in `src/lib/store/catalog-sort.ts`) and paginates. It
+   limits results to `PUBLISHED` products with active variants
+   (`PUBLIC_PRODUCT_WHERE` in `src/lib/store/visibility.ts`).
+3. `getFilterOptions` provides the brands, accords, and notes that have a
+   published product; the price bands are fixed in `PRICE_RANGES`
+   (`src/lib/store/filters.ts`).
 4. Filter controls serialize changes through the same adapter, preserving keys
    such as `genero`, `presentacion`, `marca`, `acorde`, `nota`,
    `precio`, `orden`, and `pagina`.
@@ -33,20 +36,25 @@ catalog filtered with `/?marca=<slug>#catalogo`. The product route remains
    `novedades` (newest only), `precio-asc`, `precio-desc`, `nombre`. Applied
    filters appear as removable chips (`ActiveFilterChips`). A search with no
    results offers a WhatsApp link.
-5. `getProductBySlug` returns `null` for missing, draft, or unsellable
-   products, so the route returns a 404 even for a known draft slug.
+5. `getProductBySlug` returns `null` for missing or draft products, so the
+   route returns a 404 even for a known draft slug. A published product without
+   active variants still renders, with a WhatsApp inquiry instead of the cart.
 6. Product detail queries use `getSimilarProducts` for the "Si te gusta, probá también"
    section.
 
 ## Main files
 
-| Responsibility         | File                                    |
-| ---------------------- | --------------------------------------- |
-| Store queries          | `src/lib/store/queries.ts`              |
-| URL adapter and parser | `src/lib/store/filters.ts`              |
-| Catalog UI             | `src/components/store/catalog/`         |
-| Product UI             | `src/components/store/product/`         |
-| Routes                 | `src/app/(store)/page.tsx`, `producto/` |
+| Responsibility         | File                                                    |
+| ---------------------- | ------------------------------------------------------- |
+| Store queries          | `src/lib/store/queries.ts` (re-exports the files below) |
+| Catalog query          | `src/lib/store/catalog-listing.ts`                      |
+| Product detail query   | `src/lib/store/product-detail.ts`                       |
+| Similar products       | `src/lib/store/similar-products.ts`                     |
+| URL adapter and parser | `src/lib/store/filters.ts`                              |
+| Store links            | `src/lib/store/links.ts`                                |
+| Catalog UI             | `src/components/store/catalog/`                         |
+| Product UI             | `src/components/store/product/`                         |
+| Routes                 | `src/app/(store)/page.tsx`, `producto/`                 |
 
 ## Customer and external values
 

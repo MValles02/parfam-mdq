@@ -15,10 +15,18 @@ starting point for an editable `Product`. The store never reads
 | File                                               | Responsibility                                                              |
 | -------------------------------------------------- | --------------------------------------------------------------------------- |
 | `scripts/import-references.ts`                     | Import command (two passes, see below).                                     |
+| `scripts/lib/reference-jsonl.ts`                   | Streams the dataset file line by line into parsed records.                  |
+| `scripts/lib/reference-record-schema.ts`           | Zod schema of the raw record fields the importer keeps.                     |
 | `scripts/lib/reference-parse.ts`                   | Pure parsing and normalization of one record.                               |
+| `scripts/lib/reference-parse-lists.ts`             | Note, accord, and perfumer list parsing and their slugs.                    |
 | `scripts/lib/reference-import.ts`                  | Dimension aggregation and `FragranceRef` row shape shared by create/update. |
+| `scripts/lib/reference-writes.ts`                  | The importer's database writes: dimensions, batches, note usage counts.     |
+| `scripts/lib/async-batches.ts`                     | Groups the second pass's record stream into `--batch-size` batches.         |
+| `scripts/lib/slug-frequency.ts`                    | "Most frequent value wins" tracker for display names and note families.     |
 | `scripts/lib/reference-translations.ts`            | Loads and validates the translation files.                                  |
 | `scripts/check-reference-translations.ts`          | Coverage report; can emit a skeleton for missing slugs.                     |
+| `scripts/lib/translation-skeleton.ts`              | Builds the `--emit-missing` skeleton.                                       |
+| `scripts/lib/cli-format.ts`                        | Console count formatting shared by both commands.                           |
 | `prisma/reference/notes.es.json`                   | Note slug → `{en, es}`.                                                     |
 | `prisma/reference/accords.es.json`                 | Accord slug → `{en, es, color}`.                                            |
 | `src/lib/admin/references.ts`                      | Admin search over the catalog and the adoption read path.                   |

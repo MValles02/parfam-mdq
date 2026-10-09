@@ -2,20 +2,22 @@
 
 import { headers } from "next/headers";
 import { Prisma } from "@/generated/prisma/client";
-import { ProductStatus, VariantKind } from "@/generated/prisma/enums";
 import { getSiteSettings } from "@/lib/settings";
-import { getVariantLabel } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { siteDefaults } from "@/lib/site";
-import type { InvalidReason } from "@/lib/store/server-cart";
+import {
+  resolveCartLines,
+  type InvalidReason,
+  type ResolvedCartLine,
+} from "@/lib/store/server-cart";
 import {
   buildOrderMessage,
   type OrderMessageLine,
 } from "@/lib/store/order-message";
 import { checkoutRequestSchema } from "@/lib/validations/checkout";
 import { fieldErrors } from "@/lib/validations/errors";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { buildWhatsAppLink, formatOrderNumber } from "@/lib/whatsapp";
 
 /**
  * Checkout's enforcement point. AGENTS.md requires that prices always come
@@ -25,24 +27,104 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type InvalidItem = { variantId: string; reason: InvalidReason };
 
+type OrderLine = Extract<ResolvedCartLine, { ok: true }>;
+
+type CheckoutFailure = {
+  ok: false;
+  message: string;
+  fieldErrors?: Record<string, string[]>;
+  /** Raw response fields let the client remove unavailable cart items
+   * before the customer tries checkout again. */
+  invalidItems?: InvalidItem[];
+};
+
 type CheckoutResult =
-  | { ok: true; orderNumber: string; link: string }
-  | {
-      ok: false;
-      message: string;
-      fieldErrors?: Record<string, string[]>;
-      /** Raw response fields let the client remove unavailable cart items
-       * before the customer tries checkout again. */
-      invalidItems?: InvalidItem[];
-    };
+  { ok: true; orderNumber: string; link: string } | CheckoutFailure;
+
+/**
+ * Five attempts per ten minutes matches login rate limiting. A real customer
+ * only submits a few orders close together, so this limits scripts without
+ * blocking ordinary retries.
+ */
+const CHECKOUT_RATE_LIMIT = { limit: 5, windowMs: 1000 * 60 * 10 };
 
 function failure(
   message: string,
-  extra?: Partial<
-    Omit<Extract<CheckoutResult, { ok: false }>, "ok" | "message">
-  >,
-): CheckoutResult {
+  extra?: Omit<CheckoutFailure, "ok" | "message">,
+): CheckoutFailure {
   return { ok: false, message, ...extra };
+}
+
+function tooManyAttemptsMessage(retryAfterSeconds: number): string {
+  const minutes = Math.ceil(retryAfterSeconds / 60);
+  return `Demasiados intentos. Probá de nuevo en ${minutes} ${minutes === 1 ? "minuto" : "minutos"}.`;
+}
+
+function splitAvailableLines(lines: ResolvedCartLine[]) {
+  const orderLines: OrderLine[] = [];
+  const invalidItems: InvalidItem[] = [];
+  for (const line of lines) {
+    if (line.ok) orderLines.push(line);
+    else invalidItems.push({ variantId: line.variantId, reason: line.reason });
+  }
+  return { orderLines, invalidItems };
+}
+
+/**
+ * Persists the order and its OrderItem snapshots with the database prices in
+ * `lines`, numbering it inside the same transaction.
+ */
+async function saveOrder({
+  customerName,
+  customerPhone,
+  lines,
+}: {
+  customerName: string;
+  customerPhone: string;
+  lines: OrderLine[];
+}) {
+  return prisma.$transaction(async (transaction) => {
+    // The sequence makes concurrent checkouts unique, and rollbacks do not
+    // reuse order numbers; the initial schema migration creates the sequence.
+    const [{ nextval }] = await transaction.$queryRaw<{ nextval: bigint }[]>`
+      SELECT nextval('"Order_number_seq"') AS nextval
+    `;
+
+    const totalArs = lines.reduce(
+      (total, line) => total.plus(line.priceArs.times(line.qty)),
+      new Prisma.Decimal(0),
+    );
+
+    return transaction.order.create({
+      data: {
+        number: formatOrderNumber(nextval),
+        customerName,
+        customerPhone,
+        totalArs,
+        items: {
+          create: lines.map((line) => ({
+            productId: line.productId,
+            variantId: line.variantId,
+            productName: line.productName,
+            variantLabel: line.variantLabel,
+            unitPriceArs: line.priceArs,
+            qty: line.qty,
+          })),
+        },
+      },
+      select: { number: true, totalArs: true },
+    });
+  });
+}
+
+function toMessageLine(line: OrderLine): OrderMessageLine {
+  return {
+    brandName: line.brandName,
+    productName: line.productName,
+    variantLabel: line.variantLabel,
+    qty: line.qty,
+    subtotalArs: line.priceArs.times(line.qty).toString(),
+  };
 }
 
 /**
@@ -62,19 +144,13 @@ export async function createOrder(input: {
     return failure("No pudimos procesar el pedido. Probá de nuevo.");
   }
 
-  // Five attempts per ten minutes matches login rate limiting. A real customer
-  // only submits a few orders close together, so this limits scripts without
-  // blocking ordinary retries.
   const clientIp = getClientIp(await headers());
-  const rateLimitResult = rateLimit(`checkout:${clientIp}`, {
-    limit: 5,
-    windowMs: 1000 * 60 * 10,
-  });
+  const rateLimitResult = rateLimit(
+    `checkout:${clientIp}`,
+    CHECKOUT_RATE_LIMIT,
+  );
   if (!rateLimitResult.ok) {
-    const retryAfterMinutes = Math.ceil(rateLimitResult.retryAfter / 60);
-    return failure(
-      `Demasiados intentos. Probá de nuevo en ${retryAfterMinutes} ${retryAfterMinutes === 1 ? "minuto" : "minutos"}.`,
-    );
+    return failure(tooManyAttemptsMessage(rateLimitResult.retryAfter));
   }
 
   const parsedInput = checkoutRequestSchema.safeParse(input);
@@ -89,70 +165,9 @@ export async function createOrder(input: {
     items: requestedItems,
   } = parsedInput.data;
 
-  const variantIds = requestedItems.map((item) => item.variantId);
-  const variants = await prisma.productVariant.findMany({
-    where: { id: { in: variantIds } },
-    select: {
-      id: true,
-      kind: true,
-      sizeMl: true,
-      priceArs: true,
-      isActive: true,
-      product: {
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          brand: { select: { name: true } },
-        },
-      },
-    },
-  });
-  const variantsById = new Map(
-    variants.map((variant) => [variant.id, variant]),
+  const { orderLines, invalidItems } = splitAvailableLines(
+    await resolveCartLines(requestedItems),
   );
-
-  const invalidItems: InvalidItem[] = [];
-  const orderLines: {
-    productId: string;
-    variantId: string;
-    productName: string;
-    brandName: string;
-    variantLabel: string;
-    qty: number;
-    unitPriceArs: (typeof variants)[number]["priceArs"];
-  }[] = [];
-
-  for (const item of requestedItems) {
-    const variant = variantsById.get(item.variantId);
-    if (!variant) {
-      invalidItems.push({
-        variantId: item.variantId,
-        reason: "deleted",
-      });
-    } else if (!variant.isActive || variant.kind === VariantKind.TESTER) {
-      // Legacy testers may still exist in the database but are no longer sold.
-      invalidItems.push({
-        variantId: item.variantId,
-        reason: "inactive",
-      });
-    } else if (variant.product.status !== ProductStatus.PUBLISHED) {
-      invalidItems.push({
-        variantId: item.variantId,
-        reason: "unpublished",
-      });
-    } else {
-      orderLines.push({
-        productId: variant.product.id,
-        variantId: variant.id,
-        productName: variant.product.name,
-        brandName: variant.product.brand.name,
-        variantLabel: getVariantLabel(variant.kind, variant.sizeMl),
-        qty: item.qty,
-        unitPriceArs: variant.priceArs,
-      });
-    }
-  }
 
   // Cart reconciliation should catch these cases first, but this action is
   // the real boundary for requests without JavaScript, stale tabs, and direct
@@ -167,57 +182,18 @@ export async function createOrder(input: {
   }
 
   const settings = await getSiteSettings();
-
-  const createdOrder = await prisma.$transaction(async (transaction) => {
-    // The sequence makes concurrent checkouts unique, and rollbacks do not
-    // reuse order numbers; the initial schema migration creates the sequence.
-    const [{ nextval }] = await transaction.$queryRaw<{ nextval: bigint }[]>`
-      SELECT nextval('"Order_number_seq"') AS nextval
-    `;
-    const orderNumber = `PM-${String(nextval).padStart(4, "0")}`;
-
-    const totalArs = orderLines.reduce(
-      (total, line) => total.plus(line.unitPriceArs.times(line.qty)),
-      new Prisma.Decimal(0),
-    );
-
-    const order = await transaction.order.create({
-      data: {
-        number: orderNumber,
-        customerName,
-        customerPhone,
-        totalArs,
-        items: {
-          create: orderLines.map((line) => ({
-            productId: line.productId,
-            variantId: line.variantId,
-            productName: line.productName,
-            variantLabel: line.variantLabel,
-            unitPriceArs: line.unitPriceArs,
-            qty: line.qty,
-          })),
-        },
-      },
-      select: { number: true, totalArs: true },
-    });
-
-    return order;
+  const createdOrder = await saveOrder({
+    customerName,
+    customerPhone,
+    lines: orderLines,
   });
-
-  const messageLines: OrderMessageLine[] = orderLines.map((line) => ({
-    brandName: line.brandName,
-    productName: line.productName,
-    variantLabel: line.variantLabel,
-    qty: line.qty,
-    subtotalArs: line.unitPriceArs.times(line.qty).toString(),
-  }));
 
   const message = buildOrderMessage({
     template: settings.whatsappMessageTemplate,
     brand: siteDefaults.name,
     customerName,
     orderNumber: createdOrder.number,
-    items: messageLines,
+    items: orderLines.map(toMessageLine),
     totalArs: createdOrder.totalArs.toString(),
   });
 

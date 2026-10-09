@@ -1,15 +1,11 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useQueryStates } from "nuqs";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 import { GENDER_LABELS, VARIANT_KIND_LABELS } from "@/lib/catalog";
-import {
-  PRICE_RANGE_LABELS,
-  catalogFilterParsers,
-  catalogFilterQueryOptions,
-} from "@/lib/store/filters";
+import { PRICE_RANGE_LABELS } from "@/lib/store/filters";
 import type { FilterOptions } from "@/lib/store/queries";
+import { useCatalogFilters } from "./use-catalog-filters";
 
 type FilterKey =
   | "search"
@@ -41,7 +37,7 @@ export function ActiveFilterChips({
   const [
     { search, gender, variantKind, brand, accord, note, priceRange },
     setFilters,
-  ] = useQueryStates(catalogFilterParsers, catalogFilterQueryOptions);
+  ] = useCatalogFilters();
   const chips: { key: FilterKey; label: string }[] = [];
   if (search.trim()) chips.push({ key: "search", label: `“${search.trim()}”` });
   if (gender) chips.push({ key: "gender", label: GENDER_LABELS[gender] });

@@ -10,10 +10,10 @@ import { env } from "@/lib/env";
 /**
  * Cloudflare R2 client compatible with the S3 API.
  *
- * Credentials are optional in `env.ts` because the bucket might not yet exist.
- * This module must load without breaking a build or server startup when its
- * five variables are blank. The client is therefore lazy: it only exists when
- * a caller uploads or deletes an object.
+ * Credentials are optional in `env.ts` outside the production runtime (build,
+ * development, and test), so this module must load without breaking a build
+ * or server startup when its five variables are blank. The client is
+ * therefore lazy: it only exists when a caller uploads or deletes an object.
  */
 
 const UPLOAD_URL_EXPIRATION_SECONDS = 5 * 60;
@@ -112,7 +112,10 @@ export function getPublicUrl(key: string): string | null {
 }
 
 /** Prefix for every object uploaded from the admin panel. */
-export const PRODUCT_STORAGE_PREFIX = "products/";
+const PRODUCT_STORAGE_PREFIX = "products/";
+
+/** Upper bound for a client-supplied key; generated keys are far shorter. */
+const MAX_STORAGE_KEY_LENGTH = 512;
 
 /**
  * Keys arrive as client data through the form. This prevents a request from
@@ -122,7 +125,7 @@ export function isProductStorageKey(key: string): boolean {
   return (
     key.startsWith(PRODUCT_STORAGE_PREFIX) &&
     !key.includes("..") &&
-    key.length <= 512
+    key.length <= MAX_STORAGE_KEY_LENGTH
   );
 }
 

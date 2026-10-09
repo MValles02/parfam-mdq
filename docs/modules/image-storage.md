@@ -6,7 +6,12 @@ Store product-image objects in Cloudflare R2 through presigned browser uploads, 
 
 ## Files
 
-- src/lib/r2.ts: client configuration, public URL helper, signing, deletion, and isProductStorageKey.
+- src/lib/r2.ts: lazy client configuration, public URL helper, signed uploads,
+  server-side uploads (`putR2Object`), deletion, key generation
+  (`createProductStorageKey`), and `isProductStorageKey`.
+- src/lib/image-type.ts: accepted MIME types, the 8 MB limit, and magic-byte
+  format detection.
+- src/lib/image-trim.ts: white-margin trimming for imported reference photos.
 - src/app/admin/(panel)/productos/image-actions.ts: protected upload and temporary-delete actions.
 - src/app/admin/(panel)/productos/actions.ts: persisted-image cleanup.
 - src/app/admin/(panel)/productos/_components/image-panel.tsx: UI.

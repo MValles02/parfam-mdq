@@ -4,14 +4,14 @@ The route group name `(store)` does not appear in public URLs.
 
 ## Store routes
 
-| URL                                             | Source                                     | Notes                                                                                                         |
-| ----------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `/`                                             | `src/app/(store)/page.tsx`                 | Store home: hero, shortcuts, presentation choices, how it works + catalog, or catalog only (`isCatalogView`). |
-| `/producto/[slug]`                              | `(store)/producto/[slug]/page.tsx`         | Returns 404 for missing or draft products.                                                                    |
-| `/carrito`                                      | `(store)/carrito/page.tsx`                 | Persisted cart.                                                                                               |
-| `/checkout`                                     | `(store)/checkout/page.tsx`                | WhatsApp order checkout.                                                                                      |
-| `/pedido/[number]/gracias`                      | `(store)/pedido/[number]/gracias/page.tsx` | Customer thank-you view without an order lookup.                                                              |
-| `/como-comprar`, `/presentaciones`, `/contacto` | matching store pages                       | Customer information.                                                                                         |
+| URL                                                                 | Source                                     | Notes                                                                                                         |
+| ------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `/`                                                                 | `src/app/(store)/page.tsx`                 | Store home: hero, shortcuts, presentation choices, how it works + catalog, or catalog only (`isCatalogView`). |
+| `/producto/[slug]`                                                  | `(store)/producto/[slug]/page.tsx`         | Returns 404 for missing or draft products.                                                                    |
+| `/carrito`                                                          | `(store)/carrito/page.tsx`                 | Persisted cart.                                                                                               |
+| `/checkout`                                                         | `(store)/checkout/page.tsx`                | WhatsApp order checkout.                                                                                      |
+| `/pedido/[number]/gracias`                                          | `(store)/pedido/[number]/gracias/page.tsx` | Customer thank-you view without an order lookup.                                                              |
+| `/como-comprar`, `/presentaciones`, `/concentraciones`, `/contacto` | matching store pages                       | Customer information.                                                                                         |
 
 ## Admin routes
 

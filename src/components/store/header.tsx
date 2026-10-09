@@ -26,9 +26,18 @@ import {
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const NAVIGATION_LINKS = [
-  { href: "/presentaciones", label: "Frasco, tester o decant" },
+  { href: "/presentaciones", label: "Frasco o decant" },
   { href: "/como-comprar", label: "Cómo comprar" },
   { href: "/contacto", label: "Contacto" },
+] as const;
+
+// The desktop nav stays at three links; the concentrations guide is reachable
+// from the mobile menu, the footer and the product page chip.
+const MOBILE_NAVIGATION_LINKS = [
+  NAVIGATION_LINKS[0],
+  { href: "/concentraciones", label: "Concentraciones" },
+  NAVIGATION_LINKS[1],
+  NAVIGATION_LINKS[2],
 ] as const;
 
 /** 46 px bordered square matching the mobile icon buttons. */
@@ -258,7 +267,7 @@ export function Header({
                     </MenuLink>
                   ))}
                   <MenuHeading>Antes de elegir</MenuHeading>
-                  {NAVIGATION_LINKS.map((item) => (
+                  {MOBILE_NAVIGATION_LINKS.map((item) => (
                     <MenuLink
                       key={item.href}
                       href={item.href}

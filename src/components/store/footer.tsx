@@ -10,7 +10,8 @@ import { siteDefaults } from "@/lib/site";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 
 const STORE_LINKS = [
-  { href: "/presentaciones", label: "Frasco, tester o decant" },
+  { href: "/presentaciones", label: "Frasco o decant" },
+  { href: "/concentraciones", label: "Concentraciones" },
   { href: "/como-comprar", label: "Cómo comprar" },
 ] as const;
 

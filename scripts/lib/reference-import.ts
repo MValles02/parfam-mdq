@@ -7,7 +7,7 @@
  *
  * Like scripts/lib/reference-parse.ts, this module does no database, file,
  * or network I/O and never imports the generated Prisma client, so it stays
- * usable from plain unit tests without a live database or `prisma generate`.
+ * usable from the importer scripts without a live database or `prisma generate`.
  */
 
 import type { Gender, ParsedReference } from "./reference-parse";

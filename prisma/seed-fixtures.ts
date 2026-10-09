@@ -269,7 +269,7 @@ async function main() {
 
         await tx.productAccord.deleteMany({ where: { productId: product.id } });
         if (
-          (FIXTURE_PUBLISHED_SLUGS as readonly string[]).includes(fixture.slug)
+          FIXTURE_LISTED.some((listed) => listed.slug === fixture.slug)
         ) {
           await tx.productAccord.create({
             data: { productId: product.id, accordId: accord.id, strength: 100 },

@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { parsePercentageInput } from "./percentage";
 
 export type Accord = {
   id: string;
@@ -32,9 +33,7 @@ export type SelectedAccord = {
 const DEFAULT_MANUAL_STRENGTH = 50;
 
 function clampStrength(raw: string) {
-  const digits = raw.replace(/\D/g, "").slice(0, 3);
-  if (digits === "") return 0;
-  return Math.min(100, Number(digits));
+  return parsePercentageInput(raw) ?? 0;
 }
 
 /**
@@ -45,12 +44,10 @@ export function AccordSelector({
   accords,
   value,
   onChange,
-  disabled,
 }: {
   accords: Accord[];
   value: SelectedAccord[];
   onChange: (accords: SelectedAccord[]) => void;
-  disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const accordsById = new Map(accords.map((accord) => [accord.id, accord]));
@@ -91,7 +88,6 @@ export function AccordSelector({
               type="number"
               min={0}
               max={100}
-              disabled={disabled}
               value={entry.strength}
               aria-label={`Intensidad del acorde ${accord.nameEs}`}
               onChange={(e) =>
@@ -101,7 +97,6 @@ export function AccordSelector({
             />
             <button
               type="button"
-              disabled={disabled}
               onClick={() => removeAccord(accord.id)}
               aria-label={`Quitar el acorde ${accord.nameEs}`}
               className="text-muted-foreground hover:text-destructive"
@@ -113,10 +108,9 @@ export function AccordSelector({
       })}
 
       <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild disabled={disabled}>
+        <PopoverTrigger asChild>
           <button
             type="button"
-            disabled={disabled}
             className="flex items-center gap-1 rounded-sm border border-dashed px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
           >
             <Plus className="size-3" />

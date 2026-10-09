@@ -3,12 +3,19 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { getSiteSettings } from "@/lib/settings";
 import { SITE_URL } from "@/lib/seo";
-import { siteDefaults } from "@/lib/site";
+import { SITE_LOCALE, siteDefaults } from "@/lib/site";
 
 const outfit = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
 });
+
+/**
+ * Google Search Console property verification. It is not secret: it is
+ * published in every page's HTML, as Google expects. The root layout also
+ * covers /admin.
+ */
+const GOOGLE_SITE_VERIFICATION = "Sie6f0R_-nTdSrgWAUCwjFG8j-dE3Eu1Ud4JQCwMoVQ";
 
 // Lets bottom-fixed surfaces pad for device insets via env(safe-area-inset-*).
 export const viewport: Viewport = { viewportFit: "cover" };
@@ -22,29 +29,27 @@ export const viewport: Viewport = { viewportFit: "cover" };
  * source for these two fields.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const config = await getSiteSettings();
+  const settings = await getSiteSettings();
 
   return {
     // metadataBase resolves relative openGraph/canonical paths against the
     // running environment (localhost in development, the production domain).
     metadataBase: new URL(SITE_URL),
     title: {
-      default: config.seoDefaultTitle,
+      default: settings.seoDefaultTitle,
       template: `%s — ${siteDefaults.name}`,
     },
-    description: config.seoDefaultDescription,
-    // Google Search Console property verification is not secret: it is
-    // published in every page's HTML, as Google expects. The root layout also
-    // covers /admin.
-    verification: {
-      google: "Sie6f0R_-nTdSrgWAUCwjFG8j-dE3Eu1Ud4JQCwMoVQ",
-    },
+    description: settings.seoDefaultDescription,
+    verification: { google: GOOGLE_SITE_VERIFICATION },
   };
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es-AR" className={`${outfit.variable} h-full antialiased`}>
+    <html
+      lang={SITE_LOCALE}
+      className={`${outfit.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

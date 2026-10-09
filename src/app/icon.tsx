@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { brandColors } from "@/lib/site";
 
 /**
  * Brand favicon. It replaces the default Next scaffold .ico, which was 25 KB
@@ -25,8 +26,8 @@ export default async function Icon() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#14120F",
-        color: "#F2EEE9",
+        background: brandColors.ink,
+        color: brandColors.cream,
         fontFamily: "Outfit",
         fontSize: 48,
         letterSpacing: "-0.04em",

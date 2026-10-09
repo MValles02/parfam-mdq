@@ -18,7 +18,12 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export type RemoteOption = { id: string; label: string; detail?: string };
+export type RemoteOption = { id: string; label: string };
+
+const SEARCH_DEBOUNCE_MS = 200;
+
+/** A typed name needs at least this many characters to offer "Crear". */
+const MIN_CREATE_LENGTH = 2;
 
 /**
  * Server-backed combobox for notes, perfumers, and brands. Loading all entries
@@ -34,9 +39,7 @@ export function RemoteCombobox({
   onCreate,
   placeholder = "Buscar…",
   emptyText = "Sin resultados.",
-  disabled,
   children,
-  align = "start",
 }: {
   value?: RemoteOption | null;
   onSelect: (option: RemoteOption) => void;
@@ -45,31 +48,29 @@ export function RemoteCombobox({
   onCreate?: (name: string) => Promise<RemoteOption | null>;
   placeholder?: string;
   emptyText?: string;
-  disabled?: boolean;
   /** Custom trigger; otherwise uses a button with the current value. */
   children?: React.ReactNode;
-  align?: "start" | "end" | "center";
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<RemoteOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Requests are numbered so stale responses cannot replace current results.
-  const requestNumber = useRef(0);
+  const latestRequest = useRef(0);
 
   function requestOptions(nextQuery: string) {
-    if (timeout.current) clearTimeout(timeout.current);
-    const currentRequest = ++requestNumber.current;
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    const currentRequest = ++latestRequest.current;
     setIsLoading(true);
-    timeout.current = setTimeout(async () => {
+    debounceTimer.current = setTimeout(async () => {
       try {
         const results = await search(nextQuery);
-        if (currentRequest === requestNumber.current) setOptions(results);
+        if (currentRequest === latestRequest.current) setOptions(results);
       } finally {
-        if (currentRequest === requestNumber.current) setIsLoading(false);
+        if (currentRequest === latestRequest.current) setIsLoading(false);
       }
-    }, 200);
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   function handleOpenChange(nextIsOpen: boolean) {
@@ -84,7 +85,7 @@ export function RemoteCombobox({
 
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild disabled={disabled}>
+      <PopoverTrigger asChild>
         {children ?? (
           <Button
             type="button"
@@ -101,7 +102,7 @@ export function RemoteCombobox({
         )}
       </PopoverTrigger>
       <PopoverContent
-        align={align}
+        align="start"
         className="w-[--radix-popover-trigger-width] min-w-72 p-0"
       >
         {/* The server owns filtering. A second cmdk filter could hide results
@@ -142,15 +143,12 @@ export function RemoteCombobox({
                     )}
                   />
                   <span className="flex-1">{option.label}</span>
-                  {option.detail ? (
-                    <span className="text-xs text-muted-foreground">
-                      {option.detail}
-                    </span>
-                  ) : null}
                 </CommandItem>
               ))}
 
-              {onCreate && query.trim().length >= 2 && !alreadyExists ? (
+              {onCreate &&
+              query.trim().length >= MIN_CREATE_LENGTH &&
+              !alreadyExists ? (
                 <CommandItem
                   value={`crear-${query}`}
                   onSelect={async () => {

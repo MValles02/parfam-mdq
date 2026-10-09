@@ -1,22 +1,32 @@
 "use client";
 
-import { parseAsStringEnum, useQueryStates } from "nuqs";
+import { parseAsInteger, parseAsStringEnum, useQueryStates } from "nuqs";
 import { cn } from "@/lib/utils";
 
+const numberFormatter = new Intl.NumberFormat("es-AR");
+
 /**
- * URL-backed status filter tabs shared by the product and order listings. The
- * established `estado` key remains at the URL boundary.
+ * URL-backed status filter tabs shared by products, orders, and notes. The
+ * established `estado` key remains at the URL boundary. `resetPage` follows
+ * the same paginated-listing rule as AdminSearch.
  */
 export function FilterTabs<T extends string>({
   options,
   defaultValue,
+  counts,
+  resetPage = false,
 }: {
   options: { id: T; label: string }[];
   defaultValue: T;
+  counts?: Record<T, number>;
+  resetPage?: boolean;
 }) {
   const ids = options.map((option) => option.id) as [T, ...T[]];
   const [{ estado }, setState] = useQueryStates(
-    { estado: parseAsStringEnum<T>(ids).withDefault(defaultValue) },
+    {
+      estado: parseAsStringEnum<T>(ids).withDefault(defaultValue),
+      pagina: parseAsInteger.withDefault(1),
+    },
     { shallow: false, clearOnDefault: true },
   );
 
@@ -28,7 +38,13 @@ export function FilterTabs<T extends string>({
           <button
             key={option.id}
             type="button"
-            onClick={() => setState({ estado: option.id })}
+            onClick={() =>
+              setState(
+                resetPage
+                  ? { estado: option.id, pagina: null }
+                  : { estado: option.id },
+              )
+            }
             className={cn(
               "rounded border px-3.5 py-1.5 text-[13px] font-medium",
               isActive
@@ -37,6 +53,20 @@ export function FilterTabs<T extends string>({
             )}
           >
             {option.label}
+            {counts ? (
+              <>
+                {" "}
+                <span
+                  className={cn(
+                    isActive
+                      ? "text-primary-foreground/70"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {numberFormatter.format(counts[option.id])}
+                </span>
+              </>
+            ) : null}
           </button>
         );
       })}

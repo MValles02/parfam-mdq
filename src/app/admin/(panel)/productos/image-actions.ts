@@ -19,6 +19,12 @@ import {
   putR2Object,
 } from "@/lib/r2";
 
+const R2_NOT_CONFIGURED_MESSAGE =
+  "Cloudflare R2 todavía no está configurado. Avisale al equipo para cargar las credenciales.";
+
+const REFERENCE_PICTURE_TOO_LARGE_MESSAGE =
+  "La foto de referencia pesa más de lo permitido.";
+
 const uploadRequestSchema = z.object({
   fileName: z.string().trim().min(1).max(200),
   contentType: z.enum(
@@ -47,9 +53,7 @@ export async function requestUploadUrl(input: {
   }
 
   if (!isR2Configured()) {
-    return actionFailure(
-      "Cloudflare R2 todavía no está configurado. Avisale al equipo para cargar las credenciales.",
-    );
+    return actionFailure(R2_NOT_CONFIGURED_MESSAGE);
   }
 
   const { contentType } = parsedInput.data;
@@ -215,7 +219,7 @@ async function fetchAndValidateReferencePicture(
   if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) {
     return {
       ok: false,
-      message: "La foto de referencia pesa más de lo permitido.",
+      message: REFERENCE_PICTURE_TOO_LARGE_MESSAGE,
     };
   }
 
@@ -226,7 +230,7 @@ async function fetchAndValidateReferencePicture(
     if (error instanceof ByteCapExceededError) {
       return {
         ok: false,
-        message: "La foto de referencia pesa más de lo permitido.",
+        message: REFERENCE_PICTURE_TOO_LARGE_MESSAGE,
       };
     }
     // A timeout abort or a connection reset while streaming the body is a
@@ -273,9 +277,7 @@ export async function importReferencePicture(
   }
 
   if (!isR2Configured()) {
-    return actionFailure(
-      "Cloudflare R2 todavía no está configurado. Avisale al equipo para cargar las credenciales.",
-    );
+    return actionFailure(R2_NOT_CONFIGURED_MESSAGE);
   }
 
   const reference = await prisma.fragranceRef.findUnique({

@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 /**
  * Label, control, and error with the approved compact uppercase label style.
  */
@@ -9,7 +7,6 @@ export function Field({
   hint,
   error,
   isAutofilled,
-  className,
   children,
 }: {
   label: string;
@@ -18,11 +15,10 @@ export function Field({
   error?: string;
   /** Shows that the field was prefilled from the adopted reference. */
   isAutofilled?: boolean;
-  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
+    <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between gap-2">
         <label
           htmlFor={htmlFor}

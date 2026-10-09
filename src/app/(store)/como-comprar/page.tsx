@@ -1,11 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/settings";
+import { buildBreadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 import {
-  buildBreadcrumbJsonLd,
-  buildPageMetadata,
-  serializeJsonLd,
-} from "@/lib/seo";
+  CONTENT_PAGE_CLASS,
+  CONTENT_PAGE_LEAD_CLASS,
+  CONTENT_PAGE_TITLE_CLASS,
+  ContentPageBreadcrumb,
+  getContentPageBreadcrumbs,
+} from "@/components/store/content-page";
+import { JsonLd } from "@/components/store/json-ld";
 import { PageCtaPair } from "@/components/store/page-cta-pair";
 
 const PAGE_TITLE = "Cómo comprar";
@@ -18,10 +22,7 @@ export const metadata: Metadata = buildPageMetadata({
   path: PAGE_PATH,
 });
 
-const breadcrumbs = [
-  { name: "Inicio", path: "/" },
-  { name: PAGE_TITLE, path: PAGE_PATH },
-];
+const breadcrumbs = getContentPageBreadcrumbs(PAGE_TITLE, PAGE_PATH);
 
 function buildSteps(shippingInfo: string) {
   return [
@@ -79,37 +80,18 @@ function buildFaqs(shippingInfo: string) {
 }
 
 export default async function HowToBuyPage() {
-  const config = await getSiteSettings();
-  const steps = buildSteps(config.shippingInfo);
-  const faqs = buildFaqs(config.shippingInfo);
+  const settings = await getSiteSettings();
+  const steps = buildSteps(settings.shippingInfo);
+  const faqs = buildFaqs(settings.shippingInfo);
 
   return (
-    <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd(buildBreadcrumbJsonLd(breadcrumbs)),
-        }}
-      />
+    <div className={CONTENT_PAGE_CLASS}>
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbs)} />
 
-      <nav
-        aria-label="Miga de pan"
-        className="mb-8 text-sm text-muted-foreground"
-      >
-        <Link
-          href="/"
-          className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
-        >
-          Inicio
-        </Link>
-        <span className="mx-2">·</span>
-        <span className="text-foreground">{PAGE_TITLE}</span>
-      </nav>
+      <ContentPageBreadcrumb title={PAGE_TITLE} />
 
-      <h1 className="text-4xl font-extrabold tracking-[-0.03em] lg:text-6xl">
-        {PAGE_TITLE}
-      </h1>
-      <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+      <h1 className={CONTENT_PAGE_TITLE_CLASS}>{PAGE_TITLE}</h1>
+      <p className={CONTENT_PAGE_LEAD_CLASS}>
         Sin pagar online: armás el pedido acá y lo cerramos por WhatsApp.
       </p>
 
@@ -133,7 +115,7 @@ export default async function HowToBuyPage() {
       </ol>
 
       <PageCtaPair
-        whatsappNumber={config.whatsappNumber}
+        whatsappNumber={settings.whatsappNumber}
         message="¡Hola! Tengo una consulta antes de comprar."
       />
 

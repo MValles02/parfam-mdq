@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { siteDefaults } from "@/lib/site";
 import { LoginForm } from "./login-form";
+import { readReturnToParam } from "./return-to";
 
 export const metadata: Metadata = {
   title: "Entrar al panel",
@@ -9,14 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage(props: PageProps<"/admin/login">) {
-  const searchParams = await props.searchParams;
-  // Accept older bookmarked login links while newly generated links use returnTo.
-  const returnTo =
-    typeof searchParams.returnTo === "string"
-      ? searchParams.returnTo
-      : typeof searchParams.volverA === "string"
-        ? searchParams.volverA
-        : undefined;
+  const returnTo = readReturnToParam(await props.searchParams);
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16">

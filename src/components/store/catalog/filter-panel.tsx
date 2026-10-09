@@ -9,6 +9,10 @@ import {
   NoteSelect,
   PriceSelect,
 } from "./filter-controls";
+import { FILTER_LABEL_CLASS } from "./filter-label";
+
+/** Full-width selects inside the sidebar. */
+const SELECT_CLASS = "w-full";
 
 function FilterRow({
   label,
@@ -19,7 +23,7 @@ function FilterRow({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+      <span className={FILTER_LABEL_CLASS}>
         {label}
       </span>
       {children}
@@ -51,20 +55,20 @@ export function FilterPanel({
       <FilterRow label="Familia olfativa">
         <AccordSelect
           filterOptions={filterOptions.accords}
-          className="w-full"
+          className={SELECT_CLASS}
         />
       </FilterRow>
 
       <FilterRow label="Marca">
-        <BrandSelect filterOptions={filterOptions.brands} className="w-full" />
+        <BrandSelect filterOptions={filterOptions.brands} className={SELECT_CLASS} />
       </FilterRow>
 
       <FilterRow label="Con la nota">
-        <NoteSelect filterOptions={filterOptions.notes} className="w-full" />
+        <NoteSelect filterOptions={filterOptions.notes} className={SELECT_CLASS} />
       </FilterRow>
 
       <FilterRow label="Precio">
-        <PriceSelect className="w-full" />
+        <PriceSelect className={SELECT_CLASS} />
       </FilterRow>
     </div>
   );

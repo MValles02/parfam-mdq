@@ -5,9 +5,18 @@ import { LRUCache } from "lru-cache";
  * horizontally scaled deployment needs Redis because each instance would keep
  * its own counter.
  */
+const MAX_TRACKED_KEYS = 5_000;
+
+/**
+ * How long an idle key keeps its hits. It must be at least the longest
+ * `windowMs` any caller passes, or a key could expire while its hits still
+ * count.
+ */
+const KEY_TTL_MS = 1000 * 60 * 15;
+
 const buckets = new LRUCache<string, number[]>({
-  max: 5_000,
-  ttl: 1000 * 60 * 15,
+  max: MAX_TRACKED_KEYS,
+  ttl: KEY_TTL_MS,
 });
 
 interface RateLimitResult {
@@ -24,7 +33,9 @@ export function rateLimit(
   { limit, windowMs }: { limit: number; windowMs: number },
 ): RateLimitResult {
   const now = Date.now();
-  const hits = (buckets.get(key) ?? []).filter((t) => now - t < windowMs);
+  const hits = (buckets.get(key) ?? []).filter(
+    (hitTime) => now - hitTime < windowMs,
+  );
 
   if (hits.length >= limit) {
     const oldest = hits[0]!;

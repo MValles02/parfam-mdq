@@ -4,7 +4,7 @@
 
 A store route loads `CatalogFilters` through
 `loadCatalogFilters()` in `src/lib/store/filters.ts`, then calls
-`listCatalog()` in `src/lib/store/queries.ts`. Client filter controls share
+`listCatalog()` in `src/lib/store/catalog-listing.ts`. Client filter controls share
 the parser definitions through nuqs, so changing a filter updates the URL and
 requests a new server render.
 
@@ -57,5 +57,7 @@ public representation that reads it.
 ## Site settings
 
 `getSiteSettings()` reads the singleton setting with a cache tag and applies
-`siteDefaults` when the row is unavailable. Admin editing uses the uncached
-admin query so the form always reflects the saved values.
+`siteDefaults` (`src/lib/site.ts`) when the row is unavailable or an optional
+column is empty. The same defaults seed the row in `prisma/seed.ts`. Admin
+editing uses the uncached admin query so the form always reflects the saved
+values.

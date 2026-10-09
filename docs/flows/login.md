@@ -8,7 +8,7 @@ Authenticate the single panel administrator and return them to the requested adm
 
 1. `src/proxy.ts` optimistically redirects unauthenticated `/admin/*` requests to `/admin/login?returnTo=<original path>`.
 2. `LoginForm` posts to the login Server Action with the `returnTo` field.
-3. The action validates input, then calls Auth.js Credentials `signIn` without a framework redirect.
+3. The action validates input, then calls Auth.js Credentials `signIn` without a framework redirect. On success it redirects to `returnTo` only when it is an `/admin` path (`resolveReturnTo` in `src/app/admin/login/return-to.ts`), otherwise to `/admin`.
 4. Inside `authorize()`, an IP and email rate limit is checked before the `User` lookup and argon2 verify, so it also covers direct POSTs to `/api/auth/callback/credentials`. It uses a dummy hash for absent users to reduce timing disclosure, and resets the limit only once the password verifies.
 5. Auth.js writes the JWT session cookie. `requireAdmin()` protects every writing panel Server Action and the panel layout enforces the rendered route.
 
@@ -16,13 +16,14 @@ Authenticate the single panel administrator and return them to the requested adm
 
 ## Main files
 
-| Responsibility       | File                                        |
-| -------------------- | ------------------------------------------- |
-| Optimistic redirect  | `src/proxy.ts`                              |
-| Auth configuration   | `src/lib/auth.config.ts`, `src/lib/auth.ts` |
-| Login UI and action  | `src/app/admin/login/`                      |
-| Panel authorization  | `src/lib/admin/guard.ts`                    |
-| Seeded administrator | `prisma/seed.ts`                            |
+| Responsibility        | File                                        |
+| --------------------- | ------------------------------------------- |
+| Optimistic redirect   | `src/proxy.ts`                              |
+| Auth configuration    | `src/lib/auth.config.ts`, `src/lib/auth.ts` |
+| Login UI and action   | `src/app/admin/login/`                      |
+| Route and param names | `src/lib/auth.config.ts`                    |
+| Panel authorization   | `src/lib/admin/guard.ts`                    |
+| Seeded administrator  | `prisma/seed.ts`                            |
 
 ## Constraints
 

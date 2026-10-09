@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { toast } from "sonner";
-import {
-  validateCartAction,
-  type CartValidationResponseItem,
-} from "@/app/(store)/carrito/actions";
-import { useCart, useHydrated } from "@/lib/cart";
-import type { InvalidReason } from "@/lib/store/server-cart";
+import { validateCartAction } from "@/app/(store)/carrito/actions";
+import { useCart, useHydrated, type CartItem } from "@/lib/cart";
+import type {
+  CartValidationItem,
+  InvalidReason,
+} from "@/lib/store/server-cart";
 
 /**
  * Reconciles cart state with the database for both /carrito and /checkout.
@@ -26,6 +26,43 @@ export type PriceChange = {
   currentPriceArs: string;
 };
 
+type CartDiscrepancy =
+  | { kind: "unavailable"; item: CartItem; reason: InvalidReason }
+  | { kind: "priceChange"; change: PriceChange };
+
+/**
+ * Compares the stored cart with the database results, in result order.
+ * Results for variants that are no longer in the cart are ignored.
+ */
+export function findCartDiscrepancies(
+  items: CartItem[],
+  results: CartValidationItem[],
+): CartDiscrepancy[] {
+  const discrepancies: CartDiscrepancy[] = [];
+  for (const result of results) {
+    const item = items.find(
+      (cartItem) => cartItem.variantId === result.variantId,
+    );
+    if (!item) continue;
+
+    if (!result.ok) {
+      discrepancies.push({ kind: "unavailable", item, reason: result.reason });
+    } else if (result.priceArs !== item.unitPriceArs) {
+      discrepancies.push({
+        kind: "priceChange",
+        change: {
+          variantId: result.variantId,
+          productName: item.productName,
+          variantLabel: item.variantLabel,
+          previousPriceArs: item.unitPriceArs,
+          currentPriceArs: result.priceArs,
+        },
+      });
+    }
+  }
+  return discrepancies;
+}
+
 /**
  * Price-change notices live in a module store, not per-hook state, so a
  * customer who sees the cart first (drawer or /carrito) still gets the same
@@ -42,6 +79,12 @@ const INVALID_REASON_MESSAGES: Record<InvalidReason, string> = {
   unpublished: "ya no está a la venta",
 };
 
+function notifyRemoval(item: CartItem, reason: InvalidReason) {
+  toast.error(`Sacamos "${item.productName}" del carrito`, {
+    description: `${item.variantLabel} ${INVALID_REASON_MESSAGES[reason]}.`,
+  });
+}
+
 /**
  * /carrito can mount this hook twice while the drawer is open. One module-level
  * request is shared for the same cart signature, which prevents duplicate
@@ -50,7 +93,7 @@ const INVALID_REASON_MESSAGES: Record<InvalidReason, string> = {
  */
 let inFlightValidation: {
   signature: string;
-  request: Promise<CartValidationResponseItem[]>;
+  request: Promise<CartValidationItem[]>;
   hasApplied: boolean;
 } | null = null;
 
@@ -100,32 +143,18 @@ export function useCartReconciliation() {
       validation.hasApplied = true;
 
       const detectedChanges: PriceChange[] = [];
-      for (const result of results) {
-        const item = items.find(
-          (cartItem) => cartItem.variantId === result.variantId,
-        );
-        if (!item) continue;
-
-        if (!result.ok) {
+      for (const discrepancy of findCartDiscrepancies(items, results)) {
+        if (discrepancy.kind === "unavailable") {
           if (shouldApply) {
-            remove(result.variantId);
-            toast.error(`Sacamos "${item.productName}" del carrito`, {
-              description: `${item.variantLabel} ${INVALID_REASON_MESSAGES[result.reason]}.`,
-            });
+            remove(discrepancy.item.variantId);
+            notifyRemoval(discrepancy.item, discrepancy.reason);
           }
           continue;
         }
 
-        if (result.priceArs !== item.unitPriceArs) {
-          detectedChanges.push({
-            variantId: result.variantId,
-            productName: item.productName,
-            variantLabel: item.variantLabel,
-            previousPriceArs: item.unitPriceArs,
-            currentPriceArs: result.priceArs,
-          });
-          if (shouldApply) updatePrice(result.variantId, result.priceArs);
-        }
+        const { change } = discrepancy;
+        detectedChanges.push(change);
+        if (shouldApply) updatePrice(change.variantId, change.currentPriceArs);
       }
       if (detectedChanges.length > 0) setChanges(detectedChanges);
       setIsReady(true);

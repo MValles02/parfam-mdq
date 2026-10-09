@@ -5,15 +5,6 @@ import { buildWhatsAppLink, formatPhoneNumber } from "@/lib/whatsapp";
 
 export type OrderStatusFilter = "all" | OrderStatus;
 
-const STATUS_FILTER_WHERE: Record<OrderStatusFilter, OrderStatus | undefined> =
-  {
-    all: undefined,
-    [OrderStatus.PENDING]: OrderStatus.PENDING,
-    [OrderStatus.CONFIRMED]: OrderStatus.CONFIRMED,
-    [OrderStatus.DELIVERED]: OrderStatus.DELIVERED,
-    [OrderStatus.CANCELLED]: OrderStatus.CANCELLED,
-  };
-
 /**
  * Spanish `OrderStatus` labels stay in this admin-only module because the
  * public store does not display order statuses.
@@ -41,44 +32,40 @@ function buildSearchWhere(query: string): Prisma.OrderWhereInput {
   };
 }
 
-/**
- * Returns order-table rows and per-status counts for the page header and
- * filter tabs.
- */
-export async function listOrders(options: {
+/** Returns order-table rows and the per-status counts for the page header. */
+export async function listOrders({
+  query = "",
+  status = "all",
+}: {
   query?: string;
   status?: OrderStatusFilter;
 }) {
-  const query = options.query ?? "";
-  const status = options.status ?? "all";
   const where: Prisma.OrderWhereInput = {
     ...buildSearchWhere(query),
-    status: STATUS_FILTER_WHERE[status],
+    status: status === "all" ? undefined : status,
   };
 
-  const [orders, pending, confirmed, delivered, cancelled, total] =
-    await Promise.all([
-      prisma.order.findMany({
-        where,
-        orderBy: [{ createdAt: "desc" }],
-        select: {
-          id: true,
-          number: true,
-          customerName: true,
-          customerPhone: true,
-          status: true,
-          totalArs: true,
-          createdAt: true,
-          _count: { select: { items: true } },
-          items: { select: { productName: true }, take: 3 },
-        },
-      }),
-      prisma.order.count({ where: { status: OrderStatus.PENDING } }),
-      prisma.order.count({ where: { status: OrderStatus.CONFIRMED } }),
-      prisma.order.count({ where: { status: OrderStatus.DELIVERED } }),
-      prisma.order.count({ where: { status: OrderStatus.CANCELLED } }),
-      prisma.order.count(),
-    ]);
+  const [orders, pending, confirmed, delivered, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }],
+      select: {
+        id: true,
+        number: true,
+        customerName: true,
+        customerPhone: true,
+        status: true,
+        totalArs: true,
+        createdAt: true,
+        _count: { select: { items: true } },
+        items: { select: { productName: true }, take: 3 },
+      },
+    }),
+    prisma.order.count({ where: { status: OrderStatus.PENDING } }),
+    prisma.order.count({ where: { status: OrderStatus.CONFIRMED } }),
+    prisma.order.count({ where: { status: OrderStatus.DELIVERED } }),
+    prisma.order.count(),
+  ]);
 
   const rows = orders.map((order) => ({
     id: order.id,
@@ -97,7 +84,6 @@ export async function listOrders(options: {
     pending,
     confirmed,
     delivered,
-    cancelled,
     total,
   };
 }

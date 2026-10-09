@@ -39,7 +39,7 @@ const isDev = process.env.NODE_ENV === "development";
  * for scripts and styles is the tradeoff that keeps static rendering intact.
  *
  * connect-src allows the whole `*.r2.cloudflarestorage.com` wildcard, not
- * just R2_PUBLIC_ORIGIN, because admin image uploads PUT directly from the
+ * just `r2PublicOrigin`, because admin image uploads PUT directly from the
  * browser to a presigned R2 endpoint scoped to the account id
  * (`https://<account>.r2.cloudflarestorage.com`, see `getUploadUrl` in
  * src/lib/r2.ts and the XMLHttpRequest in image-panel.tsx) — a different

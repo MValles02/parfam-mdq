@@ -2,12 +2,6 @@ import { z } from "zod";
 import { phoneSchema } from "@/lib/validations/checkout";
 import { optionalText } from "@/lib/validations/product";
 
-/**
- * Shared client and server schema for `/admin/configuracion`. It reuses the
- * checkout phone rule (libphonenumber-js, AR region) because
- * `SiteSetting.whatsappNumber` and `Order.customerPhone` use E.164.
- */
-
 const instagramHandle = z
   .string()
   .trim()
@@ -19,6 +13,11 @@ const instagramHandle = z
   .nullable()
   .default(null);
 
+/**
+ * Shared client and server schema for `/admin/configuracion`. It reuses the
+ * checkout phone rule (libphonenumber-js, AR region) because
+ * `SiteSetting.whatsappNumber` and `Order.customerPhone` use E.164.
+ */
 export const settingsSchema = z.object({
   whatsappNumber: phoneSchema,
   whatsappMessageTemplate: z

@@ -6,10 +6,11 @@ import { useCart, useHydrated } from "@/lib/cart";
 import { useCartReconciliation } from "@/lib/store/use-cart-reconciliation";
 import { PriceChangeAlert } from "@/components/store/cart/price-change-alert";
 import { CartItemRow } from "@/components/store/cart/cart-item-row";
+import { CATALOG_HREF } from "@/lib/store/links";
 
 /**
- * Empty-cart placeholder shared by the drawer (/carrito preview) and the
- * standalone checkout page, which show it when the cart has no items.
+ * Empty-cart placeholder shared by the cart list (drawer and /carrito) and the
+ * checkout page.
  */
 export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
   return (
@@ -18,7 +19,7 @@ export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
         Todavía no agregaste nada al carrito.
       </p>
       <Button asChild onClick={onNavigate} className="min-h-11 lg:min-h-0">
-        <Link href="/#catalogo">Ir al catálogo</Link>
+        <Link href={CATALOG_HREF}>Ir al catálogo</Link>
       </Button>
     </div>
   );
@@ -26,8 +27,8 @@ export function EmptyCart({ onNavigate }: { onNavigate?: () => void }) {
 
 /**
  * Renders cart items and the empty state for both the drawer and /carrito.
- * It owns the shared reconciliation trigger so either surface refreshes cart
- * availability exactly once.
+ * It owns the reconciliation trigger for both surfaces; when both are mounted
+ * they share one database request (see `useCartReconciliation`).
  */
 export function CartItemList({ onNavigate }: { onNavigate?: () => void }) {
   const hydrated = useHydrated();
@@ -48,7 +49,7 @@ export function CartItemList({ onNavigate }: { onNavigate?: () => void }) {
       ))}
 
       <Link
-        href="/#catalogo"
+        href={CATALOG_HREF}
         onClick={onNavigate}
         className="rounded border border-dashed border-border p-4 text-center text-[13px] font-medium text-muted-foreground hover:border-foreground hover:text-foreground"
       >

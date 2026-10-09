@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ProductCardData } from "@/lib/store/queries";
 import { formatArsPrice } from "@/lib/catalog";
+import { getProductPath } from "@/lib/store/links";
 import { ProductImage } from "@/components/store/product-image";
 
 /**
@@ -21,7 +22,7 @@ export function ProductCard({
 }) {
   return (
     <Link
-      href={`/producto/${product.slug}`}
+      href={getProductPath(product.slug)}
       className="group flex flex-col overflow-hidden rounded border bg-card transition-colors hover:border-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <div className="relative isolate h-[180px] border-b bg-background sm:h-[260px]">
@@ -66,22 +67,21 @@ export function ProductCard({
         </div>
 
         {product.sizes.length > 0 ? (
-          <p className="truncate text-[11px] font-semibold text-muted-foreground sm:hidden">
-            {product.sizes.join(" · ")}
-          </p>
-        ) : null}
-
-        {product.sizes.length > 0 ? (
-          <div className="hidden gap-1.5 pt-1 sm:flex">
-            {product.sizes.map((size) => (
-              <span
-                key={size}
-                className="rounded-md border px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground"
-              >
-                {size}
-              </span>
-            ))}
-          </div>
+          <>
+            <p className="truncate text-[11px] font-semibold text-muted-foreground sm:hidden">
+              {product.sizes.join(" · ")}
+            </p>
+            <div className="hidden gap-1.5 pt-1 sm:flex">
+              {product.sizes.map((size) => (
+                <span
+                  key={size}
+                  className="rounded-md border px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground"
+                >
+                  {size}
+                </span>
+              ))}
+            </div>
+          </>
         ) : null}
       </div>
     </Link>

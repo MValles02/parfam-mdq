@@ -90,7 +90,7 @@ from the initial migration are unaffected and still back admin search (see
 `20260927120000_product_name_trgm_index` adds `Product_name_trgm_idx`, a GIN
 trigram index on `parfam_normalize("name")`, mirroring `Brand_name_trgm_idx`
 from the initial migration. It backs the accent-insensitive store search in
-`listCatalog` (`src/lib/store/queries.ts`), which matches product and brand
+`listCatalog` (`src/lib/store/catalog-listing.ts`), which matches product and brand
 names through `parfam_normalize` in a raw query rather than Prisma's
 `contains`, since Prisma cannot call a SQL function.
 
@@ -112,7 +112,8 @@ pnpm db:seed
 products are created by adopting reference catalog entries from the panel
 (see `docs/modules/reference-data.md`), not by a seed script. For local smoke
 checks, `pnpm db:seed:fixtures` (`prisma/seed-fixtures.ts`) additionally
-upserts a small `fixture-`-prefixed catalog; it refuses to run outside a
-local database.
+upserts a small `fixture-`-prefixed catalog (slugs and names in
+`scripts/lib/fixture-catalog.ts`); it refuses to run outside a local
+database.
 
 `Brand.country` is editable from `/admin/marcas` (inline row form, `brandSchema`); the slug stays immutable.

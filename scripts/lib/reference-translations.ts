@@ -22,6 +22,13 @@ import path from "node:path";
 import { z } from "zod";
 import { toNoteSlug, toSlug } from "./reference-parse";
 
+/** Repository-relative directory holding both translation files. */
+export const DEFAULT_TRANSLATIONS_DIR = "prisma/reference";
+export const NOTES_TRANSLATION_FILE = "notes.es.json";
+export const ACCORDS_TRANSLATION_FILE = "accords.es.json";
+
+const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+
 const trimmedNonEmpty = z.string().trim().min(1, "must be a non-empty string");
 
 export const noteTranslationEntrySchema = z.object({
@@ -34,7 +41,7 @@ export const accordTranslationEntrySchema = z.object({
   es: trimmedNonEmpty,
   color: z
     .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "must be a hex color like #RRGGBB"),
+    .regex(HEX_COLOR_PATTERN, "must be a hex color like #RRGGBB"),
 });
 
 type NoteTranslationEntry = z.infer<typeof noteTranslationEntrySchema>;
@@ -128,15 +135,15 @@ function parseTranslationFile<Entry extends { en: string }>(
  * repository is invoked from the project root via `pnpm`).
  */
 export function loadReferenceTranslations(
-  dir = "prisma/reference",
+  dir = DEFAULT_TRANSLATIONS_DIR,
 ): ReferenceTranslations {
   const baseDir = path.resolve(dir);
   const notes = parseTranslationFile(
-    path.join(baseDir, "notes.es.json"),
+    path.join(baseDir, NOTES_TRANSLATION_FILE),
     notesFileSchema,
   );
   const accords = parseTranslationFile(
-    path.join(baseDir, "accords.es.json"),
+    path.join(baseDir, ACCORDS_TRANSLATION_FILE),
     accordsFileSchema,
   );
   return {
@@ -187,4 +194,11 @@ export function findMissingTranslations(
     .sort();
 
   return { missingNotes, missingAccords, unusedNotes, unusedAccords };
+}
+
+/** Untranslated note and accord slugs combined; anything above 0 blocks an import. */
+export function countMissingTranslations(
+  report: MissingTranslationsReport,
+): number {
+  return report.missingNotes.length + report.missingAccords.length;
 }

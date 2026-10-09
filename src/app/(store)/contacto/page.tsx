@@ -6,15 +6,22 @@ import {
   absoluteUrl,
   buildBreadcrumbJsonLd,
   buildPageMetadata,
-  serializeJsonLd,
 } from "@/lib/seo";
 import {
   buildInstagramLink,
   buildWhatsAppLink,
   formatPhoneNumber,
 } from "@/lib/whatsapp";
-import { catalogHref } from "@/lib/store/filters";
 import { siteDefaults } from "@/lib/site";
+import { CATALOG_HREF } from "@/lib/store/links";
+import {
+  CONTENT_PAGE_CLASS,
+  CONTENT_PAGE_LEAD_CLASS,
+  CONTENT_PAGE_TITLE_CLASS,
+  ContentPageBreadcrumb,
+  getContentPageBreadcrumbs,
+} from "@/components/store/content-page";
+import { JsonLd } from "@/components/store/json-ld";
 
 const PAGE_TITLE = "Contacto";
 const PAGE_PATH = "/contacto";
@@ -26,63 +33,36 @@ export const metadata: Metadata = buildPageMetadata({
   path: PAGE_PATH,
 });
 
-const breadcrumbs = [
-  { name: "Inicio", path: "/" },
-  { name: PAGE_TITLE, path: PAGE_PATH },
-];
+const breadcrumbs = getContentPageBreadcrumbs(PAGE_TITLE, PAGE_PATH);
 
 export default async function ContactPage() {
-  const config = await getSiteSettings();
+  const settings = await getSiteSettings();
 
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Store",
     name: siteDefaults.legalName,
     url: absoluteUrl("/"),
-    telephone: config.whatsappNumber,
+    telephone: settings.whatsappNumber,
     areaServed: siteDefaults.city,
-    sameAs: [buildInstagramLink(config.instagramHandle)],
+    sameAs: [buildInstagramLink(settings.instagramHandle)],
   };
 
   return (
-    <div className="mx-auto max-w-[68ch] px-5 py-14 lg:px-16 lg:py-20">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd(buildBreadcrumbJsonLd(breadcrumbs)),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd(organizationJsonLd),
-        }}
-      />
+    <div className={CONTENT_PAGE_CLASS}>
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbs)} />
+      <JsonLd data={organizationJsonLd} />
 
-      <nav
-        aria-label="Miga de pan"
-        className="mb-8 text-sm text-muted-foreground"
-      >
-        <Link
-          href="/"
-          className="relative before:absolute before:inset-x-0 before:-inset-y-4 hover:text-foreground lg:before:content-none"
-        >
-          Inicio
-        </Link>
-        <span className="mx-2">·</span>
-        <span className="text-foreground">{PAGE_TITLE}</span>
-      </nav>
+      <ContentPageBreadcrumb title={PAGE_TITLE} />
 
-      <h1 className="text-4xl font-extrabold tracking-[-0.03em] lg:text-6xl">
-        {PAGE_TITLE}
-      </h1>
-      <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+      <h1 className={CONTENT_PAGE_TITLE_CLASS}>{PAGE_TITLE}</h1>
+      <p className={CONTENT_PAGE_LEAD_CLASS}>
         Si buscás algo en particular o tenés una duda, escribinos.
       </p>
 
       <a
         href={buildWhatsAppLink(
-          config.whatsappNumber,
+          settings.whatsappNumber,
           "¡Hola! Quería hacerles una consulta.",
         )}
         target="_blank"
@@ -97,18 +77,18 @@ export default async function ContactPage() {
         <div className="flex items-center gap-3">
           <MessageCircle className="size-[18px] shrink-0 text-muted-foreground" />
           <span className="text-base font-medium select-text">
-            WhatsApp · {formatPhoneNumber(config.whatsappNumber)}
+            WhatsApp · {formatPhoneNumber(settings.whatsappNumber)}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <AtSign className="size-[18px] shrink-0 text-muted-foreground" />
           <a
-            href={buildInstagramLink(config.instagramHandle)}
+            href={buildInstagramLink(settings.instagramHandle)}
             target="_blank"
             rel="noopener noreferrer"
             className="relative text-base font-medium before:absolute before:inset-x-0 before:-inset-y-3 hover:text-muted-foreground lg:before:content-none"
           >
-            @{config.instagramHandle}
+            @{settings.instagramHandle}
           </a>
         </div>
         <div className="flex items-start gap-3">
@@ -116,7 +96,7 @@ export default async function ContactPage() {
           <div className="flex flex-col gap-0.5">
             <span className="text-base font-medium">{siteDefaults.city}</span>
             <span className="text-sm text-muted-foreground">
-              {config.shippingInfo}
+              {settings.shippingInfo}
             </span>
           </div>
         </div>
@@ -139,7 +119,7 @@ export default async function ContactPage() {
 
       <div className="mt-6 flex gap-6 text-sm text-muted-foreground">
         <Link
-          href={catalogHref({})}
+          href={CATALOG_HREF}
           className="relative underline underline-offset-4 before:absolute before:inset-x-0 before:-inset-y-3 hover:text-foreground"
         >
           Ver el catálogo

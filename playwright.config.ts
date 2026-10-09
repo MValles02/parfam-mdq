@@ -7,6 +7,10 @@ import { defineConfig } from "@playwright/test";
 // bucket, so a random IP per run keeps specs from throttling each other.
 const clientIp = Array.from({ length: 4 }, () => randomInt(1, 255)).join(".");
 
+const BASE_URL = "http://localhost:3000";
+// The web server command includes a full production build.
+const WEB_SERVER_TIMEOUT_MS = 300_000;
+
 export default defineConfig({
   testDir: "e2e",
   testMatch: /.*\.e2e\.ts/,
@@ -14,7 +18,7 @@ export default defineConfig({
   // html feeds the playwright-report/ artifact CI uploads on failure.
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: BASE_URL,
     extraHTTPHeaders: { "cf-connecting-ip": clientIp },
   },
   projects: [
@@ -29,8 +33,8 @@ export default defineConfig({
   ],
   webServer: {
     command: "pnpm build && pnpm start",
-    url: "http://localhost:3000",
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
-    timeout: 300_000,
+    timeout: WEB_SERVER_TIMEOUT_MS,
   },
 });

@@ -9,9 +9,9 @@ const REVEAL_STEP = 5;
 /**
  * Progressive reveal for the "Se parece a" section. The parent Server
  * Component passes up to 20 already-rendered `ProductCard` elements as
- * `children` (built from `getSimilarProducts` in `src/lib/store/queries.ts`),
- * so this stays a plain presentational Client Component: it never touches
- * Prisma-backed data itself (see the Client Component boundary in
+ * `children` (built from `getSimilarProducts` in
+ * `src/lib/store/similar-products.ts`), so this stays a plain presentational
+ * Client Component: it never touches Prisma-backed data itself (see the Client Component boundary in
  * `docs/architecture.md`).
  */
 export function SimilarProducts({ children }: { children: React.ReactNode[] }) {

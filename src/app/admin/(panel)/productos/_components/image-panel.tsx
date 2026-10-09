@@ -14,18 +14,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { MAX_IMAGE_BYTES } from "@/lib/image-type";
 import { cn } from "@/lib/utils";
 import { deleteUploadedImage, requestUploadUrl } from "../image-actions";
+import { removeImageAt, type ProductImageItem } from "./image-list";
 
-export type ProductImageItem = {
-  id: string | null; // null means it is not yet persisted.
-  /** R2 object key. This is the only image value stored in the database. */
-  storageKey: string;
-  alt: string | null;
-  isPrimary: boolean;
-};
-
-/** Mirrors `image-actions.ts` so rejected MIME types do not appear to upload
+/** Mirrors `EXTENSION_BY_CONTENT_TYPE` (`src/lib/image-type.ts`), which
+ * `requestUploadUrl` enforces, so rejected MIME types do not appear to upload
  * successfully before the server rejects them. */
 const ACCEPT: Accept = {
   "image/jpeg": [".jpg", ".jpeg"],
@@ -33,8 +28,6 @@ const ACCEPT: Accept = {
   "image/webp": [".webp"],
   "image/avif": [".avif"],
 };
-
-const EIGHT_MB = 8 * 1024 * 1024;
 
 type UploadInProgress = {
   id: string;
@@ -91,13 +84,12 @@ export function ImagePanel(props: {
    * Appends one uploaded image, reading and writing the form's current
    * `images` value at call time. This is the single place that decides
    * whether the new image becomes primary, so it must also be the function
-   * the reference-picture import uses (see `ProductForm`) — otherwise a
+   * the reference-picture import uses (see `useReferenceAdoption`) — otherwise a
    * manual upload finishing around the same time as an import could read a
    * stale image list and either drop one of the two images or mark both as
    * primary.
    */
   onUploadComplete: (storageKey: string) => void;
-  disabled?: boolean;
   /**
    * Public bucket host used for previews. It comes from the server because the
    * database stores keys, so a host migration does not touch image rows.
@@ -112,7 +104,6 @@ export function ImagePanel(props: {
     value,
     onChange,
     onUploadComplete,
-    disabled = false,
     publicBaseUrl,
     isR2Configured,
     isImportingReferencePicture = false,
@@ -183,9 +174,9 @@ export function ImagePanel(props: {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: ACCEPT,
-    maxSize: EIGHT_MB,
+    maxSize: MAX_IMAGE_BYTES,
     multiple: true,
-    disabled: disabled || isR2Configured === false,
+    disabled: isR2Configured === false,
   });
 
   function moveImage(index: number, delta: number) {
@@ -227,13 +218,7 @@ export function ImagePanel(props: {
       return nextKeys;
     });
 
-    const remainingImages = value.filter(
-      (_, imageIndex) => imageIndex !== index,
-    );
-    if (image.isPrimary && remainingImages.length > 0) {
-      remainingImages[0] = { ...remainingImages[0]!, isPrimary: true };
-    }
-    onChange(remainingImages);
+    onChange(removeImageAt(value, index));
   }
 
   return (
@@ -252,8 +237,7 @@ export function ImagePanel(props: {
           className={cn(
             "flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-border bg-card px-4 py-8 text-center transition-colors",
             isDragActive && "border-foreground bg-muted",
-            (disabled || deletingStorageKeys.size > 0) &&
-              "pointer-events-none opacity-50",
+            deletingStorageKeys.size > 0 && "pointer-events-none opacity-50",
           )}
         >
           <input {...getInputProps()} />
@@ -317,7 +301,7 @@ export function ImagePanel(props: {
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    disabled={disabled || index === 0}
+                    disabled={index === 0}
                     onClick={() => moveImage(index, -1)}
                     aria-label="Mover a la izquierda"
                   >
@@ -329,7 +313,6 @@ export function ImagePanel(props: {
                       type="button"
                       variant="ghost"
                       size="icon-xs"
-                      disabled={disabled}
                       onClick={() => setPrimaryImage(index)}
                       aria-label="Marcar como principal"
                     >
@@ -341,7 +324,7 @@ export function ImagePanel(props: {
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    disabled={disabled || isDeleting}
+                    disabled={isDeleting}
                     onClick={() => void removeImage(index)}
                     aria-label="Eliminar imagen"
                   >
@@ -356,7 +339,7 @@ export function ImagePanel(props: {
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    disabled={disabled || index === value.length - 1}
+                    disabled={index === value.length - 1}
                     onClick={() => moveImage(index, 1)}
                     aria-label="Mover a la derecha"
                   >

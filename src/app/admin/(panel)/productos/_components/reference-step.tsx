@@ -15,8 +15,28 @@ import type {
 import type { ExistingProduct } from "@/lib/admin/products";
 import { cn } from "@/lib/utils";
 import { adoptReferenceAction, searchReferencesAction } from "../actions";
-import { Step } from "./field";
+import { getAdminProductPath } from "../paths";
+import { Step } from "./step";
 import { BottlePlaceholder } from "@/components/bottle-placeholder";
+
+/** Matches `RESULT_LIMIT` in `src/lib/admin/references.ts`, which this Client
+ * Component cannot import because that module loads Prisma. A full page of
+ * results therefore means there may be more. */
+const REFERENCE_RESULT_LIMIT = 12;
+
+/** Queries shorter than this clear the results instead of searching. */
+const MIN_QUERY_LENGTH = 2;
+
+const SEARCH_DEBOUNCE_MS = 250;
+
+const FRAGRANTICA_SEARCH_URL = "https://www.fragrantica.com/search/?query=";
+
+/** The reference currently linked to the product being edited. */
+export type AdoptedReference = {
+  id: string;
+  name: string;
+  referenceUrl: string | null;
+};
 
 type ReferenceHit = ReferenceSearchResult & {
   existingProducts: ExistingProduct[];
@@ -37,7 +57,7 @@ function ExistingProductAlert({ products }: { products: ExistingProduct[] }) {
       <TriangleAlert className="size-4 shrink-0" />
       <span>Ya lo tenés cargado como «{products[0]!.name}».</span>
       <Link
-        href={`/admin/productos/${products[0]!.id}`}
+        href={getAdminProductPath(products[0]!.id)}
         className="font-semibold underline"
       >
         Abrir el existente
@@ -49,9 +69,9 @@ function ExistingProductAlert({ products }: { products: ExistingProduct[] }) {
 function getReferenceMetadata(reference: ReferenceSearchResult) {
   return [
     reference.brandName,
-    reference.year ?? null,
+    reference.year,
     reference.gender ? genderLabels[reference.gender] : null,
-    reference.collection ?? null,
+    reference.collection,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -64,11 +84,7 @@ export function ReferenceStep({
   onManualEntry,
   isManual,
 }: {
-  adoptedReference: {
-    id: string;
-    name: string;
-    referenceUrl: string | null;
-  } | null;
+  adoptedReference: AdoptedReference | null;
   onAdopt: (reference: AdoptableReference) => void;
   onUnlink: () => void;
   onManualEntry: () => void;
@@ -87,31 +103,31 @@ export function ReferenceStep({
   const [isSearching, setIsSearching] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState("");
   const [isAdopting, startAdoption] = useTransition();
-  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const requestVersion = useRef(0);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestRequest = useRef(0);
 
-  function search(text: string) {
+  function changeQuery(text: string) {
     setQuery(text);
-    if (timeout.current) clearTimeout(timeout.current);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-    if (text.trim().length < 2) {
-      requestVersion.current++;
+    if (text.trim().length < MIN_QUERY_LENGTH) {
+      latestRequest.current++;
       setResults([]);
       setIsSearching(false);
       setSearchedQuery("");
       return;
     }
 
-    const version = ++requestVersion.current;
+    const version = ++latestRequest.current;
     setIsSearching(true);
-    timeout.current = setTimeout(async () => {
+    debounceTimer.current = setTimeout(async () => {
       const result = await searchReferencesAction(text);
-      if (version !== requestVersion.current) return;
+      if (version !== latestRequest.current) return;
       setIsSearching(false);
       setSearchedQuery(text.trim());
       setResults(result.ok ? result.data : []);
       if (!result.ok) toast.error(result.message);
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   function select(hit: ReferenceHit) {
@@ -224,7 +240,7 @@ export function ReferenceStep({
                 <Search className="size-4.5 shrink-0" />
                 <input
                   value={query}
-                  onChange={(e) => search(e.target.value)}
+                  onChange={(e) => changeQuery(e.target.value)}
                   placeholder="Escribí el nombre o la marca"
                   aria-label="Buscar en el catálogo de referencia"
                   className="min-w-0 flex-1 bg-transparent py-4 text-[15px] font-medium outline-none placeholder:text-muted-foreground/70"
@@ -233,8 +249,8 @@ export function ReferenceStep({
                   <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
                 ) : results.length > 0 ? (
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {results.length === 12
-                      ? "12+ coincidencias"
+                    {results.length === REFERENCE_RESULT_LIMIT
+                      ? `${REFERENCE_RESULT_LIMIT}+ coincidencias`
                       : `${results.length} ${results.length === 1 ? "coincidencia" : "coincidencias"}`}
                   </span>
                 ) : null}
@@ -290,7 +306,7 @@ export function ReferenceStep({
                     <Button type="button" variant="outline" asChild>
                       {/* Opening a separate tab preserves partially completed form data. */}
                       <a
-                        href={`https://www.fragrantica.com/search/?query=${encodeURIComponent(searchedQuery)}`}
+                        href={`${FRAGRANTICA_SEARCH_URL}${encodeURIComponent(searchedQuery)}`}
                         target="_blank"
                         rel="noreferrer noopener"
                       >

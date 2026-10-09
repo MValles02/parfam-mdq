@@ -10,6 +10,7 @@ import {
   PYRAMID_LEVELS as pyramidLevels,
 } from "@/lib/catalog";
 import { searchNotesAction, createNoteAction } from "../actions";
+import { parsePercentageInput } from "./percentage";
 import { RemoteCombobox, type RemoteOption } from "./remote-combobox";
 
 export type SelectedNote = {
@@ -28,9 +29,7 @@ function sortByWeightDesc(notes: SelectedNote[]) {
 }
 
 function clampWeight(raw: string) {
-  const digits = raw.replace(/\D/g, "").slice(0, 3);
-  if (digits === "") return 0;
-  return Math.min(100, Number(digits));
+  return parsePercentageInput(raw) ?? 0;
 }
 
 /**
@@ -41,11 +40,9 @@ function clampWeight(raw: string) {
 export function PyramidEditor({
   value,
   onChange,
-  disabled,
 }: {
   value: SelectedNote[];
   onChange: (notes: SelectedNote[]) => void;
-  disabled?: boolean;
 }) {
   // The schema requires every note to carry a position or none at all, so a
   // non-empty value already dictates its own mode. Recomputing it from `value`
@@ -149,7 +146,6 @@ export function PyramidEditor({
           type="number"
           min={0}
           max={100}
-          disabled={disabled}
           value={note.weight}
           aria-label={`Intensidad de ${note.name}`}
           onChange={(e) =>
@@ -159,7 +155,6 @@ export function PyramidEditor({
         />
         <button
           type="button"
-          disabled={disabled}
           onClick={() => removeNote(note.noteId, note.position)}
           aria-label={`Quitar ${note.name}`}
           className="text-muted-foreground hover:text-destructive"
@@ -179,7 +174,6 @@ export function PyramidEditor({
         onValueChange={(next) => {
           if (next) changeMode(next as PyramidMode);
         }}
-        disabled={disabled}
         className="justify-start"
       >
         <ToggleGroupItem value="pyramid" className="px-3">
@@ -204,37 +198,7 @@ export function PyramidEditor({
                 <div className="flex min-h-22 flex-wrap content-start gap-1.5 rounded-md border bg-background p-3">
                   {notes.map((note) => renderNote(note))}
 
-                  <RemoteCombobox
-                    disabled={disabled}
-                    placeholder="Buscar nota…"
-                    emptyText="No hay ninguna nota con ese nombre."
-                    search={async (query) => {
-                      const result = await searchNotesAction(query);
-                      if (!result.ok) return [];
-                      return result.data.map((note) => ({
-                        id: note.id,
-                        label: note.name,
-                      }));
-                    }}
-                    onCreate={async (name) => {
-                      const result = await createNoteAction(name);
-                      if (!result.ok) {
-                        toast.error(result.message);
-                        return null;
-                      }
-                      return { id: result.data.id, label: result.data.name };
-                    }}
-                    onSelect={(option) => addNote(level, option)}
-                  >
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      className="flex items-center gap-1 rounded-sm border border-dashed px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
-                    >
-                      <Plus className="size-3" />
-                      Agregar
-                    </button>
-                  </RemoteCombobox>
+                  <NoteSearch onSelect={(option) => addNote(level, option)} />
                 </div>
               </div>
             );
@@ -248,40 +212,49 @@ export function PyramidEditor({
           <div className="flex min-h-22 flex-wrap content-start gap-1.5 rounded-md border bg-background p-3">
             {sortByWeightDesc(value).map((note) => renderNote(note))}
 
-            <RemoteCombobox
-              disabled={disabled}
-              placeholder="Buscar nota…"
-              emptyText="No hay ninguna nota con ese nombre."
-              search={async (query) => {
-                const result = await searchNotesAction(query);
-                if (!result.ok) return [];
-                return result.data.map((note) => ({
-                  id: note.id,
-                  label: note.name,
-                }));
-              }}
-              onCreate={async (name) => {
-                const result = await createNoteAction(name);
-                if (!result.ok) {
-                  toast.error(result.message);
-                  return null;
-                }
-                return { id: result.data.id, label: result.data.name };
-              }}
-              onSelect={(option) => addNote(null, option)}
-            >
-              <button
-                type="button"
-                disabled={disabled}
-                className="flex items-center gap-1 rounded-sm border border-dashed px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
-              >
-                <Plus className="size-3" />
-                Agregar
-              </button>
-            </RemoteCombobox>
+            <NoteSearch onSelect={(option) => addNote(null, option)} />
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+/** "Agregar" trigger that searches the note vocabulary or creates a new note. */
+function NoteSearch({
+  onSelect,
+}: {
+  onSelect: (option: RemoteOption) => void;
+}) {
+  return (
+    <RemoteCombobox
+      placeholder="Buscar nota…"
+      emptyText="No hay ninguna nota con ese nombre."
+      search={async (query) => {
+        const result = await searchNotesAction(query);
+        if (!result.ok) return [];
+        return result.data.map((note) => ({
+          id: note.id,
+          label: note.name,
+        }));
+      }}
+      onCreate={async (name) => {
+        const result = await createNoteAction(name);
+        if (!result.ok) {
+          toast.error(result.message);
+          return null;
+        }
+        return { id: result.data.id, label: result.data.name };
+      }}
+      onSelect={onSelect}
+    >
+      <button
+        type="button"
+        className="flex items-center gap-1 rounded-sm border border-dashed px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
+      >
+        <Plus className="size-3" />
+        Agregar
+      </button>
+    </RemoteCombobox>
   );
 }

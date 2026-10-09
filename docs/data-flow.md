@@ -45,7 +45,7 @@ thank-you page with the generated WhatsApp link.
 ## Admin updates and invalidation
 
 Product actions revalidate the store root, catalog, relevant product and brand
-pages, the sitemap tag, and the "Se parece a" similar-products tag. Brand
+pages, the sitemap tag, and the "Si te gusta, probá también" similar-products tag. Brand
 actions invalidate affected product routes. Settings actions invalidate the
 site-settings tag. The sitemap and similar-products ranking are both dynamic
 but cache their database result with a tagged `unstable_cache`.

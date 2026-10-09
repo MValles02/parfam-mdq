@@ -35,7 +35,7 @@ catalog filtered with `/?marca=<slug>#catalogo`. The product route remains
    results offers a WhatsApp link.
 5. `getProductBySlug` returns `null` for missing, draft, or unsellable
    products, so the route returns a 404 even for a known draft slug.
-6. Product detail queries use `getSimilarProducts` for the "Se parece a"
+6. Product detail queries use `getSimilarProducts` for the "Si te gusta, probá también"
    section.
 
 ## Main files

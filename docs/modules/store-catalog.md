@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Query and render publicly sellable products, catalog filters, product detail, and "Se parece a" similar products.
+Query and render publicly sellable products, catalog filters, product detail, and "Si te gusta, probá también" similar products.
 
 ## API
 
@@ -19,7 +19,7 @@ Query and render publicly sellable products, catalog filters, product detail, an
 | src/lib/store/queries.ts                             | Prisma queries and serialized DTOs                                     |
 | src/lib/store/filters.ts                             | URL parser and serialization adapter                                   |
 | src/lib/store/catalog-sort.ts                        | Catalog sort comparator (featured, newest, price, name)                |
-| src/lib/store/similarity.ts                          | Pure "Se parece a" scoring                                             |
+| src/lib/store/similarity.ts                          | Pure "Si te gusta, probá también" scoring                              |
 | src/components/store/catalog/                        | Catalog controls and grid                                              |
 | src/components/store/catalog/active-filter-chips.tsx | Removable chips for applied filters                                    |
 | src/components/store/catalog/search.tsx              | `CatalogSearch` (URL-driven) and header `StoreSearch`                  |

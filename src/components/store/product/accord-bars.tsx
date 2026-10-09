@@ -8,7 +8,7 @@ type Accord = {
 };
 
 /**
- * Strength-ranked accord bars, replacing the plain chip list this section
+ * Strength-ranked accord bars (name inside the bar, width = strength), replacing the plain chip list this section
  * used before `Product.accords` gained a `strength` (see
  * `src/lib/store/queries.ts`, ordered strongest first). The bar fill reuses
  * `getChipColor()`'s background half so the accord's own dictionary color
@@ -19,29 +19,26 @@ export function AccordBars({ accords }: { accords: Accord[] }) {
   if (accords.length === 0) return null;
 
   return (
-    <div className="mt-6 flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {accords.map((accord) => {
-        const { background } = getChipColor(accord.color);
+        const { background, foreground } = getChipColor(accord.color);
         return (
-          <div key={accord.slug} className="flex flex-col gap-1.5">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-semibold">{accord.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {accord.strength}%
-              </span>
-            </div>
+          <div
+            key={accord.slug}
+            role="img"
+            aria-label={`${accord.name}: ${accord.strength} de 100`}
+            className="flex h-9 items-center overflow-hidden rounded-sm bg-muted"
+          >
+            {/* The label sits inside the fill; min-w-fit keeps short bars legible. */}
             <div
-              role="img"
-              aria-label={`${accord.name}: ${accord.strength} de 100`}
-              className="h-2 w-full overflow-hidden rounded-sm bg-border"
+              className="flex h-full min-w-fit items-center rounded-sm px-3 text-sm font-semibold whitespace-nowrap"
+              style={{
+                width: `${accord.strength}%`,
+                backgroundColor: background,
+                color: foreground,
+              }}
             >
-              <div
-                className="h-full rounded-sm"
-                style={{
-                  width: `${accord.strength}%`,
-                  backgroundColor: background,
-                }}
-              />
+              {accord.name}
             </div>
           </div>
         );

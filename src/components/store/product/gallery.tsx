@@ -14,8 +14,8 @@ import { cn, FOCUS_VISIBLE } from "@/lib/utils";
 type ProductImageData = { id: string; url: string; alt: string };
 
 /**
- * Product gallery with a Carousel and up to four thumbnails. The active
- * thumbnail is derived from `useCarousel` to avoid state updates in effects.
+ * Product gallery with a Carousel, dots below lg and up to four vertical
+ * thumbnails from lg. The active index is derived from `useCarousel` to avoid state updates in effects.
  */
 export function Gallery({ images }: { images: ProductImageData[] }) {
   if (images.length === 0) {
@@ -23,7 +23,7 @@ export function Gallery({ images }: { images: ProductImageData[] }) {
       <div className="relative isolate aspect-square w-full overflow-hidden rounded bg-background">
         <ProductImage
           image={null}
-          sizes="(min-width: 1024px) 620px, 100vw"
+          sizes="(min-width: 1024px) 560px, 100vw"
           priority
         />
       </div>
@@ -33,16 +33,17 @@ export function Gallery({ images }: { images: ProductImageData[] }) {
   return (
     <Carousel
       opts={{ loop: images.length > 1 }}
-      className="flex flex-col gap-3.5"
+      className="flex flex-col gap-3 lg:flex-row"
     >
-      <div className="relative">
+      {images.length > 1 ? <Thumbnails images={images} /> : null}
+      <div className="relative min-w-0 flex-1">
         <CarouselContent className="ml-0">
           {images.map((image, index) => (
             <CarouselItem key={image.id} className="pl-0">
               <div className="relative isolate aspect-square w-full overflow-hidden rounded bg-background">
                 <ProductImage
                   image={image}
-                  sizes="(min-width: 1024px) 620px, 100vw"
+                  sizes="(min-width: 1024px) 560px, 100vw"
                   priority={index === 0}
                 />
               </div>
@@ -57,16 +58,47 @@ export function Gallery({ images }: { images: ProductImageData[] }) {
         ) : null}
       </div>
 
-      {images.length > 1 ? <Thumbnails images={images} /> : null}
+      {images.length > 1 ? <Dots count={images.length} /> : null}
     </Carousel>
   );
 }
 
+/** Mobile pagination: 44px hit areas around small dots. */
+function Dots({ count }: { count: number }) {
+  const { api, currentIndex } = useCarousel();
+
+  return (
+    <div className="flex justify-center lg:hidden">
+      {Array.from({ length: count }, (_, index) => (
+        <button
+          key={index}
+          type="button"
+          aria-label={`Ver foto ${index + 1}`}
+          aria-current={index === currentIndex}
+          onClick={() => api?.scrollTo(index)}
+          className={cn(
+            "flex size-11 items-center justify-center",
+            FOCUS_VISIBLE,
+          )}
+        >
+          <span
+            className={cn(
+              "size-2 rounded-full",
+              index === currentIndex ? "bg-foreground" : "bg-input",
+            )}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Desktop: vertical strip of up to four thumbnails left of the image. */
 function Thumbnails({ images }: { images: ProductImageData[] }) {
   const { api, currentIndex: selectedIndex } = useCarousel();
 
   return (
-    <div className="grid grid-cols-4 gap-3.5">
+    <div className="hidden w-[72px] shrink-0 flex-col gap-2.5 lg:flex">
       {images.slice(0, 4).map((image, index) => {
         const isActive = index === selectedIndex;
         return (
@@ -77,18 +109,14 @@ function Thumbnails({ images }: { images: ProductImageData[] }) {
             aria-current={isActive}
             onClick={() => api?.scrollTo(index)}
             className={cn(
-              "relative isolate aspect-square overflow-hidden rounded border bg-background transition-colors",
+              "relative isolate aspect-square overflow-hidden rounded border bg-muted transition-colors",
               isActive
                 ? "border-foreground ring-1 ring-foreground"
                 : "border-transparent",
               FOCUS_VISIBLE,
             )}
           >
-            {/* Below lg the grid is 4 columns full-width, so each thumbnail is ~25vw */}
-            <ProductImage
-              image={image}
-              sizes="(min-width: 1024px) 146px, 25vw"
-            />
+            <ProductImage image={image} sizes="72px" />
           </button>
         );
       })}

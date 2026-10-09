@@ -42,6 +42,13 @@ names are English, while `catalogFilterUrlKeys` deliberately retains existing
 Spanish query keys and values. Cart state is a persisted Zustand store in
 `src/lib/cart.ts`; its storage key is also a compatibility contract.
 
+## Admin panel shell
+
+`src/app/admin/(panel)/layout.tsx` renders the sidebar (`admin-sidebar.tsx`)
+and, below `md`, a fixed bottom nav (`admin-bottom-nav.tsx`) with Inicio,
+Pedidos (pending badge), Productos and "Más", which opens the sidebar sheet
+for Marcas, Configuración and the user menu. Both read the shared `NAV`.
+
 ## Server Actions
 
 Server Actions are public POST endpoints. Admin actions therefore call

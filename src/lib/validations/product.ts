@@ -41,6 +41,17 @@ const formatArsPrice = z
   )
   .refine((v) => Number(v) > 0, "El precio tiene que ser mayor a cero.");
 
+/** Quick edits from the mobile product cards. */
+export const variantPriceSchema = z.object({
+  variantId: z.string().min(1),
+  priceArs: formatArsPrice,
+});
+
+export const variantActiveSchema = z.object({
+  variantId: z.string().min(1),
+  isActive: z.boolean(),
+});
+
 const characteristicBar = z
   .number()
   .int()

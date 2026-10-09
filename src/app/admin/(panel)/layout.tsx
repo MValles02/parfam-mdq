@@ -9,6 +9,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { countPendingOrders } from "@/lib/admin/orders";
 import { auth } from "@/lib/auth";
+import { AdminBottomNav } from "./admin-bottom-nav";
 import { AdminSidebar } from "./admin-sidebar";
 import { UserMenu } from "./user-menu";
 
@@ -44,8 +45,9 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
             <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
               <SidebarTrigger />
             </header>
-            <div className="flex-1">{children}</div>
+            <div className="flex-1 pb-20 md:pb-0">{children}</div>
           </SidebarInset>
+          <AdminBottomNav pendingCount={pendingCount} />
           <Toaster position="top-right" richColors />
         </SidebarProvider>
       </NuqsAdapter>

@@ -7,6 +7,7 @@ import { listProducts } from "@/lib/admin/products";
 import { loadProductListParams } from "@/lib/admin/product-list-params";
 import { AdminSearch } from "@/components/admin/admin-search";
 import { FilterTabs } from "@/components/admin/filter-tabs";
+import { ProductCards } from "./_components/product-cards";
 import { ProductsTable } from "./_components/products-table";
 
 export const metadata: Metadata = { title: "Productos" };
@@ -72,7 +73,17 @@ export default async function Page(props: PageProps<"/admin/productos">) {
             </Button>
           </div>
         ) : (
-          <ProductsTable rows={rows} />
+          <>
+            <div className="hidden md:block">
+              <ProductsTable rows={rows} />
+            </div>
+            <div className="flex flex-col gap-3 md:hidden">
+              <p className="text-xs text-muted-foreground">
+                Tocá un precio para cambiarlo.
+              </p>
+              <ProductCards rows={rows} />
+            </div>
+          </>
         )}
       </div>
     </>

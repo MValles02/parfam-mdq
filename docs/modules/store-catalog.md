@@ -30,7 +30,6 @@ and the store's content pages (`/como-comprar`, `/contacto`, `/presentaciones`, 
 | src/lib/store/catalog-sort.ts         | Pure catalog sort comparator                                    |
 | src/lib/store/similarity.ts           | Pure "Se parece a" scoring                                      |
 | src/lib/store/links.ts                | Catalog, brand-filtered catalog, and product URLs               |
-| src/lib/store/presentations.ts        | Frasco/decant copy shared by the home and its page       |
 | src/components/store/catalog/         | Catalog controls and grid                                       |
 | src/components/store/product/         | Product detail UI                                               |
 | src/components/store/content-page.tsx | Shared layout and breadcrumb of the single-column pages         |

@@ -24,7 +24,12 @@ export type CartItem = {
   qty: number;
 };
 
-const MAX_QUANTITY = 99;
+/**
+ * Units of one variant a cart line can hold. It mirrors the server limit in
+ * `src/lib/validations/checkout.ts`, which this module does not import so the
+ * cart, loaded on every store page, does not bundle zod and libphonenumber.
+ */
+export const MAX_ITEM_QUANTITY = 99;
 
 type CartState = {
   items: CartItem[];
@@ -40,50 +45,56 @@ type CartState = {
   clear: () => void;
 };
 
+/** Applies `update` to the line of `variantId`, leaving the others as they are. */
+function updateLine(
+  items: CartItem[],
+  variantId: string,
+  update: (line: CartItem) => CartItem,
+): CartItem[] {
+  return items.map((line) =>
+    line.variantId === variantId ? update(line) : line,
+  );
+}
+
 export const useCart = create<CartState>()(
   persist(
     (set) => ({
       items: [],
       add: (item, qty = 1) =>
         set((state) => {
-          const existingItem = state.items.find(
-            (i) => i.variantId === item.variantId,
+          const isInCart = state.items.some(
+            (line) => line.variantId === item.variantId,
           );
-          if (existingItem) {
-            return {
-              items: state.items.map((i) =>
-                i.variantId === item.variantId
-                  ? {
-                      ...i,
-                      qty: Math.min(MAX_QUANTITY, i.qty + qty),
-                    }
-                  : i,
-              ),
-            };
-          }
-          return { items: [...state.items, { ...item, qty }] };
+          if (!isInCart) return { items: [...state.items, { ...item, qty }] };
+          return {
+            items: updateLine(state.items, item.variantId, (line) => ({
+              ...line,
+              qty: Math.min(MAX_ITEM_QUANTITY, line.qty + qty),
+            })),
+          };
         }),
       remove: (variantId) =>
         set((state) => ({
-          items: state.items.filter((i) => i.variantId !== variantId),
+          items: state.items.filter((line) => line.variantId !== variantId),
         })),
       updateQuantity: (variantId, qty) =>
         set((state) => ({
-          items: state.items.map((i) =>
-            i.variantId === variantId
-              ? { ...i, qty: Math.min(MAX_QUANTITY, Math.max(1, qty)) }
-              : i,
-          ),
+          items: updateLine(state.items, variantId, (line) => ({
+            ...line,
+            qty: Math.min(MAX_ITEM_QUANTITY, Math.max(1, qty)),
+          })),
         })),
       updatePrice: (variantId, unitPriceArs) =>
         set((state) => ({
-          items: state.items.map((i) =>
-            i.variantId === variantId ? { ...i, unitPriceArs } : i,
-          ),
+          items: updateLine(state.items, variantId, (line) => ({
+            ...line,
+            unitPriceArs,
+          })),
         })),
       clear: () => set({ items: [] }),
     }),
     {
+      // Persisted browser contract: renaming the key discards every stored cart.
       name: "parfam-cart",
     },
   ),
@@ -108,7 +119,7 @@ export function useCartQuantity(): number {
   const hydrated = useHydrated();
   const items = useCart((state) => state.items);
   if (!hydrated) return 0;
-  return items.reduce((total, i) => total + i.qty, 0);
+  return cartUnits(items);
 }
 
 /**
@@ -116,7 +127,7 @@ export function useCartQuantity(): number {
  * the badge announcement and the drawer trigger label.
  */
 export function cartLabel(quantity: number): string {
-  return quantity === 1 ? "Carrito: 1 unidad" : `Carrito: ${quantity} unidades`;
+  return `Carrito: ${unitsLabel(quantity)}`;
 }
 
 /** Visible unit count text ("1 unidad", "N unidades") shared by cart surfaces. */
@@ -124,9 +135,22 @@ export function unitsLabel(units: number): string {
   return units === 1 ? "1 unidad" : `${units} unidades`;
 }
 
-/** Cart subtotal as a two-decimal string, for display only. */
+/** Total units across every cart line. */
+export function cartUnits(items: CartItem[]): number {
+  return items.reduce((total, line) => total + line.qty, 0);
+}
+
+/** Line subtotal (unit price × quantity) as a two-decimal string, for display only. */
+export function lineSubtotal(item: CartItem): string {
+  return (Number(item.unitPriceArs) * item.qty).toFixed(2);
+}
+
+/**
+ * Cart subtotal as a two-decimal string, for display only. It rounds the sum,
+ * not each line.
+ */
 export function cartSubtotal(items: CartItem[]): string {
   return items
-    .reduce((acc, i) => acc + Number(i.unitPriceArs) * i.qty, 0)
+    .reduce((total, line) => total + Number(line.unitPriceArs) * line.qty, 0)
     .toFixed(2);
 }

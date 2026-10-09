@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { SITE_SETTINGS_ID } from "@/lib/site";
 
 export type EditableSettings = {
   whatsappNumber: string;
@@ -20,7 +21,7 @@ export type EditableSettings = {
  */
 export async function getEditableSettings(): Promise<EditableSettings> {
   const settings = await prisma.siteSetting.findUniqueOrThrow({
-    where: { id: "singleton" },
+    where: { id: SITE_SETTINGS_ID },
   });
 
   return {

@@ -1,7 +1,7 @@
 /**
- * Spanish (es-AR) relative time for admin timestamps. date-fns is not
- * installed (see AGENTS.md); minutes, hours, days, weeks, and months cover
- * the product table's needs.
+ * Spanish (es-AR) relative time for admin timestamps. No date library is
+ * installed; minutes, hours, days, weeks, and months cover the admin product
+ * and order tables.
  */
 export function formatRelativeDate(date: Date): string {
   const seconds = Math.max(0, (Date.now() - date.getTime()) / 1000);

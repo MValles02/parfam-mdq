@@ -10,10 +10,7 @@ export type ActionResult<T = undefined> =
   | ({ ok: true } & (T extends undefined ? object : { data: T }))
   | { ok: false; message: string; fieldErrors?: Record<string, string[]> };
 
-/**
- * This replaces the slightly different failure helpers previously repeated by
- * panel Server Actions.
- */
+/** Builds the failure branch of `ActionResult`. */
 export function actionFailure<T = undefined>(
   message: string,
   fieldErrors?: Record<string, string[]>,

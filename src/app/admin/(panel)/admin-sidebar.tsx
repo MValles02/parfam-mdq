@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, ShoppingBag, Settings, Tag } from "lucide-react";
+import {
+  ExternalLink,
+  Home,
+  Package,
+  ShoppingBag,
+  Settings,
+  Tag,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,20 +18,27 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { siteDefaults } from "@/lib/site";
 
-const NAV = [
+export const NAV = [
   { href: "/admin", label: "Inicio", icon: Home },
-  { href: "/admin/productos", label: "Productos", icon: Package },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
+  { href: "/admin/productos", label: "Productos", icon: Package },
   { href: "/admin/marcas", label: "Marcas", icon: Tag },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ] as const;
 
-export function AdminSidebar({ children }: { children: React.ReactNode }) {
+export function AdminSidebar({
+  pendingCount,
+  children,
+}: {
+  pendingCount: number;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
 
   return (
@@ -63,6 +77,9 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.href === "/admin/pedidos" && pendingCount > 0 ? (
+                      <SidebarMenuBadge>{pendingCount}</SidebarMenuBadge>
+                    ) : null}
                   </SidebarMenuItem>
                 );
               })}
@@ -72,6 +89,16 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Ver la tienda">
+              <Link href="/">
+                <ExternalLink />
+                <span>Ver la tienda</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         {children}
       </SidebarFooter>
     </Sidebar>

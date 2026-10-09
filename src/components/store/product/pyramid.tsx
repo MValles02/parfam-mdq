@@ -41,7 +41,7 @@ export function Pyramid({ levels }: { levels: PyramidLevel[] }) {
         Cómo evoluciona la fragancia en la piel, de las primeras notas al fondo.
       </p>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {levels.map((level) => (
           <div
             key={level.level ?? "flat"}

@@ -9,7 +9,7 @@ const SKELETON_COUNT = 12;
  */
 export function CatalogGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4 lg:gap-7">
+    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 lg:gap-7">
       {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
         <div
           key={i}

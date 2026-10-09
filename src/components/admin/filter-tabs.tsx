@@ -31,7 +31,7 @@ export function FilterTabs<T extends string>({
   );
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex max-w-full flex-wrap items-center gap-2">
       {options.map((option) => {
         const isActive = estado === option.id;
         return (

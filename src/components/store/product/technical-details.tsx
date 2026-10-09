@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Concentration, Gender } from "@/generated/prisma/enums";
 import { CONCENTRATION_LABELS, GENDER_LABELS } from "@/lib/catalog";
+import { catalogHref } from "@/lib/store/filters";
 import { cn } from "@/lib/utils";
 import { CollapsibleSection } from "./collapsible-section";
 
@@ -24,7 +25,7 @@ export function TechnicalDetails(product: ProductDetails) {
       label: "Marca",
       value: (
         <Link
-          href={`/?marca=${product.brandSlug}#catalogo`}
+          href={catalogHref({ brand: product.brandSlug })}
           className="hover:text-muted-foreground"
         >
           {product.brandName}

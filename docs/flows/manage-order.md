@@ -32,13 +32,13 @@ text. Product, variant, label, unit price, and quantity stay frozen in
 
 ## Main files
 
-| Responsibility         | File                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| Queries and DTOs       | `src/lib/admin/orders.ts`                              |
-| Mutating actions       | `src/app/admin/(panel)/pedidos/actions.ts`             |
-| List and detail routes | `src/app/admin/(panel)/pedidos/`                       |
-| List controls          | `_components/orders-table.tsx`, `status-selector.tsx`  |
-| Detail controls        | `_components/order-notes.tsx`, `order-status-chip.tsx` |
+| Responsibility         | File                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| Queries and DTOs       | `src/lib/admin/orders.ts`                                                    |
+| Mutating actions       | `src/app/admin/(panel)/pedidos/actions.ts`                                   |
+| List and detail routes | `src/app/admin/(panel)/pedidos/`                                             |
+| List controls          | `_components/orders-list.tsx`, `status-selector.tsx`                         |
+| Detail controls        | `_components/order-detail.tsx`, `src/components/admin/order-status-chip.tsx` |
 
 ## Constraints
 

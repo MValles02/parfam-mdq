@@ -179,9 +179,9 @@ Accord colors are database data, not tokens.
 
 ## Layout
 
-Mobile-first: the primary use is a phone. The page container is 1440px max, with 20px side padding and 64px at lg. The catalog grid is 2 columns on mobile (14px gap) and 4 columns at lg (28px gap). Breakpoints are sm 640px and lg 1024px only.
+Mobile-first: the primary use is a phone. The page container is 1440px max, with 20px side padding and 64px at lg. The catalog grid is 2 columns on mobile (14px gap) and 3 columns at lg (28px gap) beside a 260px filter sidebar. Breakpoints are sm 640px and lg 1024px only.
 
-Touch targets are at least 44px, achieved with pseudo-element hit areas where the visible control is smaller; mobile touch controls are 46, 50 or 54px high. The mobile header is sticky and hides on scroll down. The hero is 40svh, rising to 68svh. Technical details collapse into details/summary below lg.
+Touch targets are at least 44px, achieved with pseudo-element hit areas where the visible control is smaller; mobile touch controls are 46, 50 or 54px high. The mobile header is sticky and hides on scroll down. The hero is at least 40svh (inset with a 4px radius on mobile, full bleed at lg), rising to 68svh. Technical details collapse into details/summary below lg.
 
 ## Elevation & Depth
 
@@ -215,7 +215,7 @@ A Field Line border with a 4px radius. Focus shows a ring-coloured border plus a
 
 ### Navigation
 
-The header has the logo on the left and 14px medium links, with the active link underlined at 4px offset and marked with aria-current. On mobile, three 46px bordered icon buttons sit beside a Sheet menu that opens from the right.
+The header has the logo on the left and 14px medium links, with the active link underlined at 4px offset and marked with aria-current. On mobile, three 46px bordered icon buttons, and the menu Sheet opens from the left with 52px link rows grouped under Fragancias, Cómo lo llevás and Antes de elegir, plus a WhatsApp CTA. At lg an ink top bar states the delivery and payment terms above the header.
 
 ### Signature: Accord Bars
 

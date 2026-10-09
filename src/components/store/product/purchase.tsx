@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { Minus, MessageCircle, Plus } from "lucide-react";
 import type { VariantKind } from "@/generated/prisma/enums";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { formatArsPrice } from "@/lib/catalog";
+import { formatArsPrice, VARIANT_KIND_LABELS } from "@/lib/catalog";
 import { useCart } from "@/lib/cart";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { cn, FOCUS_VISIBLE } from "@/lib/utils";
@@ -30,18 +30,39 @@ type PurchaseProduct = {
 
 const MAX_QUANTITY = 99;
 
-const VARIANT_DESCRIPTIONS: Record<VariantKind, string> = {
+const VARIANT_DESCRIPTIONS: Partial<Record<VariantKind, string>> = {
   FULL_BOTTLE: "Sellado, con estuche",
-  TESTER: "Nuevo, envase simple",
   DECANT: "Fraccionado en atomizador",
 };
 
-function buildInquiryMessage(
-  product: PurchaseProduct,
-  variant?: ProductVariant,
-) {
-  const presentation = variant ? ` (${variant.label})` : "";
-  return `¡Hola! Quería consultar por el ${product.name} de ${product.brandName}${presentation}.`;
+function buildInquiryMessage(product: PurchaseProduct) {
+  return `¡Hola! Quería consultar por el ${product.name} de ${product.brandName}.`;
+}
+
+/** Bordered radio row; only the border color changes so layout never shifts. */
+function OptionCard({
+  id,
+  value,
+  active,
+  children,
+}: {
+  id: string;
+  value: string;
+  active: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex min-h-12 cursor-pointer items-center gap-3 rounded border-[1.5px] bg-card px-3.5 py-2",
+        active ? "border-foreground" : "border-input",
+      )}
+    >
+      <RadioGroupItem value={value} id={id} />
+      {children}
+    </label>
+  );
 }
 
 /**
@@ -104,6 +125,10 @@ export function Purchase({
 
   const selectedVariant =
     variants.find((variant) => variant.id === selectedVariantId) ?? variants[0];
+  const kinds = [...new Set(variants.map((variant) => variant.kind))];
+  const sizeVariants = variants.filter(
+    (variant) => variant.kind === selectedVariant.kind,
+  );
 
   function decrementQuantity() {
     setQuantity((currentQuantity) => Math.max(1, currentQuantity - 1));
@@ -138,87 +163,97 @@ export function Purchase({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <h2 className="sr-only">Comprar</h2>
-      <div>
-        <p className="mb-3.5 text-[11px] font-bold tracking-[0.16em] text-muted-foreground uppercase">
-          Elegí tu presentación
-        </p>
 
-        <RadioGroup
-          value={selectedVariantId ?? undefined}
-          onValueChange={setSelectedVariantId}
-          className="gap-2.5"
-        >
-          {variants.map((variant) => {
-            const isActive = variant.id === selectedVariantId;
-            const id = `${idBase}-${variant.id}`;
-            return (
-              <label
-                key={variant.id}
-                htmlFor={id}
-                className={cn(
-                  // Keep the border width constant and change only its color:
-                  // switching from 1px to 1.5px shifts the row by half a pixel.
-                  "flex cursor-pointer items-center justify-between rounded border-[1.5px] p-4",
-                  isActive ? "border-foreground" : "border-input",
-                )}
+      {kinds.length > 1 ? (
+        <div>
+          <p className="mb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            Presentación
+          </p>
+          <RadioGroup
+            aria-label="Presentación"
+            value={selectedVariant.kind}
+            onValueChange={(kind) =>
+              setSelectedVariantId(
+                variants.find((variant) => variant.kind === kind)?.id ?? null,
+              )
+            }
+            className="grid-cols-2 gap-2"
+          >
+            {kinds.map((kind) => (
+              <OptionCard
+                key={kind}
+                id={`${idBase}-kind-${kind}`}
+                value={kind}
+                active={kind === selectedVariant.kind}
               >
-                <div className="flex items-center gap-3.5">
-                  <RadioGroupItem value={variant.id} id={id} />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold">
-                      {variant.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {VARIANT_DESCRIPTIONS[variant.kind]}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-lg font-bold">
+                <span className="text-[15px] font-semibold">
+                  {VARIANT_KIND_LABELS[kind]}
+                </span>
+              </OptionCard>
+            ))}
+          </RadioGroup>
+        </div>
+      ) : null}
+
+      <div>
+        <p className="mb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+          Tamaño
+        </p>
+        <RadioGroup
+          aria-label="Tamaño"
+          value={selectedVariant.id}
+          onValueChange={setSelectedVariantId}
+          className="grid-cols-1 gap-2 sm:grid-cols-2"
+        >
+          {sizeVariants.map((variant) => (
+            <OptionCard
+              key={variant.id}
+              id={`${idBase}-size-${variant.id}`}
+              value={variant.id}
+              active={variant.id === selectedVariant.id}
+            >
+              <span className="flex flex-1 items-center justify-between gap-3">
+                <span className="text-[15px]">
+                  {variant.sizeMl !== null
+                    ? `${variant.sizeMl} ml`
+                    : variant.label}
+                </span>
+                <span className="text-[15px] font-bold">
                   {formatArsPrice(variant.price)}
                 </span>
-              </label>
-            );
-          })}
+              </span>
+            </OptionCard>
+          ))}
         </RadioGroup>
-
-        {variants.some((variant) => variant.kind === "TESTER") ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            <Link
-              href="/presentaciones"
-              className="flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
-            >
-              ¿Frasco, tester o decant? Te explicamos
-            </Link>
-          </p>
-        ) : null}
+        <p className="mt-2 text-sm text-muted-foreground">
+          {VARIANT_DESCRIPTIONS[selectedVariant.kind] &&
+            `${VARIANT_DESCRIPTIONS[selectedVariant.kind]}. `}
+          <Link
+            href="/presentaciones"
+            className="inline-flex min-h-11 items-center text-foreground underline underline-offset-2"
+          >
+            ¿Cuál me conviene?
+          </Link>
+        </p>
       </div>
 
-      <div className="flex items-end justify-between">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {selectedVariant.label}
-          </span>
-          <span className="text-[38px] leading-none font-extrabold tracking-[-0.03em]">
-            {formatArsPrice(selectedVariant.price)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3 rounded border bg-card">
+      <div className="flex gap-2.5">
+        <div className="flex items-center rounded border bg-card">
           <button
             type="button"
             aria-label="Quitar una unidad"
             onClick={decrementQuantity}
             disabled={quantity <= 1}
             className={cn(
-              "flex size-11 items-center justify-center text-muted-foreground disabled:opacity-40",
+              "flex size-12 items-center justify-center text-muted-foreground disabled:opacity-40",
               FOCUS_VISIBLE,
             )}
           >
             <Minus className="size-4" />
           </button>
-          <span className="min-w-4 text-center text-base font-bold">
+          <span className="min-w-7 text-center text-base font-bold">
             {quantity}
           </span>
           <button
@@ -227,40 +262,20 @@ export function Purchase({
             onClick={incrementQuantity}
             disabled={quantity >= MAX_QUANTITY}
             className={cn(
-              "flex size-11 items-center justify-center disabled:opacity-40",
+              "flex size-12 items-center justify-center disabled:opacity-40",
               FOCUS_VISIBLE,
             )}
           >
             <Plus className="size-4" />
           </button>
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2.5">
         <Button
           ref={ctaRef}
           type="button"
           onClick={addToCart}
-          className="h-auto w-full py-5 text-[15px] font-semibold"
+          className="h-auto min-h-12 min-w-0 flex-1 py-3 text-[15px] font-semibold whitespace-normal"
         >
           Agregar al carrito · {selectedVariant.label}
-        </Button>
-
-        <Button
-          asChild
-          className="h-auto w-full gap-2 bg-whatsapp py-3 text-sm font-medium text-whatsapp-foreground hover:bg-whatsapp/90"
-        >
-          <a
-            href={buildWhatsAppLink(
-              whatsappNumber,
-              buildInquiryMessage(product, selectedVariant),
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <MessageCircle className="size-4" />
-            ¿Dudas? Consultanos por WhatsApp
-          </a>
         </Button>
       </div>
 

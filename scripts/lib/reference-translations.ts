@@ -14,7 +14,7 @@
  *
  * This module does no database or file-system writing and does not import
  * the generated Prisma client, so it stays usable from both the importer and
- * plain unit tests (see reference-translations.test.ts).
+ * the translation-coverage script without a live database.
  */
 
 import { readFileSync } from "node:fs";
@@ -164,7 +164,7 @@ export interface MissingTranslationsReport {
 /**
  * Pure set comparison between the slugs a dataset scan found and the slugs a
  * loaded translation file covers. Kept free of any file or network I/O so it
- * is trivial to unit test with hand-built inputs.
+ * is trivial to reason about.
  */
 export function findMissingTranslations(
   used: ReferenceSlugs,

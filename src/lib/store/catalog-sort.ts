@@ -15,8 +15,8 @@ export type CatalogSortRow = {
  * compares the minimum active variant price as a number (rows without an
  * active variant, `startingPrice === null`, sort last regardless of
  * direction); name sort uses Spanish collation so accented letters sort next
- * to their unaccented counterpart; the default (`"latest"`) shows featured
- * products first, then newest by `createdAt`.
+ * to their unaccented counterpart; `"latest"` is newest by `createdAt` only;
+ * the default (`"featured"`) shows featured products first, then newest.
  */
 export function compareCatalogRows(
   sort: SortOption,
@@ -37,6 +37,8 @@ export function compareCatalogRows(
     }
     case "name":
       return SPANISH_COLLATOR.compare(left.name, right.name);
+    case "latest":
+      return right.createdAt - left.createdAt;
     default:
       if (left.isFeatured !== right.isFeatured) {
         return left.isFeatured ? -1 : 1;

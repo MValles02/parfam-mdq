@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { Check, Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCart, useHydrated } from "@/lib/cart";
@@ -34,7 +34,7 @@ export function CustomerThanks({
   number: string | null;
   /** `SiteSetting.whatsappNumber`, used by the fallback `href` below. */
   whatsappNumber: string;
-  /** `SiteSetting.shippingInfo`; nothing is rendered when empty. */
+  /** `SiteSetting.shippingInfo`; a generic line is shown when empty. */
   shippingInfo: string;
 }) {
   const hydrated = useHydrated();
@@ -87,53 +87,111 @@ export function CustomerThanks({
     }
   }
 
+  async function copyNumber() {
+    if (!number) return;
+    try {
+      await navigator.clipboard.writeText(number);
+      toast.success("Número copiado");
+    } catch {
+      toast.error(
+        "No pudimos copiar el número. Seleccionalo y copialo a mano.",
+      );
+    }
+  }
+
+  const nextSteps = [
+    ["Pedido guardado", "Quedó registrado con los precios de hoy."],
+    [
+      "Te confirmamos por WhatsApp",
+      "Revisamos disponibilidad y te respondemos.",
+    ],
+    ["Pago y entrega", shippingInfo || "Lo coordinamos por chat."],
+  ];
+
   return (
-    <div className="mx-auto flex max-w-[560px] flex-col gap-6 px-5 py-24">
-      <div>
-        {number && (
-          <p className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
-            Pedido {number}
-          </p>
-        )}
+    <div className="mx-auto flex max-w-[560px] flex-col gap-6 px-5 py-12 lg:py-20">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <span
+          aria-hidden
+          className="flex size-14 items-center justify-center rounded-full border border-success-border bg-success text-success-foreground"
+        >
+          <Check className="size-7" />
+        </span>
         <h1
           ref={headingRef}
           tabIndex={-1}
-          className="mt-2.5 text-3xl font-extrabold tracking-[-0.02em] outline-none"
+          className="text-3xl font-extrabold tracking-[-0.02em] outline-none"
         >
-          {number
-            ? `Tu pedido ${number} quedó guardado`
-            : "Tu pedido quedó guardado"}
+          ¡Listo! Tu pedido quedó guardado.
         </h1>
-        <p className="mt-3.5 text-sm leading-relaxed text-muted-foreground">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           {link
-            ? "Para confirmarlo, enviá el mensaje que se abrió en WhatsApp. Ahí coordinamos pago y entrega."
-            : "Para confirmarlo, escribinos por WhatsApp con el botón de abajo. Ahí coordinamos pago y entrega."}
+            ? "Mandanos el mensaje por WhatsApp y seguimos por ahí."
+            : "Escribinos por WhatsApp con el botón de abajo y seguimos por ahí."}
         </p>
       </div>
+
+      {number && (
+        <div className="flex items-center justify-between gap-3 rounded border bg-card p-4">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-xs text-muted-foreground">
+              Número de pedido
+            </span>
+            <span className="text-xl font-extrabold tracking-[-0.02em] tabular-nums">
+              {number}
+            </span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 shrink-0 gap-2"
+            onClick={copyNumber}
+          >
+            <Copy className="size-4" />
+            Copiar
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         <Button
           asChild
-          className="h-11 gap-3 bg-whatsapp px-8 text-base font-semibold text-whatsapp-foreground hover:bg-whatsapp/90"
+          className="h-12 gap-3 bg-whatsapp px-8 text-base font-semibold text-whatsapp-foreground hover:bg-whatsapp/90"
         >
           <a href={href} target="_blank" rel="noopener noreferrer">
             <MessageCircle className="size-5" />
-            Abrir WhatsApp
+            {link ? "Abrir WhatsApp de nuevo" : "Abrir WhatsApp"}
           </a>
         </Button>
-        <Button asChild variant="outline" className="h-11 px-8 text-base">
-          <Link href="/#catalogo">Seguir viendo el catálogo</Link>
-        </Button>
+        {link && (
+          <p className="text-center text-sm text-muted-foreground">
+            ¿No se abrió? Tocá el botón. El mensaje ya está escrito.
+          </p>
+        )}
       </div>
 
-      {shippingInfo && (
-        <p className="text-sm leading-relaxed text-foreground/90">
-          {shippingInfo}
-        </p>
-      )}
+      <section className="flex flex-col gap-4 rounded border bg-card p-6">
+        <h2 className="text-lg font-bold tracking-[-0.015em]">Qué sigue</h2>
+        <ol className="flex flex-col gap-4">
+          {nextSteps.map(([title, text], index) => (
+            <li key={title} className="flex gap-3">
+              <span
+                aria-hidden
+                className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold"
+              >
+                {index + 1}
+              </span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold">{title}</span>
+                <span className="text-sm text-muted-foreground">{text}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
       {message && (
-        <div className="flex flex-col gap-4 rounded border bg-card p-7">
+        <div className="flex flex-col gap-4 rounded border bg-card p-6">
           <span className="text-lg font-bold tracking-[-0.015em]">
             Tu mensaje
           </span>
@@ -148,11 +206,12 @@ export function CustomerThanks({
           >
             Copiar mensaje
           </Button>
-          <p className="text-xs text-muted-foreground">
-            ¿No se abrió WhatsApp? Tocá el botón o copiá el mensaje.
-          </p>
         </div>
       )}
+
+      <Button asChild variant="outline" className="h-12 px-8 text-base">
+        <Link href="/">Seguir viendo fragancias</Link>
+      </Button>
     </div>
   );
 }

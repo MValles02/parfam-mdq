@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { PresentationsStrip } from "@/components/store/presentations-strip";
+import { CatalogShortcuts } from "@/components/store/home/catalog-shortcuts";
+import { HowItWorks } from "@/components/store/home/how-it-works";
+import { PresentationChoices } from "@/components/store/home/presentation-choices";
 import { Hero } from "@/components/store/hero";
 import { CatalogSection } from "@/components/store/catalog/catalog-section";
 import { getFilterOptions } from "@/lib/store/queries";
-import { loadCatalogFilters } from "@/lib/store/filters";
+import { isCatalogView, loadCatalogFilters } from "@/lib/store/filters";
 import { buildPageMetadata } from "@/lib/seo";
 import { siteDefaults } from "@/lib/site";
 
@@ -20,19 +22,29 @@ export default async function Page(props: PageProps<"/">) {
     getFilterOptions(),
   ]);
 
+  if (isCatalogView(filters)) {
+    return (
+      <CatalogSection
+        title="Fragancias"
+        headingLevel="h1"
+        filters={filters}
+        filterOptions={filterOptions}
+      />
+    );
+  }
+
   return (
     <>
       <Hero />
-      <PresentationsStrip className="mx-auto hidden max-w-page px-5 pt-10 lg:block lg:px-16" />
+      <CatalogShortcuts />
+      <PresentationChoices />
+      <HowItWorks />
       {/* The hero logo is the page h1, so the catalog heading starts below it. */}
       <CatalogSection
         title="Catálogo"
         headingLevel="h2"
         filters={filters}
         filterOptions={filterOptions}
-        mobileInsert={
-          <PresentationsStrip className="col-span-full lg:hidden" />
-        }
       />
     </>
   );

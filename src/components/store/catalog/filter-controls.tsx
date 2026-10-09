@@ -37,11 +37,14 @@ function useCatalogFilters() {
 function Chip({
   isActive,
   compact,
+  segmented,
   onClick,
   children,
 }: {
   isActive: boolean;
   compact?: boolean;
+  /** Equal-width cell of a segmented control; the track supplies the border. */
+  segmented?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -51,11 +54,19 @@ function Chip({
       aria-pressed={isActive}
       onClick={onClick}
       className={cn(
-        "rounded border px-[18px] text-[13px] font-medium transition-colors",
-        compact ? "h-9" : "h-[46px]",
-        isActive
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input bg-background text-foreground hover:bg-muted",
+        "rounded text-[13px] font-medium transition-colors",
+        segmented
+          ? cn(
+              "h-10 px-1",
+              isActive ? "bg-card font-semibold" : "text-muted-foreground",
+            )
+          : cn(
+              "border px-[18px]",
+              compact ? "h-9" : "h-[46px]",
+              isActive
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input bg-background text-foreground hover:bg-muted",
+            ),
         FOCUS_VISIBLE,
       )}
     >
@@ -90,14 +101,27 @@ export function GenderChips({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function VariantKindChips({ compact = false }: { compact?: boolean }) {
+export function VariantKindChips({
+  compact = false,
+  segmented = false,
+}: {
+  compact?: boolean;
+  segmented?: boolean;
+}) {
   const [{ variantKind }, setFilters] = useCatalogFilters();
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div
+      className={
+        segmented
+          ? "grid grid-cols-4 rounded bg-muted p-[3px]"
+          : "flex flex-wrap gap-2"
+      }
+    >
       <Chip
         isActive={!variantKind}
         compact={compact}
+        segmented={segmented}
         onClick={() => setFilters({ variantKind: null, page: 1 })}
       >
         Todas
@@ -107,6 +131,7 @@ export function VariantKindChips({ compact = false }: { compact?: boolean }) {
           key={p}
           isActive={variantKind === p}
           compact={compact}
+          segmented={segmented}
           onClick={() => setFilters({ variantKind: p, page: 1 })}
         >
           {VARIANT_KIND_LABELS[p]}

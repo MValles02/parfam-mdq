@@ -2,7 +2,7 @@
 
 ## Responsibility
 
-Query and render publicly sellable products, catalog filters, product detail, and "Se parece a" similar products.
+Query and render publicly sellable products, catalog filters, product detail, and "Si te gusta, probá también" similar products.
 
 ## API
 
@@ -14,14 +14,19 @@ Query and render publicly sellable products, catalog filters, product detail, an
 
 ## Files
 
-| File                          | Responsibility                       |
-| ----------------------------- | ------------------------------------ |
-| src/lib/store/queries.ts      | Prisma queries and serialized DTOs   |
-| src/lib/store/filters.ts      | URL parser and serialization adapter |
-| src/lib/store/similarity.ts   | Pure "Se parece a" scoring           |
-| src/components/store/catalog/ | Catalog controls and grid            |
-| src/components/store/product/ | Product detail UI                    |
-| src/app/(store)/              | Public routes                        |
+| File                                                 | Responsibility                                                         |
+| ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| src/lib/store/queries.ts                             | Prisma queries and serialized DTOs                                     |
+| src/lib/store/filters.ts                             | URL parser and serialization adapter                                   |
+| src/lib/store/catalog-sort.ts                        | Catalog sort comparator (featured, newest, price, name)                |
+| src/lib/store/similarity.ts                          | Pure "Si te gusta, probá también" scoring                              |
+| src/components/store/catalog/                        | Catalog controls and grid                                              |
+| src/components/store/catalog/active-filter-chips.tsx | Removable chips for applied filters                                    |
+| src/components/store/catalog/search.tsx              | `CatalogSearch` (URL-driven) and header `StoreSearch`                  |
+| src/lib/store/catalog-shortcuts.ts                   | Gender, presentation and "Novedades" shortcut links (client-safe)      |
+| src/components/store/home/                           | Home sections: `CatalogShortcuts`, `PresentationChoices`, `HowItWorks` |
+| src/components/store/product/                        | Product detail UI                                                      |
+| src/app/(store)/                                     | Public routes                                                          |
 
 ## Rules
 

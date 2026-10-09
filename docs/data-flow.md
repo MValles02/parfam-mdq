@@ -9,7 +9,7 @@ the parser definitions through nuqs, so changing a filter updates the URL and
 requests a new server render.
 
 The internal filter model is English. Existing links continue to use Spanish URL
-keys and values such as `genero`, `presentacion`, `orden=novedades`, and
+keys and values such as `genero`, `presentacion`, `orden=destacados` (the default; `novedades` is newest only), and
 `precio=hasta-100000`. The serializer/parser adapters are the compatibility
 boundary.
 

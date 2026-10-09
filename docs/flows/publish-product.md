@@ -8,8 +8,9 @@ draft, upload images, define sellable variants, and publish only valid products.
 ## Entry points
 
 The panel uses the preserved routes `/admin/productos/nuevo` and
-`/admin/productos/[id]`. `ProductForm` is an internal component in
-`src/app/admin/(panel)/productos/_components/product-form.tsx`.
+`/admin/productos/[id]`. `ProductForm` is a shell component in
+`src/app/admin/(panel)/productos/_components/product-form.tsx` that composes the
+step components, `publish-sidebar.tsx`, and the sticky `form-action-bar.tsx`.
 
 ## Flow
 
@@ -44,6 +45,7 @@ The panel uses the preserved routes `/admin/productos/nuevo` and
 | Product actions  | `src/app/admin/(panel)/productos/actions.ts`             |
 | Save/copy writes | `src/app/admin/(panel)/productos/product-persistence.ts` |
 | Upload actions   | `src/app/admin/(panel)/productos/image-actions.ts`       |
+| Route constants  | `src/app/admin/(panel)/productos/paths.ts`               |
 | Form components  | `src/app/admin/(panel)/productos/_components/`           |
 
 ## Contracts and safety

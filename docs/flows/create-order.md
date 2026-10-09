@@ -29,15 +29,15 @@ customer-facing content. The action receives `customerName`, `customerPhone`,
 
 ## Main files
 
-| Responsibility       | File                                                                                                                     |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Checkout form        | `src/app/(store)/checkout/_components/` (`checkout-form.tsx` orchestrates `customer-fields.tsx` and `order-summary.tsx`) |
-| Checkout action      | `src/app/(store)/checkout/actions.ts`                                                                                    |
-| Validation           | `src/lib/validations/checkout.ts`                                                                                        |
-| Settings lookup      | `src/lib/settings.ts`                                                                                                    |
-| Message construction | `src/lib/store/order-message.ts`                                                                                         |
-| WhatsApp URL helper  | `src/lib/whatsapp.ts`                                                                                                    |
-| Thank-you page       | `src/app/(store)/pedido/[number]/gracias/`                                                                               |
+| Responsibility       | File                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| Checkout form        | `src/app/(store)/checkout/_components/` (`checkout-form.tsx` orchestrates `customer-fields.tsx`) |
+| Checkout action      | `src/app/(store)/checkout/actions.ts`                                                            |
+| Validation           | `src/lib/validations/checkout.ts`                                                                |
+| Settings lookup      | `src/lib/settings.ts`                                                                            |
+| Message construction | `src/lib/store/order-message.ts`                                                                 |
+| WhatsApp URL helper  | `src/lib/whatsapp.ts`                                                                            |
+| Thank-you page       | `src/app/(store)/pedido/[number]/gracias/`                                                       |
 
 ## Preserved external values
 

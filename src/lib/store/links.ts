@@ -12,16 +12,10 @@ export const CATALOG_HREF = `/#${CATALOG_SECTION_ID}`;
 
 /**
  * Home catalog filtered by one brand. `marca` is the brand key of
- * `catalogFilterUrlKeys` in `src/lib/store/filters.ts` (tested in
- * `links.test.ts`).
+ * `catalogFilterUrlKeys` in `src/lib/store/filters.ts`.
  */
 export function getBrandCatalogPath(brandSlug: string): string {
   return `/?marca=${brandSlug}`;
-}
-
-/** `getBrandCatalogPath` scrolled to the catalog section. */
-export function getBrandCatalogHref(brandSlug: string): string {
-  return `${getBrandCatalogPath(brandSlug)}#${CATALOG_SECTION_ID}`;
 }
 
 export function getProductPath(productSlug: string): string {

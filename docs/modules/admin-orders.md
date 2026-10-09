@@ -12,15 +12,15 @@ Provide panel queries and controlled updates for persisted WhatsApp checkout ord
 
 ## Files
 
-| File                                       | Responsibility                                           |
-| ------------------------------------------ | -------------------------------------------------------- |
-| src/lib/admin/orders.ts                    | Prisma queries and DTOs                                  |
-| src/lib/admin/order-status.ts              | Prisma-free status order, Spanish labels, and `estado` filter values |
-| src/app/admin/(panel)/pedidos/actions.ts   | Authorized mutations and revalidation                    |
-| src/app/admin/(panel)/pedidos/             | List and detail routes                                   |
-| _components/orders-list.tsx                | Selectable order rows (split view)                       |
-| _components/order-detail.tsx               | Detail pane, next-status and copy-phone                  |
-| src/components/admin/order-status-chip.tsx | Status chip (warning, secondary, success, danger tokens) |
+| File                                       | Responsibility                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| src/lib/admin/orders.ts                    | Prisma queries, DTOs, and `ORDER_STATUS_LABELS` (Spanish labels)        |
+| src/lib/admin/order-status.ts              | Prisma-free `ORDER_STEPS` and `getNextOrderStatus`                      |
+| src/app/admin/(panel)/pedidos/actions.ts   | Authorized mutations and revalidation                                   |
+| src/app/admin/(panel)/pedidos/             | List and detail routes (`page.tsx` maps `estado` URL values to filters) |
+| _components/orders-list.tsx                | Selectable order rows (split view)                                      |
+| _components/order-detail.tsx               | Detail pane, next-status and copy-phone                                 |
+| src/components/admin/order-status-chip.tsx | Status chip (warning, secondary, success, danger tokens)                |
 
 ## Constraints
 

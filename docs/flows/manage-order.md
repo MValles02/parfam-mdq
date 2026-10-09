@@ -9,13 +9,13 @@ status and internal-note updates without changing the historical order snapshot.
 
 The preserved public panel routes are `/admin/pedidos` and
 `/admin/pedidos/[id]`. URL status values (`estado=pendientes`, …) remain the
-existing route contract; `ORDER_STATUS_FILTERS` in
-`src/app/admin/(panel)/pedidos/order-status.ts` maps them to the internal
+existing route contract; `ORDER_STATUS_QUERY_VALUES` in
+`src/app/admin/(panel)/pedidos/page.tsx` maps them to the internal
 `OrderStatusFilter`.
 
 ## Flow
 
-1. The panel page calls `listOrders` and renders `OrdersTable` with status
+1. The panel page calls `listOrders` and renders `OrdersList` with status
    counts and a search query.
 2. The detail page calls `getOrderById`, displays the immutable item snapshot,
    and derives a WhatsApp contact link from the stored E.164 phone number.
@@ -34,14 +34,14 @@ text. Product, variant, label, unit price, and quantity stay frozen in
 
 ## Main files
 
-| Responsibility         | File |
-| ---------------------- | ---- |
-| Queries and DTOs       | `src/lib/admin/orders.ts` |
-| Status labels, filters | `src/lib/admin/order-status.ts` |
-| Mutating actions       | `src/app/admin/(panel)/pedidos/actions.ts`                                   |
-| List and detail routes | `src/app/admin/(panel)/pedidos/`                                             |
-| List controls          | `_components/orders-list.tsx`, `status-selector.tsx`                         |
-| Detail controls        | `_components/order-detail.tsx`, `src/components/admin/order-status-chip.tsx` |
+| Responsibility                        | File                                                                         |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| Queries, DTOs, status labels          | `src/lib/admin/orders.ts`                                                    |
+| Status lifecycle (steps, next status) | `src/lib/admin/order-status.ts`                                              |
+| Mutating actions                      | `src/app/admin/(panel)/pedidos/actions.ts`                                   |
+| List and detail routes                | `src/app/admin/(panel)/pedidos/`                                             |
+| List controls                         | `_components/orders-list.tsx`, `status-selector.tsx`                         |
+| Detail controls                       | `_components/order-detail.tsx`, `src/components/admin/order-status-chip.tsx` |
 
 ## Constraints
 

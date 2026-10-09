@@ -25,7 +25,7 @@ Create, edit, duplicate, delete, and publish store products while validating all
 - src/app/admin/(panel)/productos/product-persistence.ts: database steps behind `saveProduct` and `duplicateProduct` (ID verification, product write, relation/variant/image sync, copy). Not a "use server" file, so its exports are not public endpoints; callers run `requireAdmin()` first.
 - src/app/admin/(panel)/productos/image-actions.ts: direct-upload signing, unsaved-upload deletion, and the reference-picture import.
 - src/app/admin/(panel)/productos/paths.ts: panel route constants.
-- src/app/admin/(panel)/productos/_components/product-form.tsx: form orchestration. Its steps live beside it (`reference-step.tsx`, `fragrance-step.tsx`, `variant-editor.tsx`, `image-panel.tsx`, `seo-step.tsx`, `form-action-bar.tsx`), initial values in `product-form-values.ts`, and adoption state in `use-reference-adoption.ts`.
+- src/app/admin/(panel)/productos/_components/product-form.tsx: form shell (react-hook-form state, submit, layout). The sections live beside it as step/field components (`step.tsx` wrapper, `reference-step.tsx`, `fragrance-step.tsx`, `profile-fields.tsx`, `variant-editor.tsx`, `image-panel.tsx`, `seo-step.tsx`), with `publish-sidebar.tsx` (checklist, summary, section nav) and `form-action-bar.tsx` (sticky header). Initial values are in `product-form-values.ts` and adoption state in `use-reference-adoption.ts`.
 
 ## Rules
 
@@ -44,4 +44,4 @@ Duplicating creates an unfeatured `DRAFT` named "<name> (copia)" that copies rel
 The route and URL values remain compatibility data, and panel copy remains
 Spanish. Action results use English `data`, `message`, and `fieldErrors` keys.
 
-The edit form has a sticky top header (crumb, status chip, unsaved-changes hint, "Vista previa" for published products only, Guardar keeps the current status, Publicar for drafts) and a right-hand aside with the "Para publicar" checklist (name and brand, active variant, description), the publication summary and a section nav. Sections have anchor ids: basicos, fotos, precios, descripcion, perfil, mas-datos.
+The edit form has a sticky top header (`form-action-bar.tsx`: crumb, status chip, unsaved-changes hint, "Vista previa" for published products only, Guardar keeps the current status, Publicar for drafts) and a right-hand aside (`publish-sidebar.tsx`) with the "Para publicar" checklist (name and brand, active variant, description), the publication summary and a section nav. Sections have anchor ids: basicos, fotos, precios, descripcion, perfil, mas-datos.

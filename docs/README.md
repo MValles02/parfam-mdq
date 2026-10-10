@@ -60,7 +60,8 @@ Cloudflare R2. The repository is a single application, not a monorepo.
   are always reread from `ProductVariant.priceArs` before an order is stored.
 - `OrderItem` snapshots product name, variant label, and unit price. Product
   deletion uses nullable foreign keys with `SetNull`.
-- Public queries select only `PUBLISHED` products with active variants.
+- Public queries select only `PUBLISHED` products and their active variants;
+  listings also require at least one active variant (the product page does not).
 - Every admin Server Action starts with `requireAdmin()`.
 - Client-provided relationship IDs, R2 keys, upload MIME types, and variant IDs
   are verified on the server.

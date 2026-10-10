@@ -24,6 +24,8 @@ Provide panel queries and controlled updates for persisted WhatsApp checkout ord
 
 ## Constraints
 
+Allowed status changes (`ORDER_STATUS_TRANSITIONS` in `order-status.ts`, enforced by `changeOrderStatus` with a conditional `updateMany`): PENDING to CONFIRMED or CANCELLED; CONFIRMED to DELIVERED, PENDING, or CANCELLED; DELIVERED back to CONFIRMED only; CANCELLED back to PENDING. Same-status requests are rejected; the selector offers only allowed targets.
+
 Every action begins with requireAdmin(). Existing routes and Spanish UI status labels remain unchanged. OrderItem is immutable historical data: this module never recalculates current product names or prices.
 
 ## Dashboard queries

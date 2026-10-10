@@ -43,6 +43,31 @@ test("admin opens a pending order, confirms it and finds it under confirmados", 
     detail.getByRole("button", { name: "Pasar a Entregado" }),
   ).toBeVisible();
 
+  // Transitions: a delivered order cannot be cancelled; a cancelled one reopens.
+  await detail.getByRole("button", { name: "Pasar a Entregado" }).click();
+  await expect(
+    detail.getByRole("button", { name: "Pasar a Entregado" }),
+  ).toHaveCount(0);
+  await detail.getByRole("combobox").click();
+  await expect(page.getByRole("option", { name: "Cancelado" })).toHaveCount(0);
+  await page.getByRole("option", { name: "Confirmado" }).click();
+  await expect(
+    detail.getByRole("button", { name: "Pasar a Entregado" }),
+  ).toBeVisible();
+  await detail.getByRole("button", { name: "Cancelar pedido" }).click();
+  await expect(
+    detail.getByRole("button", { name: "Cancelar pedido" }),
+  ).toHaveCount(0);
+  await detail.getByRole("combobox").click();
+  await page.getByRole("option", { name: "Pendiente" }).click();
+  await expect(
+    detail.getByRole("button", { name: "Pasar a Confirmado" }),
+  ).toBeVisible();
+  await detail.getByRole("button", { name: "Pasar a Confirmado" }).click();
+  await expect(
+    detail.getByRole("button", { name: "Pasar a Entregado" }),
+  ).toBeVisible();
+
   await page.goto("/admin/pedidos?estado=confirmados");
   await expect(
     list.getByRole("link", { name: new RegExp(number) }),

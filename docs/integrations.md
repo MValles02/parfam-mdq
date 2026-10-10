@@ -140,3 +140,7 @@ Environment-variable names are integration and deployment contracts. Preserve
 their names when refactoring application code. Add an explicit compatibility
 plan before changing a variable consumed by Docker, CI, Dokploy, R2, Auth.js, or
 a third party.
+
+`.env.example` passes the `src/lib/env.ts` validation as-is, so a plain copy
+works for local development. Its `AUTH_SECRET` and R2 values are placeholders:
+replace them (and set the real R2 credentials) before relying on real uploads.

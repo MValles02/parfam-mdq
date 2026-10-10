@@ -14,9 +14,10 @@ import { brandSchema } from "@/lib/validations/brand";
  */
 
 /**
- * Invalidates every store page that displays this brand name: the grid, home,
- * and each associated product page. Iterating product pages
- * is sufficient because each brand has relatively few store products.
+ * Invalidates every page that displays this brand name: the grid, home,
+ * each associated product page, and the admin products list. Iterating
+ * product pages is sufficient because each brand has relatively few store
+ * products.
  */
 async function revalidateBrand(brandId: string) {
   const products = await prisma.product.findMany({
@@ -25,6 +26,7 @@ async function revalidateBrand(brandId: string) {
   });
 
   revalidatePath("/");
+  revalidatePath("/admin/productos");
   for (const product of products)
     revalidatePath(getProductPath(product.slug), "page");
 }

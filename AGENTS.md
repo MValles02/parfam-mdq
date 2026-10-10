@@ -60,8 +60,11 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
 - **Orders keep name, variant, and price snapshots in `OrderItem`.** A price
   change or product deletion cannot alter an existing order: FKs are optional
   and use `onDelete: SetNull`.
-- **The store exposes only `PUBLISHED` products with `isActive` variants.**
-  This belongs in the query, not the component; a known draft slug returns 404.
+- **The store exposes only `PUBLISHED` products and only their `isActive`
+  variants.** This belongs in the query, not the component; a known draft slug
+  returns 404. Catalog, similar-product, and sitemap queries also require at
+  least one active variant; the product page does not, and offers a WhatsApp
+  inquiry when none is purchasable.
 - **Every panel Server Action begins with `requireAdmin()`.** A Server Action is
   a public POST endpoint. The `/admin` layout protects rendering, not data;
   `src/proxy.ts` only performs an optimistic redirect.

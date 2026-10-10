@@ -57,7 +57,9 @@ a rolled-back transaction are acceptable and preserve concurrency safety.
 
 ## Publication and relationships
 
-Public store queries include only `PUBLISHED` products with active variants.
+Public store queries include only `PUBLISHED` products and their active
+variants. Listings (catalog, similar products, sitemap) also require at least
+one active variant; the product page (`getProductBySlug`) does not.
 Product notes, accords, perfumers, variants, and images are validated against
 the product action's input before they are synchronized. Variants are diffed
 rather than wholesale deleted because order items can reference them.
@@ -113,7 +115,10 @@ products are created by adopting reference catalog entries from the panel
 (see `docs/modules/reference-data.md`), not by a seed script. For local smoke
 checks, `pnpm db:seed:fixtures` (`prisma/seed-fixtures.ts`) additionally
 upserts a small `fixture-`-prefixed catalog (slugs and names in
-`scripts/lib/fixture-catalog.ts`); it refuses to run outside a local
+`scripts/lib/fixture-catalog.ts`; the women's and men's products also carry a
+description, concentration, accords, and top/heart/base notes, and one
+unadopted `FragranceRef` with pid 999000001 supports reference-search specs);
+it refuses to run outside a local
 database.
 
 `Brand.country` is editable from `/admin/marcas` (inline row form, `brandSchema`); the slug stays immutable.

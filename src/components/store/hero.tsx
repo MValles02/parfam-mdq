@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/store/logo";
 import { siteDefaults } from "@/lib/site";
+import { CATALOG_HREF } from "@/lib/store/links";
 import { FOCUS_VISIBLE, cn } from "@/lib/utils";
 import heroPhoto from "@/assets/images/hero.png";
 
@@ -56,7 +57,7 @@ export function Hero() {
         </p>
         <div className="mt-3 flex flex-col items-start gap-3 lg:flex-row">
           <Link
-            href="/#catalogo"
+            href={CATALOG_HREF}
             className={cn(
               "flex min-h-11 items-center rounded bg-background px-6 text-sm font-medium text-foreground",
               FOCUS_VISIBLE,

@@ -291,7 +291,7 @@ export async function saveProduct(
   }
   const values = parsedInput.data;
 
-  const referencedRows = await verifyReferencedRows(values);
+  const referencedRows = await verifyReferencedRows(id, values);
   if (!referencedRows.ok) return actionFailure(referencedRows.message);
 
   const result = await prisma.$transaction((tx) =>

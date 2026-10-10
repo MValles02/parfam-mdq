@@ -4,6 +4,8 @@ import { Footer } from "@/components/store/footer";
 import { Header } from "@/components/store/header";
 import { NotFoundContent } from "@/components/store/not-found-content";
 import { StoreToaster } from "@/components/store/store-toaster";
+import { getSiteSettings } from "@/lib/settings";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: { absolute: "Página no encontrada" },
@@ -14,10 +16,14 @@ export const metadata: Metadata = {
  * `(store)/layout.tsx`, so the store chrome is mounted here with the same
  * providers. `notFound()` inside `(store)` uses `(store)/not-found.tsx`.
  */
-export default function NotFound() {
+export default async function NotFound() {
+  const settings = await getSiteSettings();
   return (
     <NuqsAdapter>
-      <Header />
+      <Header
+        whatsappHref={buildWhatsAppLink(settings.whatsappNumber)}
+        instagramHandle={settings.instagramHandle}
+      />
       <main className="flex-1">
         <NotFoundContent />
       </main>

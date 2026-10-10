@@ -39,6 +39,8 @@ Quick variant edits (`updateVariantPrice`, `setVariantActive` in `productos/acti
 
 The "Perfil" section holds weights (pyramid position or flat-list note weights, accord strength), longevity, sillage, and season/daypart percentages; there are no season or occasion checkboxes, and intensity (1..5) is always administrator-entered rather than derived from reference data. Adopting a reference also lets the administrator import its single reference picture into R2 (`importReferencePicture` in `productos/image-actions.ts`); the save buttons stay disabled while that import is in flight.
 
+`saveProduct` rejects a `fragranceRefId` already used by another product (checked in `verifyReferencedRows`, no unique constraint; products that already share one stay saveable), and duplicates start without a reference.
+
 Duplicating creates an unfeatured `DRAFT` named "<name> (copia)" that copies relations, variants (without SKU), and image rows; the copy shares the source's R2 objects, which are deleted only after their last `ProductImage` reference is gone.
 
 The route and URL values remain compatibility data, and panel copy remains

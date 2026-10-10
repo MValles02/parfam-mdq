@@ -21,7 +21,7 @@ This file is the source of truth for findings and fix status.
 | 6   | Checkout           | /checkout                | src/app/(store)/checkout/page.tsx                | critiqued       | 25/40 | Fixture data; one test order PM-0006 created in dev DB; see Page 6                           |
 | 7   | Order thank-you    | /pedido/[number]/gracias | src/app/(store)/pedido/[number]/gracias/page.tsx | critiqued       | 19/40 | Poor band; page is deliberately bare (no DB lookup by design); see Page 7                    |
 | 8   | Cómo comprar       | /como-comprar            | src/app/(store)/como-comprar                     | critiqued       | 27/40 | Batch critique with 9 and 10; see Pages 8-10                                                 |
-| 9   | ¿Qué es un tester? | /que-es-un-tester        | src/app/(store)/que-es-un-tester                 | critiqued       | 24/40 | Weakest of the batch; see Pages 8-10                                                         |
+| 9   | ¿Qué es un tester? | /que-es-un-tester        | src/app/(store)/que-es-un-tester                 | removed         | -     | Obsolete: route deleted (now /presentaciones, see Decisions) and testers are being retired   |
 | 10  | Contacto           | /contacto                | src/app/(store)/contacto                         | critiqued       | 29/40 | See Pages 8-10                                                                               |
 
 Admin pages are out of scope for now.

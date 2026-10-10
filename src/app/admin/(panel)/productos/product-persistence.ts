@@ -20,8 +20,14 @@ import type { ProductFormValues } from "@/lib/validations/product";
  * value is never client-submitted (`productSchema` in
  * `src/lib/validations/product.ts` has no such field), so it is copied from
  * `FragranceRef.communityVotes`, or null when the product has no reference.
+ *
+ * `productId` is the product being saved (null on create). A reference already
+ * used by another product is rejected only when this product is newly taking
+ * it: products that already shared a reference before this rule existed must
+ * stay saveable, and `Product.fragranceRefId` has no unique constraint.
  */
 export async function verifyReferencedRows(
+  productId: string | null,
   values: ProductFormValues,
 ): Promise<
   { ok: true; communityVotes: number | null } | { ok: false; message: string }
@@ -54,6 +60,28 @@ export async function verifyReferencedRows(
     return { ok: false, message: "Alguno de los perfumistas ya no existe." };
   if (values.fragranceRefId && !fragranceRef)
     return { ok: false, message: "La fragancia de referencia ya no existe." };
+  if (values.fragranceRefId) {
+    const stored = productId
+      ? await prisma.product.findUnique({
+          where: { id: productId },
+          select: { fragranceRefId: true },
+        })
+      : null;
+    if (stored?.fragranceRefId !== values.fragranceRefId) {
+      const existing = await prisma.product.findFirst({
+        where: {
+          fragranceRefId: values.fragranceRefId,
+          ...(productId ? { id: { not: productId } } : {}),
+        },
+        select: { name: true },
+      });
+      if (existing)
+        return {
+          ok: false,
+          message: `Esa fragancia ya está cargada en «${existing.name}».`,
+        };
+    }
+  }
 
   return {
     ok: true,
@@ -138,6 +166,8 @@ export async function createProductCopy(
   return tx.product.create({
     data: {
       ...pickCopyableProductFields(original),
+      // A reference may back only one product, so the copy starts without it.
+      fragranceRefId: null,
       slug: await findAvailableSlug(tx, name, null),
       name,
       brandId: original.brandId,

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 // Prisma 7 reads the connection URL for Migrate and other CLI commands from
 // this config rather than schema.prisma. The runtime client in src/lib/db.ts
@@ -11,6 +11,9 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // Read directly instead of prisma's strict `env()` helper, which throws
+    // when unset: `prisma generate` (postinstall) needs no database. Commands
+    // that connect (migrate, seed) still fail with a connection-URL error.
+    url: process.env.DATABASE_URL,
   },
 });

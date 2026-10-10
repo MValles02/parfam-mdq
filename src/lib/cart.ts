@@ -140,17 +140,28 @@ export function cartUnits(items: CartItem[]): number {
   return items.reduce((total, line) => total + line.qty, 0);
 }
 
-/** Line subtotal (unit price × quantity) as a two-decimal string, for display only. */
-export function lineSubtotal(item: CartItem): string {
-  return (Number(item.unitPriceArs) * item.qty).toFixed(2);
+/**
+ * Line total in integer cents. Prices are Decimal(…, 2) strings, so rounding
+ * once to cents is exact, and the integer sums below never accumulate float
+ * error. The server recomputes the stored total with Prisma.Decimal; this only
+ * has to match it on screen.
+ */
+function lineCents(item: CartItem): number {
+  return Math.round(Number(item.unitPriceArs) * 100) * item.qty;
 }
 
-/**
- * Cart subtotal as a two-decimal string, for display only. It rounds the sum,
- * not each line.
- */
+function centsToString(cents: number): string {
+  return (cents / 100).toFixed(2);
+}
+
+/** Line subtotal (unit price × quantity) as a two-decimal string, for display only. */
+export function lineSubtotal(item: CartItem): string {
+  return centsToString(lineCents(item));
+}
+
+/** Cart subtotal as a two-decimal string, for display only. */
 export function cartSubtotal(items: CartItem[]): string {
-  return items
-    .reduce((total, line) => total + Number(line.unitPriceArs) * line.qty, 0)
-    .toFixed(2);
+  return centsToString(
+    items.reduce((total, line) => total + lineCents(line), 0),
+  );
 }

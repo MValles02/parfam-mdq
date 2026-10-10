@@ -96,6 +96,43 @@ test("product cards edit a decant price and toggle it at 390", async ({
   }
 });
 
+test("a price typed with a decimal point keeps its decimals", async ({
+  page,
+}) => {
+  test.skip(
+    !email || !password,
+    "ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD not set",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+
+  const name = "Fixture Eau de Prueba Mujer";
+  await page.goto(`/admin/productos?q=${encodeURIComponent(name)}`);
+  const card = page.getByRole("article").filter({ hasText: name }).first();
+  const priceButton = card
+    .getByRole("button", { name: /^Cambiar precio: .* Decant/ })
+    .first();
+  const priceInput = card.getByLabel(/^Precio: .* Decant/).first();
+
+  await priceButton.click();
+  const original = await priceInput.inputValue();
+  await priceInput.fill("8100.50");
+  await card.getByRole("button", { name: "OK" }).first().click();
+  try {
+    await expect(priceButton).toHaveText(/\$\s*8\.100,50/);
+  } finally {
+    await priceButton.click();
+    await priceInput.fill(original);
+    await card.getByRole("button", { name: "OK" }).first().click();
+    await expect(priceButton).toHaveText(
+      new RegExp(
+        String.raw`\$\s*` +
+          Number(original.replace(",", ".")).toLocaleString("es-AR"),
+      ),
+    );
+  }
+});
+
 test("the only active variant of a published product cannot be deactivated", async ({
   page,
 }) => {

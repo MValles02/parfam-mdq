@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { canChangeOrderStatus } from "@/lib/admin/order-status";
 import { changeOrderStatus } from "../actions";
 
 const STATUS_ORDER: OrderStatus[] = [
@@ -57,7 +58,9 @@ export function StatusSelector({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {STATUS_ORDER.map((orderStatus) => (
+        {STATUS_ORDER.filter(
+          (s) => s === status || canChangeOrderStatus(status, s),
+        ).map((orderStatus) => (
           <SelectItem key={orderStatus} value={orderStatus}>
             {labels[orderStatus]}
           </SelectItem>

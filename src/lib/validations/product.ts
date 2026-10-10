@@ -29,12 +29,24 @@ export const optionalText = (max: number) =>
 /**
  * Prices use Decimal and move as strings end to end to avoid floats.
  * Decimal(10,2) allows up to eight integer digits.
+ *
+ * Input follows es-AR habits but also accepts a decimal point:
+ * - with a comma, dots are thousands separators ("8.100,50" -> 8100.50);
+ * - without a comma, dots in groups of exactly three digits are thousands
+ *   separators ("8.100" -> 8100, "1.250.000" -> 1250000);
+ * - otherwise a single dot is the decimal point ("8100.50" -> 8100.50).
  */
 const formatArsPrice = z
   .string()
   .trim()
   .min(1, "Poné un precio.")
-  .transform((v) => v.replace(/\./g, "").replace(",", "."))
+  .transform((v) =>
+    v.includes(",")
+      ? v.replace(/\./g, "").replace(",", ".")
+      : /^\d{1,3}(\.\d{3})+$/.test(v)
+        ? v.replace(/\./g, "")
+        : v,
+  )
   .refine(
     (v) => /^\d{1,8}(?:\.\d{1,2})?$/.test(v),
     "Usá sólo números, con hasta dos decimales.",

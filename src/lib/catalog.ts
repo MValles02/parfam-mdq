@@ -116,7 +116,10 @@ export const PRICE_CURRENCY = "ARS";
 const arsPriceFormatter = new Intl.NumberFormat(SITE_LOCALE, {
   style: "currency",
   currency: PRICE_CURRENCY,
-  maximumFractionDigits: 0,
+  // Whole prices stay "$ 8.100"; prices with cents show both digits
+  // ("$ 8.100,50") instead of being rounded away from the stored value.
+  minimumFractionDigits: 2,
+  trailingZeroDisplay: "stripIfInteger",
 });
 
 /** Formats an ARS price. Accepts Prisma Decimal values already converted to strings. */

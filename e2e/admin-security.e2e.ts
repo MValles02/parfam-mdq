@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import { expect, test, type Browser } from "@playwright/test";
+import { FAKE_SERVICES_ORIGIN } from "./fake-services-url";
 
 const email = process.env.ADMIN_SEED_EMAIL;
 const password = process.env.ADMIN_SEED_PASSWORD;
@@ -70,7 +71,7 @@ test("admin image upload PUTs a signed, size-and-type-pinned URL to R2", async (
   );
 
   const puts: { url: string; contentType: string | undefined }[] = [];
-  await page.route("https://*.r2.cloudflarestorage.com/**", async (route) => {
+  await page.route(`${FAKE_SERVICES_ORIGIN}/**`, async (route) => {
     const request = route.request();
     puts.push({
       url: request.url(),

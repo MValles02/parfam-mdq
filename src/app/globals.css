@@ -110,6 +110,12 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* Hide scrollbars site-wide (scrolling still works via touch, wheel and keyboard). */
+    scrollbar-width: none;
+  }
+  /* Older WebKit/Blink (pre-Safari 18.2) ignore scrollbar-width. */
+  *::-webkit-scrollbar {
+    display: none;
   }
   body {
     @apply bg-background text-foreground;

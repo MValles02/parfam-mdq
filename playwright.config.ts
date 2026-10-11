@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { randomInt } from "node:crypto";
 import { defineConfig } from "@playwright/test";
+import { FAKE_SERVICES_ORIGIN } from "./e2e/fake-services-url";
 
 // Checkout and login are rate-limited in memory per client IP, read from the
 // cf-connecting-ip header. Without it every request shares one "unknown"
@@ -31,10 +32,30 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "pnpm build && pnpm start",
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: WEB_SERVER_TIMEOUT_MS,
-  },
+  webServer: [
+    {
+      command: "node e2e/fake-services.mjs",
+      url: `${FAKE_SERVICES_ORIGIN}/__health`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "pnpm build && pnpm start",
+      url: BASE_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: WEB_SERVER_TIMEOUT_MS,
+      // Merged over process.env. The two overrides are unconditional so E2E
+      // can never reach real R2 or fimgs.net; the R2 credentials are
+      // placeholders because the fake server does not check signatures.
+      env: {
+        R2_ENDPOINT: FAKE_SERVICES_ORIGIN,
+        REFERENCE_PICTURE_BASE_URL: FAKE_SERVICES_ORIGIN,
+        R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID || "e2e-placeholder",
+        R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || "e2e-placeholder",
+        R2_SECRET_ACCESS_KEY:
+          process.env.R2_SECRET_ACCESS_KEY || "e2e-placeholder",
+        R2_BUCKET: process.env.R2_BUCKET || "e2e-placeholder",
+        R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || "https://r2.invalid",
+      },
+    },
+  ],
 });

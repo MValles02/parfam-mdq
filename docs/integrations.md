@@ -37,6 +37,11 @@ Required values are documented in `.env.example`:
 - `R2_BUCKET`
 - `R2_PUBLIC_URL`
 
+Optional, tests only: `R2_ENDPOINT` replaces the account endpoint of the S3
+client (with path-style addressing) and is added to the CSP `connect-src` at
+build time. Playwright points it at `e2e/fake-services.mjs`; production leaves
+it unset.
+
 ## Reference picture import (fimgs.net)
 
 `importReferencePicture`
@@ -44,7 +49,9 @@ Required values are documented in `.env.example`:
 photo from Fragrantica's image host into R2 the first time an administrator
 asks for it while adopting a reference. The client only supplies a
 `FragranceRef` id; the download URL is always built server-side from that
-row's `pid` as `https://fimgs.net/mdimg/perfume/375x500.{pid}.jpg` — never
+row's `pid` as `https://fimgs.net/mdimg/perfume/375x500.{pid}.jpg` (the host
+is replaceable through the optional, tests-only `REFERENCE_PICTURE_BASE_URL`;
+E2E points it at `e2e/fake-services.mjs`) — never
 from client-supplied input, and never as a stored hotlink (`ProductImage`
 only ever holds an R2 key, see `docs/persistence.md`). This is a one-time
 copy per adoption, not a bulk importer: Fragrantica images stay internal

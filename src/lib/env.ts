@@ -36,6 +36,10 @@ export const env = createEnv({
     R2_SECRET_ACCESS_KEY: requiredAtProdRuntime(z.string().min(1)),
     R2_BUCKET: requiredAtProdRuntime(z.string().min(1)),
     R2_PUBLIC_URL: requiredAtProdRuntime(z.url()),
+    // Test-only overrides; production leaves both unset. They point the R2 S3
+    // client and the reference-picture download at a local fake server.
+    R2_ENDPOINT: optional(z.url()),
+    REFERENCE_PICTURE_BASE_URL: optional(z.url()),
     ADMIN_SEED_EMAIL: optional(z.email()),
     ADMIN_SEED_PASSWORD: optional(z.string().min(8)),
   },
@@ -50,6 +54,8 @@ export const env = createEnv({
     R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
     R2_BUCKET: process.env.R2_BUCKET,
     R2_PUBLIC_URL: process.env.R2_PUBLIC_URL,
+    R2_ENDPOINT: process.env.R2_ENDPOINT,
+    REFERENCE_PICTURE_BASE_URL: process.env.REFERENCE_PICTURE_BASE_URL,
     ADMIN_SEED_EMAIL: process.env.ADMIN_SEED_EMAIL,
     ADMIN_SEED_PASSWORD: process.env.ADMIN_SEED_PASSWORD,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,

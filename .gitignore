@@ -35,8 +35,9 @@ pnpm-debug.log*
 /src/generated/prisma
 
 # Configuracion local y memoria de agentes de Claude Code: son de esta
-# maquina, no del proyecto.
-.claude/
+# maquina, no del proyecto. launch.json (dev server del panel de la app) si.
+.claude/*
+!.claude/launch.json
 
 # Testing
 /coverage

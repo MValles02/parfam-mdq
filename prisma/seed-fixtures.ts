@@ -380,6 +380,14 @@ const FIXTURE_REF = {
   noteSlugs: ["fixture-bergamota", "fixture-jazmin", "fixture-cedro"],
 };
 
+// Second reference whose picture the E2E fake server serves as non-image
+// bytes, so the import rejection path has a row to adopt.
+const FIXTURE_REF_BAD_PICTURE = {
+  pid: 999000002,
+  slug: "fixture-brand-a/fixture-referencia-foto-invalida",
+  name: "Fixture Referencia Foto Inválida",
+};
+
 async function main() {
   assertLocalDatabase();
 
@@ -446,6 +454,17 @@ async function main() {
       where: { pid: FIXTURE_REF.pid },
       create: { pid: FIXTURE_REF.pid, ...refFields },
       update: refFields,
+    });
+    const badPictureFields = {
+      ...refFields,
+      slug: FIXTURE_REF_BAD_PICTURE.slug,
+      name: FIXTURE_REF_BAD_PICTURE.name,
+      searchText: `${FIXTURE_REF_BAD_PICTURE.name} ${FIXTURE_BRAND_A.name}`,
+    };
+    await prisma.fragranceRef.upsert({
+      where: { pid: FIXTURE_REF_BAD_PICTURE.pid },
+      create: { pid: FIXTURE_REF_BAD_PICTURE.pid, ...badPictureFields },
+      update: badPictureFields,
     });
     await prisma.$transaction([
       prisma.fragranceRefNote.deleteMany({ where: { fragranceRefId: ref.id } }),

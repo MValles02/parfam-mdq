@@ -26,6 +26,20 @@ const r2PublicOrigin = imageHosts[0]
   ? `${imageHosts[0].protocol}://${imageHosts[0].hostname}`
   : undefined;
 
+/**
+ * Origin of the optional R2_ENDPOINT override (a local fake S3 server in E2E),
+ * resolved at build time like `r2PublicOrigin`. Invalid values are ignored.
+ */
+const r2EndpointOrigin = (() => {
+  const rawUrl = process.env.R2_ENDPOINT;
+  if (!rawUrl) return undefined;
+  try {
+    return new URL(rawUrl).origin;
+  } catch {
+    return undefined;
+  }
+})();
+
 const isDev = process.env.NODE_ENV === "development";
 
 /**
@@ -43,7 +57,9 @@ const isDev = process.env.NODE_ENV === "development";
  * browser to a presigned R2 endpoint scoped to the account id
  * (`https://<account>.r2.cloudflarestorage.com`, see `getUploadUrl` in
  * src/lib/r2.ts and the XMLHttpRequest in image-panel.tsx) — a different
- * host than the public R2_PUBLIC_URL used to display images.
+ * host than the public R2_PUBLIC_URL used to display images. When R2_ENDPOINT
+ * is set (E2E only), its origin is added too, since presigned URLs then point
+ * there instead.
  *
  * Cloudflare injects its Web Analytics beacon (`static.cloudflareinsights.com`)
  * at the edge in production, so it never appears in this app's source; both
@@ -56,7 +72,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob:${r2PublicOrigin ? ` ${r2PublicOrigin}` : ""}`,
   "font-src 'self'",
-  `connect-src 'self' https://*.r2.cloudflarestorage.com https://cloudflareinsights.com`,
+  `connect-src 'self' https://*.r2.cloudflarestorage.com${r2EndpointOrigin ? ` ${r2EndpointOrigin}` : ""} https://cloudflareinsights.com`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

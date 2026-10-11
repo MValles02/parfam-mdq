@@ -54,7 +54,11 @@ function getClient(): S3Client {
   if (!client) {
     client = new S3Client({
       region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      // R2_ENDPOINT (tests only) targets a local S3-compatible fake, which
+      // needs path-style addressing because `<bucket>.127.0.0.1` cannot resolve.
+      ...(env.R2_ENDPOINT
+        ? { endpoint: env.R2_ENDPOINT, forcePathStyle: true }
+        : { endpoint: `https://${accountId}.r2.cloudflarestorage.com` }),
       credentials: { accessKeyId, secretAccessKey },
     });
   }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/guard";
 import { actionFailure, type ActionResult } from "@/lib/admin/action-result";
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 import { trimWhiteMargins } from "@/lib/image-trim";
 import {
   detectImageContentType,
@@ -116,10 +117,13 @@ export async function deleteUploadedImage(
 /**
  * fimgs.net serves Fragrantica's perfume bottle photo at this fixed path,
  * built from the dataset's numeric `pid`. The client never supplies this URL:
- * it is always derived here from a `pid` read from our own database.
+ * it is always derived here from a `pid` read from our own database. The host
+ * is overridable through `REFERENCE_PICTURE_BASE_URL` so E2E can target a
+ * local fake server; production leaves it unset.
  */
 function buildReferencePictureUrl(pid: number): string {
-  return `https://fimgs.net/mdimg/perfume/375x500.${pid}.jpg`;
+  const base = env.REFERENCE_PICTURE_BASE_URL ?? "https://fimgs.net";
+  return `${base.replace(/\/$/, "")}/mdimg/perfume/375x500.${pid}.jpg`;
 }
 
 const REFERENCE_PICTURE_FETCH_TIMEOUT_MS = 10_000;

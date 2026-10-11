@@ -639,8 +639,13 @@ pnpm test:e2e
 - `DATABASE_URL`, `AUTH_SECRET`, and `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD`
   (used by `db:seed` and by the admin spec).
 - `R2_*` placeholders: the webServer runs `next start` in production mode, where
-  `src/lib/env.ts` requires every R2 variable. Fake values are enough because
-  the R2 host is routed in the specs and never reached.
+  `src/lib/env.ts` requires every R2 variable. `playwright.config.ts` supplies
+  placeholders for any that are unset, so no real credentials are needed.
+- Fake services: Playwright first starts `e2e/fake-services.mjs` on
+  `127.0.0.1:4599` (a fake fimgs.net plus an in-memory S3 path-style endpoint)
+  and always sets `R2_ENDPOINT` and `REFERENCE_PICTURE_BASE_URL` to it for the
+  app, so E2E never reaches real R2 or fimgs.net. Both variables are also read
+  at `next build` time (the CSP), which the same webServer command performs.
 - Chromium: set `CHROMIUM_PATH=/usr/bin/chromium` to use the system browser,
   otherwise run `pnpm exec playwright install chromium`.
 

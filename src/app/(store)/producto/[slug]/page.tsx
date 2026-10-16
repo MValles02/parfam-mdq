@@ -62,7 +62,10 @@ const CRUMB_LINK_CLASS =
 /** Visible "Catálogo / <brand> / <product>" trail above the gallery. */
 function ProductBreadcrumb({ product }: { product: PublicProduct }) {
   return (
-    <nav aria-label="Miga de pan" className="pt-5 text-xs text-muted-foreground">
+    <nav
+      aria-label="Miga de pan"
+      className="pt-5 text-xs text-muted-foreground"
+    >
       <ol className="flex flex-wrap items-center gap-x-2">
         <li>
           <Link href={catalogHref({})} className={CRUMB_LINK_CLASS}>
@@ -165,7 +168,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
               {product.concentration ? (
                 <Link
                   href="/concentraciones"
-                  className="mt-2 inline-flex min-h-11 w-fit items-center rounded border bg-card px-2.5 py-1 text-xs font-bold tracking-[0.04em] hover:bg-muted lg:min-h-0"
+                  className="inline-flex min-h-11 w-fit items-center text-[15px] underline underline-offset-4 hover:text-muted-foreground lg:min-h-0"
                 >
                   {CONCENTRATION_LABELS[product.concentration]}
                 </Link>
@@ -213,9 +216,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
         <section className="grid grid-cols-1 gap-x-14 lg:grid-cols-2">
           {product.accords.length > 0 ? (
             <div className="border-t pt-11">
-              <h2 className={`mb-5 ${SECTION_TITLE_CLASS}`}>
-                A qué huele
-              </h2>
+              <h2 className={`mb-5 ${SECTION_TITLE_CLASS}`}>A qué huele</h2>
               <AccordBars accords={product.accords} />
             </div>
           ) : null}
@@ -233,11 +234,7 @@ export default async function Page(props: PageProps<"/producto/[slug]">) {
               <CollapsibleSection
                 className="border-t pt-11"
                 defaultOpenOnMobile
-                title={
-                  <h2 className={SECTION_TITLE_CLASS}>
-                    Descripción
-                  </h2>
-                }
+                title={<h2 className={SECTION_TITLE_CLASS}>Descripción</h2>}
               >
                 <p className="mt-4 max-w-prose text-base leading-relaxed">
                   {product.description}

@@ -12,8 +12,8 @@
 ## CI gate
 
 The `main` ruleset hard-blocks anything else: changes land only via pull request,
-and the required status checks `checks` (`.github/workflows/ci.yml`) and
-`gitleaks` (`.github/workflows/secrets-scan.yml`) must pass. Force pushes and
+and the required status check `checks` (`.github/workflows/ci.yml`, which
+includes a gitleaks scan of the PR's commits) must pass. Force pushes and
 branch deletion are blocked. Merged branches are deleted automatically.
 
 Run locally before opening a PR:

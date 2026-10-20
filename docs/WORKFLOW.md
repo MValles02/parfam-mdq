@@ -16,6 +16,11 @@ and the required status checks `checks` (`.github/workflows/ci.yml`) and
 `gitleaks` (`.github/workflows/secrets-scan.yml`) must pass. Force pushes and
 branch deletion are blocked. Merged branches are deleted automatically.
 
+Rulesets cannot restrict a PR's source branch, so `develop-only`
+(`.github/workflows/promotion-guard.yml`) runs on every PR to `main` and fails
+unless the head is `develop` of this repository. Once it has run on `main`, it
+is added to the `main` ruleset as a third required check.
+
 Run locally before opening a PR:
 
 ```bash

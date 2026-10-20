@@ -5,10 +5,12 @@ The application is built as a multi-stage Docker image and published to GHCR by
 (development). Dokploy runs the published image.
 
 `.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
-lint, integration tests against a Postgres service; no unit tests) on every pull request and is reused by `deploy.yml`. Pull requests
-also run the `e2e` job (see "E2E tests (Playwright)"), which is skipped when
-`deploy.yml` reuses the workflow. On `main` and
-`develop`, `checks` is followed by the `publish` job, which logs in to GHCR with the
+lint, integration tests against a Postgres service; no unit tests) on every pull
+request. Its first step is a gitleaks scan limited to the PR's commits. Pull
+requests also run the `e2e` job (see "E2E tests (Playwright)"). `deploy.yml`
+does not re-run these checks: they already ran on the PR and the ruleset
+requires them. On pushes to `main` and
+`develop`, the `publish` job logs in to GHCR with the
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
 so no separate registry credential is needed. The `deploy` job then POSTs the
@@ -662,8 +664,8 @@ The checkout specs create real `Order` rows and leave them in the database. That
 is fine for CI and local dev databases; never run them against a real one. The
 admin spec is skipped when `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are unset.
 
-In CI, the `e2e` job in `ci.yml` runs only on pull requests (not when
-`deploy.yml` reuses the workflow). It starts a throwaway Postgres service,
+In CI, the `e2e` job in `ci.yml` runs only on pull requests (`ci.yml` has no
+other trigger). It starts a throwaway Postgres service,
 applies `db:deploy`, `db:seed`, and `db:seed:fixtures`, then runs
 `pnpm test:e2e` with fixed placeholder env values, and uploads
 `playwright-report/` on failure.

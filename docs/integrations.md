@@ -15,8 +15,10 @@ Product image keys use `products/`. The legacy `productos/` prefix and the
 `products/dev/` fixtures are gone from the production bucket. Database rows
 store a key, then public views derive the URL from `R2_PUBLIC_URL`.
 
-Local development uses its own bucket, `parfam-mdq-imagenes-dev`, public via
-its r2.dev URL, with CORS restricted to `http://localhost:3000`. Production
+Local development and https://dev.parfammdq.com use their own bucket,
+`parfam-mdq-imagenes-dev`, public only via the custom domain
+`https://img-dev.parfammdq.com` (its r2.dev URL is disabled), with CORS
+restricted to `http://localhost:3000`. Production
 uses `parfam-mdq-imagenes`, public only via the custom domain
 `https://img.parfammdq.com` (its r2.dev URL is disabled), with CORS
 restricted to `parfammdq.com` and `www.parfammdq.com`. Each bucket has its own

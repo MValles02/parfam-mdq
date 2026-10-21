@@ -120,7 +120,8 @@ pnpm db:check-translations
 pnpm smoke                  # optional, against `pnpm start`; see docs/deployment.md
 ```
 
-Git hooks (husky): pre-commit runs `lint-staged` and a gitleaks staged scan via Docker (skipped with a warning if `docker` is missing).
+Git hooks (husky): pre-commit runs `lint-staged` and a gitleaks scan of the staged diff (`git diff --cached` piped into the digest-pinned image via stdin, so it also works in git worktrees; skipped with a warning if `docker` is missing).
+`.gitattributes` forces LF for `*.sh` and `.husky/*` so scripts copied into the image or run as hooks keep working when checked out on Windows.
 
 Remote dev: `pnpm dev` binds to loopback only (`-H 127.0.0.1`); start it with `pnpm dev -p 3100`, then `ssh -N -L 3100:localhost:3100 mateo@<tailscale-ip>` and open `http://localhost:3100`.
 

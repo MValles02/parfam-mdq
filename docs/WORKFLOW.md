@@ -4,22 +4,38 @@
 
 - `main` is production and auto-deploys on merge (see [deployment.md](deployment.md)).
 - Do all work on feature branches named `feat/`, `fix/`, `chore/`, `docs/`, or `ci/`.
-- Merge to `main` only through a pull request, squash only.
+- Feature branches merge into `develop` through a pull request, squash only.
+  `main` receives only the promotion PR from `develop`, merged with a merge
+  commit (see "Environments and promotion").
 - The PR title follows Conventional Commits (`feat: …`, `fix(scope): …`) because
   it becomes the squash commit message. Commits on the branch use Conventional
   Commits too.
 
 ## CI gate
 
-The `main` ruleset hard-blocks anything else: changes land only via pull request,
-and the required status check `checks` (`.github/workflows/ci.yml`, which
-includes a gitleaks scan of the PR's commits) must pass. Force pushes and
-branch deletion are blocked. Merged branches are deleted automatically.
+The `develop` and `main` rulesets hard-block anything else: changes land only
+via pull request, and these status checks are required:
 
-Rulesets cannot restrict a PR's source branch, so `develop-only`
-(`.github/workflows/promotion-guard.yml`) runs on every PR to `main` and fails
-unless the head is `develop` of this repository. Once it has run on `main`, it
-is added to the `main` ruleset as a third required check.
+| Check          | Workflow                                | Required on       |
+| -------------- | --------------------------------------- | ----------------- |
+| `checks`       | `.github/workflows/ci.yml`              | `develop`, `main` |
+| `e2e`          | `.github/workflows/ci.yml`              | `develop`, `main` |
+| `develop-only` | `.github/workflows/promotion-guard.yml` | `main`            |
+
+`checks` runs typecheck, lint and the integration tests, after a gitleaks scan
+of the PR's commits; `e2e` runs the Playwright specs. Rulesets cannot restrict
+a PR's source branch, so `develop-only` runs on every PR to `main` and fails
+unless the head is `develop` of this repository. Force pushes and branch
+deletion are blocked. Merged branches are deleted automatically.
+
+Required checks are configured in the rulesets (repository Settings → Rules →
+Rulesets), not in the workflow files; a check only becomes selectable there
+after it has run at least once.
+
+Every push to any branch is also scanned by gitleaks
+(`.github/workflows/secrets-scan.yml`, commits added by that push only). It is
+not a required check: it reports on the pushed commit, and the PR scan in
+`checks` is the merge gate.
 
 Run locally before opening a PR:
 

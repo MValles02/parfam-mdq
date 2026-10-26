@@ -8,8 +8,11 @@ The application is built as a multi-stage Docker image and published to GHCR by
 lint, integration tests against a Postgres service; no unit tests) on every pull
 request. Its first step is a gitleaks scan limited to the PR's commits. Pull
 requests also run the `e2e` job (see "E2E tests (Playwright)"). `deploy.yml`
-does not re-run these checks: they already ran on the PR and the ruleset
-requires them. On pushes to `main` and
+does not re-run these checks on push: they already ran on the PR and the
+rulesets require them. A manual run (`workflow_dispatch`, for example after a
+build-variable change) must be started from `main` or `develop` with the
+`confirm` input set to that branch name, and it calls `ci.yml` (`checks` and
+`e2e`) first; it builds and deploys only if those pass. On pushes to `main` and
 `develop`, the `publish` job logs in to GHCR with the
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,

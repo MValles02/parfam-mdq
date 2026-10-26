@@ -21,6 +21,10 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     extraHTTPHeaders: { "cf-connecting-ip": clientIp },
+    // Intermittent failures need evidence: a trace of the retried attempt and
+    // a screenshot of each failure land in test-results/, which CI uploads.
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
   },
   projects: [
     {

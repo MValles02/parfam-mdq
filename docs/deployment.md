@@ -670,8 +670,11 @@ admin spec is skipped when `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are unset.
 In CI, the `e2e` job in `ci.yml` runs only on pull requests (`ci.yml` has no
 other trigger). It starts a throwaway Postgres service,
 applies `db:deploy`, `db:seed`, and `db:seed:fixtures`, then runs
-`pnpm test:e2e` with fixed placeholder env values, and uploads
-`playwright-report/` on failure.
+`pnpm test:e2e` with fixed placeholder env values. CI retries a failed spec
+once and records a trace of that retry plus a screenshot of each failure
+(`use` in `playwright.config.ts`). On failure it uploads `playwright-report/`
+and `test-results/` (traces and screenshots) as artifacts; open a trace with
+`pnpm exec playwright show-trace <trace.zip>`.
 
 Relation to `pnpm smoke`: smoke visits every page looking for CSP violations
 and console errors; E2E exercises user flows. Neither replaces the other.

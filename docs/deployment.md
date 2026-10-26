@@ -42,14 +42,18 @@ Its `DOKPLOY_WEBHOOK_URL` secret is set in the `development` environment, with
 the same name as the production one in the `production` environment.
 
 The dev database is a separate PostgreSQL service (`database-dev`) with no
-backups. `parfam-dev-refresh.sh` (in the `infra` repo, `files/`, on the VPS)
-rebuilds it from a production `pg_dump`; it only reads from production. The
-script stops the dev app, drops and restores the dev database, replaces every
-`User` row with the test user `test@parfammdq.com`, sets the WhatsApp number
-to a test number, copies the product images referenced by `ProductImage` from
-the public production image URL into the dev bucket, and starts the dev app so
-its entrypoint applies any migration that `develop` has and production does
-not. Orders are kept as copied. Run it on demand or from its schedule.
+backups. `parfam-dev-refresh.sh` rebuilds it from a production `pg_dump`; it
+only reads from production. The script lives only on the VPS
+(`~/.local/bin/parfam-dev-refresh.sh`, run by a nightly user systemd timer)
+and is not versioned in any repository. It stops the dev app, drops and
+restores the dev database, replaces every `User` row with the test user
+`test@parfammdq.com`, anonymizes every `Order` (customer name and phone, and
+clears the admin notes), sets the WhatsApp number to a test number, copies the
+product images referenced by `ProductImage` from the public production image
+URL into the dev bucket, and starts the dev app so its entrypoint applies any
+migration that `develop` has and production does not. The schedule, log
+location, and the check that no real customer data remains are in the infra
+repo's [RUNBOOK](https://github.com/MValles02/infra/blob/main/RUNBOOK.md#dev-databases).
 
 ## Build stages
 

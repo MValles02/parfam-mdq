@@ -18,8 +18,8 @@ built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
 so no separate registry credential is needed. The `deploy` job then POSTs the
 Dokploy webhook, sending `CF-Access-Client-Id`/`CF-Access-Client-Secret`
-headers with a Cloudflare Access service token (`github-actions-deploy`),
-because `dokploy.mateovalles.cloud/api/deploy*` is protected by Cloudflare
+headers with a Cloudflare Access service token (`parfam-mdq-deploy`),
+because `dokploy.mateovalles.com/api/deploy*` is protected by Cloudflare
 Access; the step fails if `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, or
 `CF_ACCESS_CLIENT_SECRET` is missing. It then waits until `vars.HEALTH_URL`
 reports status `ok` with the new commit SHA (failing if that repo variable is

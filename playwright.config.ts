@@ -43,7 +43,9 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: "pnpm build && pnpm start",
+      // node, not `pnpm start`: pnpm 12 leaves next-server orphaned on teardown
+      // and Playwright then never exits.
+      command: "pnpm build && node node_modules/next/dist/bin/next start",
       url: BASE_URL,
       reuseExistingServer: !process.env.CI,
       timeout: WEB_SERVER_TIMEOUT_MS,

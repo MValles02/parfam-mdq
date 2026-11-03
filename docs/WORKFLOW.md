@@ -13,11 +13,11 @@ This file is identical in every app repo (gastar-app, parfam-mdq, gastar-app-lan
 
 `.github/workflows/ci.yml` runs on every pull request and is called by `deploy.yml` before a manual deploy.
 
-| Check          | Required on     | What it runs                                                                                                        |
-| -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `checks`       | every PR        | gitleaks over the PR commits, `pnpm lint`, `pnpm typecheck`, `pnpm build`, then `db:deploy` and `test` when present |
-| `e2e`          | every PR        | Playwright browser install, `db:deploy`, `test:e2e:setup` when present, `pnpm test:e2e`                             |
-| `develop-only` | PRs into `main` | head must be `develop` of this repo (passes when the repo has no `develop`)                                         |
+| Check | Required on | What it runs |
+| --- | --- | --- |
+| `checks` | every PR | gitleaks over the PR commits, `pnpm lint`, `pnpm typecheck`, `pnpm build`, then `db:deploy` and `test` when present |
+| `e2e` | every PR | Playwright browser install, `db:deploy`, `test:e2e:setup` when present, `pnpm test:e2e` |
+| `develop-only` | PRs into `main` | head must be `develop` of this repo (passes when the repo has no `develop`) |
 
 Both CI jobs run against a throwaway `postgres:17-alpine` (`DATABASE_URL=postgresql://ci:ci@localhost:5432/ci`). `secrets-scan.yml` also scans the commits of every push, on any branch.
 
@@ -25,16 +25,16 @@ Both CI jobs run against a throwaway `postgres:17-alpine` (`DATABASE_URL=postgre
 
 Every app `package.json` has `packageManager: pnpm@12.6.0`, `engines.node: ">=24"` and a `prepare` script that contains `husky`.
 
-| Script           | Required | Meaning                                                                            |
-| ---------------- | -------- | ---------------------------------------------------------------------------------- |
-| `lint`           | yes      | `prettier --check .` + eslint                                                      |
-| `typecheck`      | yes      | static types                                                                       |
-| `build`          | yes      | builds the deploy artifact                                                         |
-| `test:e2e`       | yes      | Playwright                                                                         |
-| `test`           | optional | integration tests against `DATABASE_URL`                                           |
-| `db:deploy`      | optional | apply committed migrations, non-interactive                                        |
-| `test:e2e:setup` | optional | seeds needed by e2e, after `db:deploy`                                             |
-| `ci:env`         | optional | `node scripts/ci-env.mjs <checks\|e2e>` prints non-secret `KEY=VALUE` placeholders |
+| Script | Required | Meaning |
+| --- | --- | --- |
+| `lint` | yes | `prettier --check .` + eslint |
+| `typecheck` | yes | static types |
+| `build` | yes | builds the deploy artifact |
+| `test:e2e` | yes | Playwright |
+| `test` | optional | integration tests against `DATABASE_URL` |
+| `db:deploy` | optional | apply committed migrations, non-interactive |
+| `test:e2e:setup` | optional | seeds needed by e2e, after `db:deploy` |
+| `ci:env` | optional | `node scripts/ci-env.mjs <checks\|e2e>` prints non-secret `KEY=VALUE` placeholders |
 
 CI appends the `ci:env` output to `$GITHUB_ENV` after `DATABASE_URL`, so a later line wins. Only integration and E2E tests are written, never unit tests.
 
@@ -49,11 +49,11 @@ CI appends the `ci:env` output to `$GITHUB_ENV` after `DATABASE_URL`, so a later
 
 ## Environments and variables
 
-| Where               | Name                                                                    | Meaning                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Environment secret  | `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | per environment (`production`, `development`), never at repository level                                |
-| Repository variable | `HEALTH_URL`, `DEV_HEALTH_URL`                                          | health endpoint returning `{"status":"ok","sha":"<commit>"}`                                            |
-| Repository variable | `BUILD_ARGS`, `DEV_BUILD_ARGS`                                          | optional multi-line `KEY=VALUE` image build args (production / development); `GIT_SHA` is always passed |
+| Where | Name | Meaning |
+| --- | --- | --- |
+| Environment secret | `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | per environment (`production`, `development`), never at repository level |
+| Repository variable | `HEALTH_URL`, `DEV_HEALTH_URL` | health endpoint returning `{"status":"ok","sha":"<commit>"}` |
+| Repository variable | `BUILD_ARGS`, `DEV_BUILD_ARGS` | optional multi-line `KEY=VALUE` image build args (production / development); `GIT_SHA` is always passed |
 
 ## Migrations
 

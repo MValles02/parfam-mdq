@@ -10,7 +10,7 @@ updates:
           - minor
           - patch
     ignore:
-      - dependency-name: "@types/node"
+      - dependency-name: '@types/node'
         update-types:
           - version-update:semver-major
 
@@ -21,7 +21,7 @@ updates:
     groups:
       docker:
         patterns:
-          - "*"
+          - '*'
     ignore:
       - dependency-name: node
         update-types:
@@ -34,4 +34,4 @@ updates:
     groups:
       github-actions:
         patterns:
-          - "*"
+          - '*'

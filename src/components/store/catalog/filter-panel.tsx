@@ -23,9 +23,7 @@ function FilterRow({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className={FILTER_LABEL_CLASS}>
-        {label}
-      </span>
+      <span className={FILTER_LABEL_CLASS}>{label}</span>
       {children}
     </div>
   );
@@ -60,11 +58,17 @@ export function FilterPanel({
       </FilterRow>
 
       <FilterRow label="Marca">
-        <BrandSelect filterOptions={filterOptions.brands} className={SELECT_CLASS} />
+        <BrandSelect
+          filterOptions={filterOptions.brands}
+          className={SELECT_CLASS}
+        />
       </FilterRow>
 
       <FilterRow label="Con la nota">
-        <NoteSelect filterOptions={filterOptions.notes} className={SELECT_CLASS} />
+        <NoteSelect
+          filterOptions={filterOptions.notes}
+          className={SELECT_CLASS}
+        />
       </FilterRow>
 
       <FilterRow label="Precio">

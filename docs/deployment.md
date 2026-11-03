@@ -5,16 +5,21 @@ The application is built as a multi-stage Docker image and published to GHCR by
 (development). Dokploy runs the published image.
 
 `.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
-lint, integration tests against a Postgres service; no unit tests) on every pull request and is reused by `deploy.yml`. Pull requests
-also run the `e2e` job (see "E2E tests (Playwright)"), which is skipped when
-`deploy.yml` reuses the workflow. On `main` and
-`develop`, `checks` is followed by the `publish` job, which logs in to GHCR with the
+lint, integration tests against a Postgres service; no unit tests) on every pull
+request. Its first step is a gitleaks scan limited to the PR's commits. Pull
+requests also run the `e2e` job (see "E2E tests (Playwright)"). `deploy.yml`
+does not re-run these checks on push: they already ran on the PR and the
+rulesets require them. A manual run (`workflow_dispatch`, for example after a
+build-variable change) must be started from `main` or `develop` with the
+`confirm` input set to that branch name, and it calls `ci.yml` (`checks` and
+`e2e`) first; it builds and deploys only if those pass. On pushes to `main` and
+`develop`, the `publish` job logs in to GHCR with the
 built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
 `latest`/`sha-*` tags — the GHCR package inherits access from this repository,
 so no separate registry credential is needed. The `deploy` job then POSTs the
 Dokploy webhook, sending `CF-Access-Client-Id`/`CF-Access-Client-Secret`
-headers with a Cloudflare Access service token (`github-actions-deploy`),
-because `dokploy.mateovalles.cloud/api/deploy*` is protected by Cloudflare
+headers with a Cloudflare Access service token (`parfam-mdq-deploy`),
+because `dokploy.mateovalles.com/api/deploy*` is protected by Cloudflare
 Access; the step fails if `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, or
 `CF_ACCESS_CLIENT_SECRET` is missing. It then waits until `vars.HEALTH_URL`
 reports status `ok` with the new commit SHA (failing if that repo variable is
@@ -37,14 +42,18 @@ Its `DOKPLOY_WEBHOOK_URL` secret is set in the `development` environment, with
 the same name as the production one in the `production` environment.
 
 The dev database is a separate PostgreSQL service (`database-dev`) with no
-backups. `parfam-dev-refresh.sh` (in the `infra` repo, `files/`, on the VPS)
-rebuilds it from a production `pg_dump`; it only reads from production. The
-script stops the dev app, drops and restores the dev database, replaces every
-`User` row with the test user `test@parfammdq.com`, sets the WhatsApp number
-to a test number, copies the product images referenced by `ProductImage` from
-the public production image URL into the dev bucket, and starts the dev app so
-its entrypoint applies any migration that `develop` has and production does
-not. Orders are kept as copied. Run it on demand or from its schedule.
+backups. `parfam-dev-refresh.sh` rebuilds it from a production `pg_dump`; it
+only reads from production. The script lives only on the VPS
+(`~/.local/bin/parfam-dev-refresh.sh`, run by a nightly user systemd timer)
+and is not versioned in any repository. It stops the dev app, drops and
+restores the dev database, replaces every `User` row with the test user
+`test@parfammdq.com`, anonymizes every `Order` (customer name and phone, and
+clears the admin notes), sets the WhatsApp number to a test number, copies the
+product images referenced by `ProductImage` from the public production image
+URL into the dev bucket, and starts the dev app so its entrypoint applies any
+migration that `develop` has and production does not. The schedule, log
+location, and the check that no real customer data remains are in the infra
+repo's [RUNBOOK](https://github.com/MValles02/infra/blob/main/RUNBOOK.md#dev-databases).
 
 ## Build stages
 
@@ -662,11 +671,14 @@ The checkout specs create real `Order` rows and leave them in the database. That
 is fine for CI and local dev databases; never run them against a real one. The
 admin spec is skipped when `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are unset.
 
-In CI, the `e2e` job in `ci.yml` runs only on pull requests (not when
-`deploy.yml` reuses the workflow). It starts a throwaway Postgres service,
+In CI, the `e2e` job in `ci.yml` runs only on pull requests (`ci.yml` has no
+other trigger). It starts a throwaway Postgres service,
 applies `db:deploy`, `db:seed`, and `db:seed:fixtures`, then runs
-`pnpm test:e2e` with fixed placeholder env values, and uploads
-`playwright-report/` on failure.
+`pnpm test:e2e` with fixed placeholder env values. CI retries a failed spec
+once and records a trace of that retry plus a screenshot of each failure
+(`use` in `playwright.config.ts`). On failure it uploads `playwright-report/`
+and `test-results/` (traces and screenshots) as artifacts; open a trace with
+`pnpm exec playwright show-trace <trace.zip>`.
 
 Relation to `pnpm smoke`: smoke visits every page looking for CSP violations
 and console errors; E2E exercises user flows. Neither replaces the other.

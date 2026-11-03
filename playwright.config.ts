@@ -21,6 +21,10 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     extraHTTPHeaders: { "cf-connecting-ip": clientIp },
+    // Intermittent failures need evidence: a trace of the retried attempt and
+    // a screenshot of each failure land in test-results/, which CI uploads.
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
   },
   projects: [
     {
@@ -39,7 +43,9 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: "pnpm build && pnpm start",
+      // node, not `pnpm start`: pnpm 12 leaves next-server orphaned on teardown
+      // and Playwright then never exits.
+      command: "pnpm build && node node_modules/next/dist/bin/next start",
       url: BASE_URL,
       reuseExistingServer: !process.env.CI,
       timeout: WEB_SERVER_TIMEOUT_MS,

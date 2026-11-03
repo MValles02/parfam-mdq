@@ -1,45 +1,36 @@
 # Deployment
 
-The application is built as a multi-stage Docker image and published to GHCR by
+The application is built as a multi-stage Docker image, published to GHCR by
 `.github/workflows/deploy.yml` on pushes to `main` (production) and `develop`
-(development). Dokploy runs the published image.
+(development), and run by Dokploy. The branching model, CI gate, script
+contract, and the generic deploy pipeline are described in
+[WORKFLOW.md](WORKFLOW.md); this file holds what is specific to Parfam MDQ.
 
-`.github/workflows/ci.yml` (workflow "CI") runs the `checks` job (typecheck,
-lint, integration tests against a Postgres service; no unit tests) on every pull
-request. Its first step is a gitleaks scan limited to the PR's commits. Pull
-requests also run the `e2e` job (see "E2E tests (Playwright)"). `deploy.yml`
-does not re-run these checks on push: they already ran on the PR and the
-rulesets require them. A manual run (`workflow_dispatch`, for example after a
-build-variable change) must be started from `main` or `develop` with the
+`deploy.yml` does not re-run the checks on push: they already ran on the PR and
+the rulesets require them. A manual run (`workflow_dispatch`, for example after
+a build-variable change) must be started from `main` or `develop` with the
 `confirm` input set to that branch name, and it calls `ci.yml` (`checks` and
-`e2e`) first; it builds and deploys only if those pass. On pushes to `main` and
-`develop`, the `publish` job logs in to GHCR with the
-built-in `GITHUB_TOKEN` (`packages: write` on that job) and pushes
-`latest`/`sha-*` tags — the GHCR package inherits access from this repository,
-so no separate registry credential is needed. The `deploy` job then POSTs the
-Dokploy webhook, sending `CF-Access-Client-Id`/`CF-Access-Client-Secret`
-headers with a Cloudflare Access service token (`parfam-mdq-deploy`),
-because `dokploy.mateovalles.com/api/deploy*` is protected by Cloudflare
-Access; the step fails if `DOKPLOY_WEBHOOK_URL`, `CF_ACCESS_CLIENT_ID`, or
-`CF_ACCESS_CLIENT_SECRET` is missing. It then waits until `vars.HEALTH_URL`
-reports status `ok` with the new commit SHA (failing if that repo variable is
-missing), then smoke-tests that the site's home page returns `200`. The
-`deploy` job runs in the `production` (main) or `development` (develop) GitHub
-environment, and the secrets it uses (`DOKPLOY_WEBHOOK_URL`,
-`CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`) are defined per environment.
+`e2e`) first; it builds and deploys only if those pass. The `publish` job logs
+in to GHCR with the built-in `GITHUB_TOKEN` (`packages: write` on that job) and
+pushes `latest` (main) or `develop` plus `sha-*` tags to
+`ghcr.io/mvalles02/parfam-mdq`; the GHCR package inherits access from this
+repository, so no separate registry credential is needed. The `deploy` job then
+POSTs the Dokploy webhook, sending `CF-Access-Client-Id`/`CF-Access-Client-Secret`
+headers with a Cloudflare Access service token (`parfam-mdq-deploy`), because
+`dokploy.mateovalles.com/api/deploy*` is protected by Cloudflare Access. It then
+waits until the health URL reports status `ok` with the new commit SHA, and
+smoke-tests that the site's home page returns `200`.
 
-## Development environment
+## Environments
 
-Pushes to `develop` build `ghcr.io/mvalles02/parfam-mdq:develop` (never
-`latest`) and deploy it to the `development` environment of the Dokploy
-project. It is served at https://dev.parfammdq.com behind Cloudflare Access;
-the service token `github-actions-deploy` must be allowed by that policy
-because the health check and smoke test send its headers.
+| Environment   | Branch    | Image tag | URL                       | Health URL                           |
+| ------------- | --------- | --------- | ------------------------- | ------------------------------------ |
+| `production`  | `main`    | `latest`  | https://parfammdq.com     | https://parfammdq.com/api/health     |
+| `development` | `develop` | `develop` | https://dev.parfammdq.com | https://dev.parfammdq.com/api/health |
 
-The `develop` run uses these extra repo variables instead of the production
-ones: `DEV_NEXT_PUBLIC_SITE_URL`, `DEV_R2_PUBLIC_URL`, and `DEV_HEALTH_URL`.
-Its `DOKPLOY_WEBHOOK_URL` secret is set in the `development` environment, with
-the same name as the production one in the `production` environment.
+The development environment is served behind Cloudflare Access; the service
+token `github-actions-deploy` must be allowed by that policy because the health
+check and smoke test send its headers.
 
 The dev database is a separate PostgreSQL service (`database-dev`) with no
 backups. `parfam-dev-refresh.sh` rebuilds it from a production `pg_dump`; it
@@ -55,6 +46,80 @@ migration that `develop` has and production does not. The schedule, log
 location, and the check that no real customer data remains are in the infra
 repo's [RUNBOOK](https://github.com/MValles02/infra/blob/main/RUNBOOK.md#dev-databases).
 
+## Secrets and variables
+
+Secrets live in the `production` and `development` GitHub environments, with
+the same names in both, never at repository level:
+
+- `DOKPLOY_WEBHOOK_URL`
+- `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`
+
+The `deploy` job fails if any of them is missing.
+
+Repository variables (not secrets):
+
+| Variable         | Used by                      | Content                                                  |
+| ---------------- | ---------------------------- | -------------------------------------------------------- |
+| `HEALTH_URL`     | `main` deploy health wait    | `https://parfammdq.com/api/health`                       |
+| `DEV_HEALTH_URL` | `develop` deploy health wait | `https://dev.parfammdq.com/api/health`                   |
+| `BUILD_ARGS`     | `main` image build           | multi-line `KEY=VALUE` Docker build arguments, see below |
+| `DEV_BUILD_ARGS` | `develop` image build        | same, for the development environment                    |
+
+`BUILD_ARGS` and `DEV_BUILD_ARGS` hold the public values Next serializes into
+the build output (the Dockerfile refuses to build without either), one per
+line:
+
+```text
+NEXT_PUBLIC_SITE_URL=https://parfammdq.com
+R2_PUBLIC_URL=https://img.parfammdq.com
+```
+
+```text
+NEXT_PUBLIC_SITE_URL=https://dev.parfammdq.com
+R2_PUBLIC_URL=https://img-dev.parfammdq.com
+```
+
+`deploy.yml` appends them after `GIT_SHA`. A build inlines them into the image,
+so changing one requires `workflow_dispatch` or a commit-triggered rebuild;
+changing only the Dokploy variable is not enough.
+
+CI uses no secrets: `scripts/ci-env.mjs` prints the fixed placeholder values
+each CI job needs (`pnpm ci:env checks|e2e`).
+
+## Dokploy
+
+Dokploy (https://dokploy.mateovalles.com) runs one application per
+environment, each pulling its GHCR tag (`latest` or `develop`) when the deploy
+webhook fires. The runtime environment variables (see "Runtime configuration"
+below) are set on each Dokploy application, not in GitHub. Deploys are
+start-first: the new container must pass the Docker health check
+(`GET /api/health`, which probes the database) before the old one stops, so
+both overlap on the same database while the new one applies migrations (see
+"Startup").
+
+## Rollback
+
+Every published image is also tagged `sha-<short sha>`. To roll back, point the
+Dokploy application at the last good `ghcr.io/mvalles02/parfam-mdq:sha-*` tag
+and redeploy, then fix forward with a revert PR into `develop` and a normal
+promotion. Migrations are not rolled back: they are expand/contract, so the
+previous release keeps working against the newer schema. A rollback across a
+contract migration (a drop or rename) is not safe; restore from backup instead
+(see the infra repo's RUNBOOK).
+
+## Promotion checks
+
+Before merging the `develop` → `main` promotion PR, verify on
+https://dev.parfammdq.com:
+
+- `DEV_HEALTH_URL` reports status `ok` and the `develop` head SHA.
+- Catalog: filters and sorting work, products show their starting price.
+- Product page: variants are purchasable and "Se parece a" renders.
+- Checkout: an order gets a `PM-` number and the thank-you page opens the
+  prewritten WhatsApp link.
+- Admin: login works, a product image upload shows in the panel and the store.
+- Any migration in the promotion has applied cleanly (dev container logs).
+
 ## Build stages
 
 | Stage        | Responsibility                                                                                  |
@@ -68,7 +133,8 @@ The Docker build needs public values that Next serializes into the output:
 - `NEXT_PUBLIC_SITE_URL`
 - `R2_PUBLIC_URL`
 
-The Dockerfile uses `AUTH_SECRET_PLACEHOLDER_BUILD`, a non-secret placeholder
+CI passes them from `BUILD_ARGS` / `DEV_BUILD_ARGS` (see "Secrets and
+variables"). The Dockerfile uses `AUTH_SECRET_PLACEHOLDER_BUILD`, a non-secret placeholder
 build argument for `AUTH_SECRET`, only because build validation requires a
 value. Runtime authentication always uses the real deployment secret.
 
@@ -569,22 +635,20 @@ otherwise (see AGENTS.md's "Commands" section).
 Before shipping a repository change, run:
 
 ```bash
-pnpm format
+pnpm lint        # prettier --check . && eslint; `pnpm format` fixes formatting
 pnpm typecheck
-pnpm lint
+pnpm build
 pnpm test
 pnpm db:check-translations
-pnpm build
 ```
 
 `pnpm test` runs the integration tests (see "Integration tests (Vitest)"), so it
 needs a migrated local database: `pnpm db:up && pnpm db:deploy`.
 
 A build needs the public build-time values above and a generated Prisma client.
-The CI workflow (`checks` job) runs `pnpm typecheck`, `pnpm lint`, and `pnpm
-test`; it does not run `pnpm format`, `pnpm db:check-translations`, or `pnpm
-build`, so it should not be treated as a substitute for the local checks
-above.
+The CI workflow (`checks` job) runs `pnpm lint`, `pnpm typecheck`, `pnpm build`,
+`pnpm db:deploy`, and `pnpm test`; it does not run `pnpm db:check-translations`,
+so run that locally before any reference import.
 
 ## Local smoke check
 
@@ -673,8 +737,9 @@ admin spec is skipped when `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` are unset.
 
 In CI, the `e2e` job in `ci.yml` runs only on pull requests (`ci.yml` has no
 other trigger). It starts a throwaway Postgres service,
-applies `db:deploy`, `db:seed`, and `db:seed:fixtures`, then runs
-`pnpm test:e2e` with fixed placeholder env values. CI retries a failed spec
+applies `db:deploy`, then `test:e2e:setup` (`db:seed` and `db:seed:fixtures`),
+then runs `pnpm test:e2e` with the fixed placeholder env values printed by
+`pnpm ci:env e2e` (`scripts/ci-env.mjs`). CI retries a failed spec
 once and records a trace of that retry plus a screenshot of each failure
 (`use` in `playwright.config.ts`). On failure it uploads `playwright-report/`
 and `test-results/` (traces and screenshots) as artifacts; open a trace with

@@ -96,7 +96,11 @@ export function CheckoutForm({
   const units = cartUnits(items);
   const total = cartSubtotal(items);
 
-  function showFailure({ message, fieldErrors, invalidItems }: CheckoutFailure) {
+  function showFailure({
+    message,
+    fieldErrors,
+    invalidItems,
+  }: CheckoutFailure) {
     for (const invalidItem of invalidItems ?? []) {
       remove(invalidItem.variantId);
     }

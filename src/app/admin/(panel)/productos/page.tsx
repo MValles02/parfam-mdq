@@ -49,9 +49,7 @@ export default async function Page(props: PageProps<"/admin/productos">) {
       <PageHeader
         title="Productos"
         description={`${published} publicados · ${drafts} en borrador`}
-        action={
-          <NewProductButton />
-        }
+        action={<NewProductButton />}
       />
 
       <div className="p-8 pt-6">

@@ -193,7 +193,8 @@ export function SettingsForm({
             {isMissingOrderDetail ? (
               <Alert>
                 <AlertTitle>
-                  La plantilla no tiene {ITEMS_PLACEHOLDER} ni {TOTAL_PLACEHOLDER}
+                  La plantilla no tiene {ITEMS_PLACEHOLDER} ni{" "}
+                  {TOTAL_PLACEHOLDER}
                 </AlertTitle>
                 <AlertDescription>
                   El pedido se crea igual, pero el mensaje de WhatsApp no va a

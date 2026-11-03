@@ -50,7 +50,9 @@ Prisma 7 + PostgreSQL · Auth.js v5 (JWT, provider Credentials + argon2) ·
 `react-hook-form` · Cloudflare R2.
 Deploy: Docker multi-stage → GHCR → Dokploy.
 
-## Non-negotiable rules
+## Rules
+
+### Non-negotiable
 
 - **Use Prisma `Decimal` for ARS prices; never `float`.** Prices cross to the
   client as `string` because `Decimal` is not Client Component serializable;
@@ -71,7 +73,7 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
 - **Verify all client input**: note, accord, and perfumer IDs; R2 keys
   (`isProductStorageKey`); `variantId`; and an upload `contentType`.
 
-## Conventions
+### Conventions
 
 - **Use existing libraries.** Before writing a component or utility, check
   shadcn/ui and the selected ecosystem in `docs/architecture.md`.
@@ -114,6 +116,8 @@ drops and renames go in a later release).
 
 ```bash
 pnpm dev | build | typecheck | lint | test | test:e2e | format
+pnpm test:e2e:setup         # db:seed + db:seed:fixtures, run before test:e2e
+pnpm ci:env checks|e2e      # placeholder env for CI jobs (scripts/ci-env.mjs)
 pnpm db:up | db:down | db:migrate | db:seed | db:seed:fixtures
 pnpm db:import-references   # flags without `--`; see docs/modules/reference-data.md
 pnpm db:check-translations
@@ -121,13 +125,14 @@ pnpm smoke                  # optional, against `pnpm start`; see docs/deploymen
 ```
 
 Git hooks (husky): pre-commit runs `lint-staged` and a gitleaks scan of the staged diff (`git diff --cached` piped into the digest-pinned image via stdin, so it also works in git worktrees; skipped with a warning if `docker` is missing).
-`.gitattributes` forces LF for `*.sh` and `.husky/*` so scripts copied into the image or run as hooks keep working when checked out on Windows.
+`.gitattributes` (`* text=auto eol=lf`) forces LF everywhere, so scripts copied into the image or run as hooks keep working when checked out on Windows and `prettier --check` sees the same bytes on every OS.
+The CI workflows, PR templates, dependabot, hooks and `docs/WORKFLOW.md` are copied byte-for-byte from the infra repo (`standards/apps/`); change them there, not here. `.prettierignore` lists them so formatting never alters them.
 
 Remote dev: `pnpm dev` binds to loopback only (`-H 127.0.0.1`); start it with `pnpm dev -p 3100`, then `ssh -N -L 3100:localhost:3100 mateo@<tailscale-ip>` and open `http://localhost:3100`.
 
 ## Before declaring work complete
 
-`pnpm typecheck`, `pnpm lint`, `pnpm test` must pass (CI requires them).
+`pnpm lint` (`prettier --check .` + eslint), `pnpm typecheck`, `pnpm build`, `pnpm test` must pass (CI requires them).
 Tests are integration and E2E only; never write unit tests (no isolated
 function tests, no mocking of internal modules). `pnpm test` runs the Vitest
 integration tests in `tests/integration/*.int.test.ts` against a real, migrated

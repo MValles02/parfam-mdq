@@ -66,14 +66,18 @@ function Thumbnail({ image, alt }: { image: string | null; alt: string }) {
 function formatPresentations(variants: ProductRow["variants"]) {
   const active = variants.filter((variant) => variant.isActive);
   const decantSizes = active
-    .filter((variant) => variant.kind === VariantKind.DECANT && variant.sizeMl !== null)
+    .filter(
+      (variant) =>
+        variant.kind === VariantKind.DECANT && variant.sizeMl !== null,
+    )
     .map((variant) => variant.sizeMl);
   const parts: string[] = [];
   if (decantSizes.length > 0) {
     parts.push(`Decant ${decantSizes.join(" · ")} ml`);
   }
   for (const variant of active) {
-    if (variant.kind === VariantKind.DECANT && variant.sizeMl !== null) continue;
+    if (variant.kind === VariantKind.DECANT && variant.sizeMl !== null)
+      continue;
     parts.push(getVariantLabel(variant.kind, variant.sizeMl));
   }
   return parts.length > 0 ? parts.join(" · ") : "Sin presentaciones activas";

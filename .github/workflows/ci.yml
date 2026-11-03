@@ -25,22 +25,16 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_USER: e2e
-          POSTGRES_PASSWORD: e2e
-          POSTGRES_DB: e2e
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U e2e -d e2e"
+          --health-cmd "pg_isready -U ci -d ci"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-    env:
-      # Fixed throwaway test values; none of these are secrets. The database
-      # backs the integration tests (`pnpm test`).
-      DATABASE_URL: "postgresql://e2e:e2e@localhost:5432/e2e?schema=public"
-      AUTH_SECRET: "e2e-only-auth-secret-not-for-production-use"
-      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
 
     steps:
       # On a PR, HEAD is the test merge commit (parent 1: base tip, parent 2:
@@ -78,17 +72,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm run typecheck
+      # Fixed throwaway test values; none of these are secrets. The repo's
+      # optional `ci:env` script adds its own KEY=VALUE lines (later lines win).
+      - name: Set env
+        run: |
+          echo "DATABASE_URL=postgresql://ci:ci@localhost:5432/ci" >> "$GITHUB_ENV"
+          pnpm --silent run --if-present ci:env checks >> "$GITHUB_ENV"
 
       - name: Lint
-        run: pnpm run lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
 
       - name: Apply migrations
-        run: pnpm db:deploy
+        run: pnpm run --if-present db:deploy
 
       - name: Test
-        run: pnpm run test
+        run: pnpm run --if-present test
 
   e2e:
     name: e2e
@@ -98,29 +102,16 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_USER: e2e
-          POSTGRES_PASSWORD: e2e
-          POSTGRES_DB: e2e
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U e2e -d e2e"
+          --health-cmd "pg_isready -U ci -d ci"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-    env:
-      # Fixed throwaway test values; none of these are secrets.
-      DATABASE_URL: "postgresql://e2e:e2e@localhost:5432/e2e?schema=public"
-      AUTH_SECRET: "e2e-only-auth-secret-not-for-production-use"
-      AUTH_TRUST_HOST: "true"
-      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
-      R2_ACCOUNT_ID: "e2e-placeholder"
-      R2_ACCESS_KEY_ID: "e2e-placeholder"
-      R2_SECRET_ACCESS_KEY: "e2e-placeholder"
-      R2_BUCKET: "e2e-placeholder"
-      R2_PUBLIC_URL: "https://r2.invalid"
-      ADMIN_SEED_EMAIL: "e2e-admin@example.test"
-      ADMIN_SEED_PASSWORD: "e2e-throwaway-password"
 
     steps:
       - name: Check out repository
@@ -140,17 +131,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Set env
+        run: |
+          echo "DATABASE_URL=postgresql://ci:ci@localhost:5432/ci" >> "$GITHUB_ENV"
+          pnpm --silent run --if-present ci:env e2e >> "$GITHUB_ENV"
+
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Apply migrations
-        run: pnpm db:deploy
+        run: pnpm run --if-present db:deploy
 
-      - name: Seed admin user
-        run: pnpm db:seed
-
-      - name: Seed fixtures
-        run: pnpm db:seed:fixtures
+      - name: E2E setup
+        run: pnpm run --if-present test:e2e:setup
 
       - name: E2E tests
         run: pnpm test:e2e

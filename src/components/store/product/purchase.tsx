@@ -236,9 +236,7 @@ export function Purchase({
 
       {kinds.length > 1 ? (
         <div>
-          <p className={`mb-2 ${OPTION_GROUP_LABEL_CLASS}`}>
-            Presentación
-          </p>
+          <p className={`mb-2 ${OPTION_GROUP_LABEL_CLASS}`}>Presentación</p>
           <RadioGroup
             aria-label="Presentación"
             value={selectedVariant.kind}
@@ -266,9 +264,7 @@ export function Purchase({
       ) : null}
 
       <div>
-        <p className={`mb-2 ${OPTION_GROUP_LABEL_CLASS}`}>
-          Tamaño
-        </p>
+        <p className={`mb-2 ${OPTION_GROUP_LABEL_CLASS}`}>Tamaño</p>
         <RadioGroup
           aria-label="Tamaño"
           value={selectedVariant.id}

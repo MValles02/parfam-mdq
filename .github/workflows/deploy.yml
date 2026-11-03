@@ -1,7 +1,8 @@
 # Image build and Dokploy redeployment for both environments: pushes to `main`
 # deploy production, pushes to `develop` deploy the development environment
-# (dev.parfammdq.com). Deploy secrets live in the `production`/`development`
-# GitHub environments, not at repository level.
+# (a repo without a `develop` branch simply never triggers that path). Deploy
+# secrets live in the `production`/`development` GitHub environments, not at
+# repository level.
 #
 # Checks run on the pull request (and are required by the branch ruleset), so
 # they are not repeated on push. A manual run (workflow_dispatch) has no PR
@@ -68,6 +69,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # GHCR image names must be lowercase.
+      - name: Resolve image name
+        id: image
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -82,15 +88,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: ghcr.io/mvalles02/parfam-mdq
+          images: ${{ steps.image.outputs.image }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
             type=sha
 
-      # NEXT_PUBLIC_SITE_URL and R2_PUBLIC_URL (DEV_-prefixed for develop) are
-      # repository variables, not secrets. Next inlines them into client HTML during this build, so changing
-      # either requires workflow_dispatch or a commit-triggered rebuild.
+      # BUILD_ARGS (DEV_BUILD_ARGS for develop) is a multi-line repository
+      # variable of KEY=VALUE build arguments, may be empty. They are variables,
+      # not secrets: a build inlines them into the image, so changing one
+      # requires workflow_dispatch or a commit-triggered rebuild.
       - name: Build and publish
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -100,9 +107,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_SITE_URL=${{ github.ref == 'refs/heads/main' && vars.NEXT_PUBLIC_SITE_URL || vars.DEV_NEXT_PUBLIC_SITE_URL }}
-            R2_PUBLIC_URL=${{ github.ref == 'refs/heads/main' && vars.R2_PUBLIC_URL || vars.DEV_R2_PUBLIC_URL }}
             GIT_SHA=${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && vars.BUILD_ARGS || vars.DEV_BUILD_ARGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

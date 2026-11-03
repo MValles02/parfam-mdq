@@ -27,9 +27,11 @@ pnpm dev
 | Script                               | Purpose                                       |
 | ------------------------------------ | --------------------------------------------- |
 | `pnpm dev` / `build` / `start`       | Run, build, and serve the app                 |
-| `pnpm typecheck` / `lint` / `format` | Static checks and formatting                  |
+| `pnpm typecheck` / `lint` / `format` | Types; prettier check + eslint; formatting    |
 | `pnpm test`                          | Integration tests (needs a migrated local DB) |
 | `pnpm test:e2e`                      | Playwright E2E tests (needs a seeded DB)      |
+| `pnpm test:e2e:setup`                | Seed the DB for E2E (base data + fixtures)    |
+| `pnpm ci:env checks` / `e2e`         | Print the placeholder env a CI job uses       |
 | `pnpm db:up` / `db:down`             | Start/stop the local PostgreSQL container     |
 | `pnpm db:migrate` / `db:deploy`      | Create a migration / apply pending migrations |
 | `pnpm db:seed` / `db:seed:fixtures`  | Seed base data / sample fixtures              |
@@ -37,7 +39,7 @@ pnpm dev
 
 ## Branching and deploys
 
-- Feature branches (`feat/`, `fix/`, `chore/`, `docs/`, `ci/`) merge into
+- `develop` is the default branch. Feature branches (`feat/`, `fix/`, `chore/`, `docs/`, `ci/`) merge into
   `develop` with a **squash** merge.
 - `develop` is promoted to `main` through a PR with a **merge commit**.
 - CI builds a Docker image, publishes it to GHCR, and triggers the Dokploy

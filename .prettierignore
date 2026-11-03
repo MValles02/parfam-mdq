@@ -5,3 +5,15 @@ build
 pnpm-lock.yaml
 /new-database/
 src/components/ui
+
+# Canonical files copied byte-for-byte from infra/standards/apps (see
+# docs/WORKFLOW.md); formatting them here would break the drift check.
+.github/dependabot.yml
+.github/pull_request_template.md
+.github/PULL_REQUEST_TEMPLATE/promotion.md
+.github/workflows/ci.yml
+.github/workflows/deploy.yml
+.github/workflows/promotion-guard.yml
+.github/workflows/secrets-scan.yml
+.lintstagedrc.json
+docs/WORKFLOW.md

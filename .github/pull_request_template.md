@@ -10,13 +10,15 @@ Refs #  (partial fix: the issue stays open) -->
 
 ## Checks run
 
-- [ ] `pnpm typecheck`
 - [ ] `pnpm lint`
-- [ ] `pnpm test` (integration tests; needs a migrated local DB)
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm test` (if the repo has it)
+- [ ] `pnpm test:e2e` (if a covered flow changed)
 
 ## Migration
 
-<!-- None, or: the migration, and whether the previous release still works against the migrated schema (deploys are start-first: old and new containers overlap on the same DB). Destructive changes (drop/rename) go in a later release. -->
+<!-- None, or: the migration and whether it is backward-compatible with the previous release (expand/contract, see docs/WORKFLOW.md). -->
 
 ## Screenshots
 

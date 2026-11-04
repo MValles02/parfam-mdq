@@ -139,4 +139,8 @@ integration tests in `tests/integration/*.int.test.ts` against a real, migrated
 local Postgres (`pnpm db:up && pnpm db:deploy`); they refuse a non-local
 `DATABASE_URL`. Playwright E2E (`pnpm test:e2e`, needs a seeded DB; see `docs/deployment.md`)
 runs in CI on pull requests; run it locally when a change touches the store,
-checkout, or admin flows.
+checkout, or admin flows. E2E covers money, data, auth and access-isolation
+flows only. No layout/pixel/viewport, animation, touch-target, colour or copy
+tests; one representative test per error class; no duplicated assertions across
+specs; no `waitForTimeout` or `networkidle`. Before adding a test, check it is
+not already covered. Keep CI E2E under ~5 min.

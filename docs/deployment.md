@@ -695,7 +695,7 @@ instead. The CI `checks` job provides a `postgres:17-alpine` service and runs
 ## E2E tests (Playwright)
 
 `pnpm test:e2e` runs user-flow specs in Chromium: catalog (starting price and
-sorting), product page ("Se parece a"), checkout and thank-you page, and admin
+sorting), product page (published, draft 404, Decant pricing), checkout and thank-you page, and admin
 login, throttling and image upload. Specs live in `e2e/*.e2e.ts`; `testMatch`
 in `playwright.config.ts` limits Playwright to that suffix, so Vitest ignores
 them.

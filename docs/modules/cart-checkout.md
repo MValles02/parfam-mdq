@@ -28,5 +28,4 @@ the browser, while checkout keeps the Prisma Decimal database prices and then
 creates OrderItem snapshots inside a transaction. Request and result fields
 are English; customer messages remain Spanish.
 
-
 The checkout page (`checkout-form.tsx`) renders the cart lines with `CartItemRow` (not `CartItemList`, which would run the reconciliation a second time) next to the customer form and order summary.

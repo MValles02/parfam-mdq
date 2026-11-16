@@ -40,10 +40,7 @@ export function FormActionBar({
       {product ? (
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="text-xs text-muted-foreground">
-            <Link
-              href={ADMIN_PRODUCTS_PATH}
-              className="hover:text-foreground"
-            >
+            <Link href={ADMIN_PRODUCTS_PATH} className="hover:text-foreground">
               Productos
             </Link>
             {` / ${product.brand.name}`}

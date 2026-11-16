@@ -2,28 +2,26 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
-    target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       npm-minor-patch:
         update-types:
           - minor
           - patch
     ignore:
-      - dependency-name: "@types/node"
+      - dependency-name: '@types/node'
         update-types:
           - version-update:semver-major
 
   - package-ecosystem: docker
     directory: /
-    target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       docker:
         patterns:
-          - "*"
+          - '*'
     ignore:
       - dependency-name: node
         update-types:
@@ -31,10 +29,9 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
-    target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       github-actions:
         patterns:
-          - "*"
+          - '*'

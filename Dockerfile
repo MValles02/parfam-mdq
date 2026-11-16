@@ -18,7 +18,7 @@
 ARG DATABASE_URL_BUILD="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 ARG AUTH_SECRET_PLACEHOLDER_BUILD="build-placeholder-with-no-runtime-value"
 
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS base
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS base
 ENV PNPM_HOME="/pnpm" \
     PATH="/pnpm:$PATH" \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
@@ -94,7 +94,7 @@ RUN PRISMA_VERSION="$(node -p "require('./package.json').devDependencies.prisma"
 # ---------------------------------------------------------------------------
 # runner — the only published stage
 # ---------------------------------------------------------------------------
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS runner
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \

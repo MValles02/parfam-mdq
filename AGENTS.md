@@ -72,6 +72,9 @@ Deploy: Docker multi-stage → GHCR → Dokploy.
   `src/proxy.ts` only performs an optimistic redirect.
 - **Verify all client input**: note, accord, and perfumer IDs; R2 keys
   (`isProductStorageKey`); `variantId`; and an upload `contentType`.
+- **This repository is public.** Never commit secrets, `.env*` (except
+  examples), customer data or non-public infra hostnames/IPs, and never file
+  vulnerabilities as public issues (`docs/deployment.md`).
 
 ### Conventions
 

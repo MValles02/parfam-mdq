@@ -86,6 +86,20 @@ changing only the Dokploy variable is not enough.
 CI uses no secrets: `scripts/ci-env.mjs` prints the fixed placeholder values
 each CI job needs (`pnpm ci:env checks|e2e`).
 
+## Public repository
+
+This repository is public on purpose and stays public. That means:
+
+- Never commit secrets, `.env*` files (except `.env.example`), customer data
+  (orders, names, phones), or VPS IPs, hostnames and internal URLs that are not
+  already public. Secrets live only in GitHub Actions secrets and Dokploy.
+- PRs from forks run CI without secrets; deploys run only on pushes to
+  `develop` and `main`.
+- A `pull_request_target` workflow never checks out or runs PR code
+  (`auto-merge.yml` has no checkout step).
+- Report vulnerabilities privately (a GitHub security advisory), never as a
+  public issue with exploit detail.
+
 ## Dokploy
 
 Dokploy (https://dokploy.mateovalles.com) runs one application per
